@@ -5,18 +5,15 @@ const path = require('path');
 const url = require('url');
 
 const PORT = process.env.PORT || 3000;
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 
-// Tratamento de erros globais
 process.on('uncaughtException', function(err) {
   console.error('ERRO NAO TRATADO:', err.message);
-  console.error(err.stack);
 });
-
 process.on('unhandledRejection', function(reason) {
   console.error('PROMISE REJEITADA:', reason);
 });
 
-// MIME types
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.json': 'application/json',
@@ -27,7 +24,6 @@ const MIME = {
   '.ico':  'image/x-icon',
 };
 
-// Requisição HTTPS externa
 function httpsGet(reqUrl) {
   return new Promise(function(resolve, reject) {
     https.get(reqUrl, function(res) {
@@ -38,7 +34,6 @@ function httpsGet(reqUrl) {
   });
 }
 
-// Mapa de arquivos estáticos
 const FILEMAP = {
   '/':              'hitssoud.html',
   '/hitssoud.html': 'hitssoud.html',
@@ -55,7 +50,6 @@ const server = http.createServer(function(req, res) {
   const parsed   = url.parse(req.url, true);
   const pathname = parsed.pathname;
 
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
 
@@ -67,19 +61,17 @@ const server = http.createServer(function(req, res) {
 
   console.log(req.method, pathname);
 
-  // API: busca
   if (pathname === '/api/search') {
-    const q      = parsed.query.q   || '';
-    const apiKey = parsed.query.key || '';
-    if (!apiKey) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'sem key' }));
+    const q = parsed.query.q || '';
+    if (!YOUTUBE_API_KEY) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: { message: 'API Key não configurada no servidor' } }));
       return;
     }
     const apiUrl = 'https://www.googleapis.com/youtube/v3/search'
       + '?part=snippet&type=video&maxResults=12'
-      + '&q='   + encodeURIComponent(q)
-      + '&key=' + encodeURIComponent(apiKey);
+      + '&q=' + encodeURIComponent(q)
+      + '&key=' + encodeURIComponent(YOUTUBE_API_KEY);
     httpsGet(apiUrl)
       .then(function(body) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -87,22 +79,20 @@ const server = http.createServer(function(req, res) {
       })
       .catch(function(e) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: e.message }));
+        res.end(JSON.stringify({ error: { message: e.message } }));
       });
     return;
   }
 
-  // API: trending
   if (pathname === '/api/trending') {
-    const apiKey = parsed.query.key || '';
-    if (!apiKey) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'sem key' }));
+    if (!YOUTUBE_API_KEY) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: { message: 'API Key não configurada no servidor' } }));
       return;
     }
     const apiUrl = 'https://www.googleapis.com/youtube/v3/videos'
       + '?part=snippet&chart=mostPopular&videoCategoryId=10&maxResults=8&regionCode=BR'
-      + '&key=' + encodeURIComponent(apiKey);
+      + '&key=' + encodeURIComponent(YOUTUBE_API_KEY);
     httpsGet(apiUrl)
       .then(function(body) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -110,27 +100,23 @@ const server = http.createServer(function(req, res) {
       })
       .catch(function(e) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: e.message }));
+        res.end(JSON.stringify({ error: { message: e.message } }));
       });
     return;
   }
 
-  // Arquivos estáticos
   const filename = FILEMAP[pathname];
   if (filename) {
     const filepath = path.join(__dirname, filename);
-    const ext      = path.extname(filename);
+    const ext = path.extname(filename);
     fs.readFile(filepath, function(err, data) {
       if (err) {
-        console.error('Arquivo nao encontrado:', filepath);
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('nao encontrado: ' + filename);
         return;
       }
-      const headers = {
-        'Content-Type': MIME[ext] || 'application/octet-stream',
-      };
-      if (filename === 'sw.js')         headers['Service-Worker-Allowed'] = '/';
+      const headers = { 'Content-Type': MIME[ext] || 'application/octet-stream' };
+      if (filename === 'sw.js') headers['Service-Worker-Allowed'] = '/';
       if (filename === 'manifest.json') headers['Cache-Control'] = 'no-cache';
       res.writeHead(200, headers);
       res.end(data);
@@ -138,12 +124,11 @@ const server = http.createServer(function(req, res) {
     return;
   }
 
-  // 404
   res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('not found');
 });
 
-server.listen(PORT, function() {
+server.listen(PORT, '0.0.0.0', function() {
   console.log('');
   console.log('  HitsSoud rodando na porta ' + PORT);
   console.log('');
