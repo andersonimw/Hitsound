@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 function httpsGet(reqUrl) {
   return new Promise(function(resolve, reject) {
@@ -15,6 +15,15 @@ function httpsGet(reqUrl) {
     }).on('error', function(e) { reject(e); });
   });
 }
+
+var MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.json': 'application/json',
+  '.js':   'application/javascript',
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.ico':  'image/x-icon',
+};
 
 var server = http.createServer(function(req, res) {
   var parsed = url.parse(req.url, true);
@@ -59,11 +68,23 @@ var server = http.createServer(function(req, res) {
     return;
   }
 
-  if (pathname === '/' || pathname === '/hitssoud.html') {
-    var filePath = path.join(__dirname, 'hitssoud.html');
-    fs.readFile(filePath, function(err, data) {
-      if (err) { res.writeHead(404); res.end('hitssoud.html nao encontrado'); return; }
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  var filemap = {
+    '/':              'hitssoud.html',
+    '/hitssoud.html': 'hitssoud.html',
+    '/manifest.json': 'manifest.json',
+    '/sw.js':         'sw.js',
+    '/icon-192.png':  'icon-192.png',
+    '/icon-512.png':  'icon-512.png',
+  };
+
+  var filename = filemap[pathname];
+  if (filename) {
+    var ext = path.extname(filename);
+    fs.readFile(path.join(__dirname, filename), function(err, data) {
+      if (err) { res.writeHead(404); res.end('nao encontrado'); return; }
+      res.setHeader('Content-Type', MIME[ext] || 'text/plain');
+      if (filename === 'sw.js') res.setHeader('Service-Worker-Allowed', '/');
+      if (filename === 'manifest.json') res.setHeader('Cache-Control', 'no-cache');
       res.writeHead(200);
       res.end(data);
     });
