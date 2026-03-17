@@ -365,7 +365,37 @@ var GENRES=[{name:'Pop',emoji:'🎤',bg:'linear-gradient(135deg,#FF6B00,#c42b00)
 var ytPlayer=null,ytReady=false,pendingVideoId=null,progressInterval=null,currentTrack=null,isPlaying=false,liked={},shuffle=false,repeat=false,muted=false,playlists=[],queue=TRACKS.slice(),nextQueue=[],ctxTrack=null,ctxPlSubOpen=false,openPlaylistIdx=-1,modalCallback=null,_cardArr=[],_listMap={};
 function savePlaylists(){try{localStorage.setItem('hs_playlists',JSON.stringify(playlists));}catch(e){}}
 function loadPlaylists(){try{var s=localStorage.getItem('hs_playlists');if(s){playlists=JSON.parse(s);}}catch(e){playlists=[];}}
-window.onYouTubeIframeAPIReady=function(){ytPlayer=new YT.Player('yt-player',{height:'1',width:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,modestbranding:1,playsinline:1},events:{onReady:function(){ytReady=true;if(pendingVideoId){ytPlayer.loadVideoById(pendingVideoId);pendingVideoId=null;}},onStateChange:function(e){if(e.data===YT.PlayerState.ENDED){if(repeat){ytPlayer.seekTo(0);ytPlayer.playVideo();}else if(nextQueue.length){playTrackObj(nextQueue.shift());}else nextTrack();}if(e.data===YT.PlayerState.PLAYING){isPlaying=true;document.getElementById('play-icon').className='fa fa-pause';startProgressSync();}if(e.data===YT.PlayerState.PAUSED){isPlaying=false;document.getElementById('play-icon').className='fa fa-play';clearInterval(progressInterval);}if(e.data===YT.PlayerState.BUFFERING){document.getElementById('play-icon').className='fa fa-spinner fa-spin';}},onError:function(){showToast('⚠️ Vídeo não disponível, pulando...');nextTrack();}}});};
+// AUDIO CONTEXT — mantém audio ativo em background
+var _audioCtx=null,_audioTimer=null;
+function keepAudioAlive(){
+  try{
+    if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(_audioCtx.state==='suspended')_audioCtx.resume();
+    var buf=_audioCtx.createBuffer(1,1,22050);
+    var src=_audioCtx.createBufferSource();
+    src.buffer=buf;src.connect(_audioCtx.destination);src.start(0);
+  }catch(e){}
+}
+function startKeepAlive(){
+  keepAudioAlive();
+  clearInterval(_audioTimer);
+  _audioTimer=setInterval(keepAudioAlive,15000);
+}
+function stopKeepAlive(){clearInterval(_audioTimer);}
+// Ativa ao primeiro toque do usuario
+document.addEventListener('click',function wake(){keepAudioAlive();document.removeEventListener('click',wake);},{once:true});
+// Reativa quando volta do background
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'&&isPlaying){
+    keepAudioAlive();
+    setTimeout(function(){
+      if(ytReady&&isPlaying){
+        try{ytPlayer.playVideo();}catch(e){}
+      }
+    },300);
+  }
+});
+window.onYouTubeIframeAPIReady=function(){ytPlayer=new YT.Player('yt-player',{height:'1',width:'1',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,modestbranding:1,playsinline:1},events:{onReady:function(){ytReady=true;if(pendingVideoId){ytPlayer.loadVideoById(pendingVideoId);pendingVideoId=null;}},onStateChange:function(e){if(e.data===YT.PlayerState.ENDED){stopKeepAlive();if(repeat){ytPlayer.seekTo(0);ytPlayer.playVideo();}else if(nextQueue.length){playTrackObj(nextQueue.shift());}else nextTrack();}if(e.data===YT.PlayerState.PLAYING){isPlaying=true;document.getElementById('play-icon').className='fa fa-pause';startProgressSync();startKeepAlive();}if(e.data===YT.PlayerState.PAUSED){isPlaying=false;document.getElementById('play-icon').className='fa fa-play';clearInterval(progressInterval);stopKeepAlive();}if(e.data===YT.PlayerState.BUFFERING){document.getElementById('play-icon').className='fa fa-spinner fa-spin';}},onError:function(){showToast('⚠️ Vídeo não disponível, pulando...');nextTrack();}}});};
 function playYT(id){if(!ytReady){pendingVideoId=id;return;}ytPlayer.loadVideoById(id);}
 function startProgressSync(){clearInterval(progressInterval);progressInterval=setInterval(function(){if(!ytPlayer||!isPlaying)return;var c=ytPlayer.getCurrentTime()||0,d=ytPlayer.getDuration()||0;if(d>0){document.getElementById('progress-fill').style.width=(c/d*100)+'%';document.getElementById('time-current').textContent=fmt(Math.floor(c));document.getElementById('time-total').textContent=fmt(Math.floor(d));}},500);}
 function fmt(s){return Math.floor(s/60)+':'+(s%60+'').padStart(2,'0');}
