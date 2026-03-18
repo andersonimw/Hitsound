@@ -1,4 +1,4 @@
-var CACHE = 'hitssoud-v9';
+var CACHE = 'hitssoud-v10';
 var FILES = ['/', '/hitssoud.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', function(e) {
