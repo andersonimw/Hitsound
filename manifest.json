@@ -7,6 +7,8 @@
   "background_color": "#0A0A0A",
   "theme_color": "#FF6B00",
   "orientation": "portrait",
+  "display_override": ["standalone", "minimal-ui"],
+  "viewport": "width=device-width, initial-scale=1.0, maximum-scale=1.0",
   "id": "/",
   "icons": [
     {
