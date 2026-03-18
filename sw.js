@@ -1,4 +1,4 @@
-var CACHE = 'hitssoud-v2';
+var CACHE = 'hitssoud-v3';
 var ASSETS = ['/', '/hitssoud.html', '/manifest.json'];
 self.addEventListener('install', function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(ASSETS); }));
