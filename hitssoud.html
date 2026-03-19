@@ -708,6 +708,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   </div>
   <div class="player-extras">
     <button class="extra-btn" id="btn-mute"><i class="fa fa-volume-high"></i></button>
+    <button class="extra-btn" id="btn-sleep" title="Timer de Sono"><i class="fa fa-moon"></i></button>
     <div id="vol-track" class="vol-slider"><div id="vol-fill" class="vol-fill" style="width:70%"></div></div>
   </div>
 </footer>
@@ -746,6 +747,25 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 </div>
 
 <div id="toast"></div>
+<div id="sleep-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9002;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px;padding:26px;width:290px;border:1px solid var(--surface3);">
+    <h2 style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:16px;color:var(--text);">😴 Timer de Sono</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">A musica para automaticamente apos o tempo selecionado.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <button class="sleep-opt btn-outline" data-min="15" style="justify-content:center;padding:12px;">15 min</button>
+      <button class="sleep-opt btn-outline" data-min="30" style="justify-content:center;padding:12px;">30 min</button>
+      <button class="sleep-opt btn-outline" data-min="45" style="justify-content:center;padding:12px;">45 min</button>
+      <button class="sleep-opt btn-outline" data-min="60" style="justify-content:center;padding:12px;">1 hora</button>
+      <button class="sleep-opt btn-outline" data-min="90" style="justify-content:center;padding:12px;">1h 30min</button>
+      <button class="sleep-opt btn-outline" data-min="120" style="justify-content:center;padding:12px;">2 horas</button>
+    </div>
+    <div id="sleep-status" style="text-align:center;font-size:13px;color:var(--orange);font-weight:800;margin-bottom:12px;min-height:20px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-outline" style="flex:1;justify-content:center;" id="sleep-cancel-btn">Cancelar Timer</button>
+      <button class="btn-outline" style="flex:1;justify-content:center;" id="sleep-close-btn">Fechar</button>
+    </div>
+  </div>
+</div>
 
 <!-- CADASTRO -->
 <div id="cadastro-screen" style="display:none;position:fixed;inset:0;background:#0A0A0A;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;">
@@ -1090,6 +1110,38 @@ document.getElementById('btn-hero-play').addEventListener('click',function(){if(
 document.getElementById('btn-hero-explore').addEventListener('click',function(){showView('search');});
 document.getElementById('progress-track').addEventListener('click',function(e){if(!ytPlayer||!ytReady)return;var r=this.getBoundingClientRect();ytPlayer.seekTo(ytPlayer.getDuration()*((e.clientX-r.left)/r.width),true);});
 document.getElementById('vol-track').addEventListener('click',function(e){var r=this.getBoundingClientRect();var pct=Math.min(100,Math.max(0,(e.clientX-r.left)/r.width*100));document.getElementById('vol-fill').style.width=pct+'%';if(ytReady)ytPlayer.setVolume(pct);});
+var sleepTimer=null,sleepMinutes=0;
+document.getElementById('btn-sleep').addEventListener('click',function(){
+  document.getElementById('sleep-modal').style.display='flex';
+});
+document.getElementById('sleep-close-btn').addEventListener('click',function(){
+  document.getElementById('sleep-modal').style.display='none';
+});
+document.getElementById('sleep-cancel-btn').addEventListener('click',function(){
+  if(sleepTimer){clearTimeout(sleepTimer);sleepTimer=null;sleepMinutes=0;}
+  document.getElementById('sleep-modal').style.display='none';
+  document.getElementById('sleep-status').textContent='';
+  document.getElementById('btn-sleep').style.color='';
+  showToast('Timer cancelado!');
+});
+document.querySelectorAll('.sleep-opt').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    if(sleepTimer)clearTimeout(sleepTimer);
+    sleepMinutes=parseInt(this.dataset.min);
+    sleepTimer=setTimeout(function(){
+      if(ytPlayer&&ytReady)ytPlayer.pauseVideo();
+      if(radioAudio){radioAudio.pause();}
+      showToast('Boa noite! Musica pausada.');
+      sleepTimer=null;sleepMinutes=0;
+      document.getElementById('sleep-status').textContent='';
+      document.getElementById('btn-sleep').style.color='';
+    },sleepMinutes*60*1000);
+    document.getElementById('sleep-modal').style.display='none';
+    document.getElementById('sleep-status').textContent='Timer ativo: '+sleepMinutes+' minutos';
+    document.getElementById('btn-sleep').style.color='var(--orange)';
+    showToast('Musica para em '+sleepMinutes+' minutos!');
+  });
+});
 document.getElementById('btn-mute').addEventListener('click',function(){muted=!muted;this.innerHTML=muted?'<i class="fa fa-volume-xmark"></i>':'<i class="fa fa-volume-high"></i>';if(ytReady){muted?ytPlayer.mute():ytPlayer.unMute();}});
 function updateBottomNav(viewName){document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});var map={home:'bn-home',search:'bn-search',top100:'bn-top100',radio:'bn-radio',library:'bn-library',profile:'bn-profile'};if(map[viewName]){var el=document.getElementById(map[viewName]);if(el)el.classList.add('active');}}
 function showView(name){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');v.classList.add('hidden');});var el=document.getElementById('view-'+name);if(el){el.classList.remove('hidden');el.classList.add('active');}document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.view===name);});document.getElementById('content').scrollTop=0;updateBottomNav(name);if(name==='profile')updateProfileView();if(name==='radio')renderRadioList('br');if(name==='top100'){var af=document.querySelector('.filter-tab.active');if(af)loadTop100(af.dataset.q);}}
