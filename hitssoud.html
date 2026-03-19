@@ -876,10 +876,11 @@ function renderTopArtists(){var sorted=Object.entries(artistPlayCount).sort(func
 function renderWeeklyChart(){var days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];var max=Math.max.apply(null,days.map(function(d){return weeklyPlays[d]||0;}))||1;var h='';days.forEach(function(d){var val=weeklyPlays[d]||0;var pct=Math.max(4,Math.round((val/max)*100));h+='<div class="chart-bar-wrap"><div class="chart-bar" style="height:'+pct+'%"></div><div class="chart-bar-label">'+d+'</div></div>';});document.getElementById('weekly-chart').innerHTML=h;}
 
 // ── KARAOKE - LIMPEZA AGRESSIVA DO TÍTULO ─────────────────────────
-var lyricsLoaded=false,lyricsLines=[],lyricsTimestamps=[],karaokeInterval=null,currentLyricIdx=0;
+var lyricsLoaded=false,lyricsLines=[],karaokeInterval=null,currentLyricIdx=0;
 function cleanForLyrics(str){
   return str
-    .replace(/[\u{1F300}-\u{1FFFF}]/gu,'') // remove emojis
+    .replace(/[\u{1F300}-\u{1FFFF}]/gu,'')
+    .replace(/\|.*/,'')
     .replace(/\(.*?\)/g,'')
     .replace(/\[.*?\]/g,'')
     .replace(/ft\.?.*/gi,'')
@@ -892,8 +893,9 @@ function cleanForLyrics(str){
     .replace(/remix.*/gi,'')
     .replace(/lyrics.*/gi,'')
     .replace(/letra.*/gi,'')
-    .replace(/-\s*$/,'')
-    .replace(/\|.*/,'')
+    .replace(/ao vivo.*/gi,'')
+    .replace(/\s*-\s*$/,'')
+    .replace(/^.*?-\s*/,'')
     .trim();
 }
 async function loadLyrics(tr){
@@ -923,49 +925,9 @@ async function loadLyrics(tr){
     lyricsLoaded=true;
     var h='';for(var i=0;i<lyricsLines.length;i++)h+='<div class="karaoke-line" id="kl-'+i+'">'+esc(lyricsLines[i])+'</div>';
     container.innerHTML=h;startKaraokeScroll();
-    // tenta buscar LRC sincronizado
-    fetchLRC(artist,title,container);
   }else{
     container.innerHTML='<div class="karaoke-not-found"><i class="fa fa-microphone-slash" style="font-size:34px;display:block;margin-bottom:12px;color:var(--orange);"></i>Letra não encontrada<br><small style="font-size:12px;margin-top:8px;display:block;opacity:.5">Funciona melhor com músicas conhecidas</small></div>';
   }
-}
-async function fetchLRC(artist,title,container){
-  try{
-    var r=await fetch('https://lrclib.net/api/search?track_name='+encodeURIComponent(title)+'&artist_name='+encodeURIComponent(artist));
-    if(!r.ok)return;
-    var d=await r.json();
-    if(!d||!d.length||!d[0].syncedLyrics)return;
-    var raw=d[0].syncedLyrics;
-    var lines=raw.split('
-');
-    var times=[],texts=[];
-    lines.forEach(function(l){
-      var m=l.match(/\[(\d+):(\d+\.\d+)\](.*)/);
-      if(m){
-        var t=parseInt(m[1])*60+parseFloat(m[2]);
-        times.push(t);texts.push(m[3].trim());
-      }
-    });
-    if(times.length<3)return;
-    lyricsTimestamps=times;lyricsLines=texts;
-    var h='';for(var i=0;i<texts.length;i++)h+='<div class="karaoke-line" id="kl-'+i+'">'+esc(texts[i])+'</div>';
-    container.innerHTML=h;
-    clearInterval(karaokeInterval);
-    currentLyricIdx=0;
-    karaokeInterval=setInterval(function(){
-      if(!isPlaying||!lyricsTimestamps.length)return;
-      var c=ytPlayer?ytPlayer.getCurrentTime()||0:0;
-      var idx=0;
-      for(var i=0;i<lyricsTimestamps.length;i++){if(lyricsTimestamps[i]<=c)idx=i;}
-      if(idx!==currentLyricIdx){
-        var prev=document.getElementById('kl-'+currentLyricIdx);
-        if(prev){prev.classList.remove('active');prev.classList.add('passed');}
-        currentLyricIdx=idx;
-        var curr=document.getElementById('kl-'+idx);
-        if(curr){curr.classList.add('active');curr.scrollIntoView({behavior:'smooth',block:'center'});}
-      }
-    },300);
-  }catch(e){}
 }
 function startKaraokeScroll(){if(karaokeInterval)clearInterval(karaokeInterval);currentLyricIdx=0;karaokeInterval=setInterval(function(){if(!isPlaying||!lyricsLoaded||!lyricsLines.length)return;var d=ytPlayer?ytPlayer.getDuration()||0:0,c=ytPlayer?ytPlayer.getCurrentTime()||0:0;if(d>0){var idx=Math.floor((c/d)*lyricsLines.length);if(idx!==currentLyricIdx&&idx<lyricsLines.length){var prev=document.getElementById('kl-'+currentLyricIdx);if(prev){prev.classList.remove('active');prev.classList.add('passed');}currentLyricIdx=idx;var curr=document.getElementById('kl-'+idx);if(curr){curr.classList.add('active');curr.scrollIntoView({behavior:'smooth',block:'center'});}}}},1000);}
 
