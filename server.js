@@ -5,11 +5,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const YT_KEYS = [
-  'AIzaSyCLe0YiHDpQTwHLR99JZRgXGQOj_jKIzUM',
-  'AIzaSyDNYQ1nEQF-Z2duAhYNbm22jsIfmTSwRCY',
-  'AIzaSyDbf76nVTMhD-oNhaJXjZHNIBiwH7dN3Ew',
-  'AIzaSyArQU2Ji4tk-h2Fd_S7VnGqSukImW4RQr4'
-];
+  process.env.YOUTUBE_API_KEY,
+  process.env.YOUTUBE_API_KEY2,
+  process.env.YOUTUBE_API_KEY3,
+  process.env.YOUTUBE_API_KEY4
+].filter(Boolean);
 
 let currentKey = 0;
 
