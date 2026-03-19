@@ -1081,14 +1081,14 @@ function showToast(msg){var el=document.getElementById('toast');el.textContent=m
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
 var radioAudio=null,currentRadio=null;
 var RADIO_QUERIES={
-  br:{country:'BR',tags:'',limit:15},
-  gospel:{country:'BR',tags:'gospel',limit:15},
-  internacional:{country:'',tags:'pop',limit:15},
-  noticias:{country:'BR',tags:'news',limit:15}
+  br:{country:'BR',tags:'music',limit:30},
+  gospel:{country:'BR',tags:'gospel,christian,religiao',limit:30},
+  internacional:{country:'',tags:'pop,hits,top40',limit:30},
+  noticias:{country:'BR',tags:'news,noticias,jornalismo',limit:30}
 };
 async function fetchRadios(cat){
   var q=RADIO_QUERIES[cat];
-  var url='https://de1.api.radio-browser.info/json/stations/search?limit='+q.limit+'&countrycode='+q.country+'&tags='+q.tags+'&hidebroken=true&order=clickcount&reverse=true';
+  var url='https://de1.api.radio-browser.info/json/stations/search?limit='+q.limit+'&countrycode='+q.country+'&tagList='+q.tags+'&hidebroken=true&order=clickcount&reverse=true';
   try{
     var r=await fetch(url);
     var data=await r.json();
