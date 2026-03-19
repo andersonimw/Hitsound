@@ -626,7 +626,12 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
     </section>
     <section id="view-radio" class="view hidden">
       <div class="section-header"><h2 class="section-title">📻 Rádios</h2></div>
-
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-radio="br">🇧🇷 Brasileiras</button>
+        <button class="filter-tab" data-radio="gospel">✝️ Gospel</button>
+        <button class="filter-tab" data-radio="internacional">🌍 Internacionais</button>
+        <button class="filter-tab" data-radio="noticias">📰 Notícias</button>
+      </div>
       <div class="tracks-list" id="radio-list"></div>
     </section>
     <section id="view-profile" class="view hidden">
@@ -1076,11 +1081,14 @@ function showToast(msg){var el=document.getElementById('toast');el.textContent=m
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
 var radioAudio=null,currentRadio=null;
 var RADIO_QUERIES={
-  br:{country:'BR',tags:'',limit:100}
+  br:{country:'BR',tags:'',limit:15},
+  gospel:{country:'BR',tags:'gospel',limit:15},
+  internacional:{country:'',tags:'pop',limit:15},
+  noticias:{country:'BR',tags:'news',limit:15}
 };
 async function fetchRadios(cat){
   var q=RADIO_QUERIES[cat];
-  var url='https://de1.api.radio-browser.info/json/stations/search?limit='+q.limit+'&countrycode='+q.country+'&tagList='+q.tags+'&hidebroken=true&order=clickcount&reverse=true';
+  var url='https://de1.api.radio-browser.info/json/stations/search?limit='+q.limit+'&countrycode='+q.country+'&tags='+q.tags+'&hidebroken=true&order=clickcount&reverse=true';
   try{
     var r=await fetch(url);
     var data=await r.json();
@@ -1126,92 +1134,8 @@ document.addEventListener('click',function(e){
     renderRadioList(tab.dataset.radio);
   }
 });
-function checkFirstAccess(){
-  var cadastro=localStorage.getItem('hs_cadastro');
-  var termos=localStorage.getItem('hs_termos');
-  if(!cadastro){
-    document.getElementById('cadastro-screen').classList.remove('hidden');
-    document.getElementById('cadastro-screen').style.display='flex';
-    return false;
-  }
-  if(!termos){
-    document.getElementById('termos-screen').classList.remove('hidden');
-    document.getElementById('termos-screen').style.display='flex';
-    return false;
-  }
-  return true;
-}
-document.getElementById('btn-cadastrar').addEventListener('click',function(){
-  var nome=document.getElementById('cad-nome').value.trim();
-  var sobrenome=document.getElementById('cad-sobrenome').value.trim();
-  var nascimento=document.getElementById('cad-nascimento').value.trim();
-  var email=document.getElementById('cad-email').value.trim();
-  var telefone=document.getElementById('cad-telefone').value.trim();
-  if(!nome||!sobrenome||!nascimento||!email||!telefone){
-    document.getElementById('cad-erro').style.display='block';
-    return;
-  }
-  var dados={nome:nome,sobrenome:sobrenome,nascimento:nascimento,email:email,telefone:telefone};
-  localStorage.setItem('hs_cadastro',JSON.stringify(dados));
-  userProfile.name=nome+' '+sobrenome;
-  saveProfile();
-  document.getElementById('cadastro-screen').style.display='none';
-  document.getElementById('cadastro-screen').classList.add('hidden');
-  document.getElementById('termos-screen').classList.remove('hidden');
-  document.getElementById('termos-screen').style.display='flex';
-});
-document.getElementById('btn-aceitar-termos').addEventListener('click',function(){
-  localStorage.setItem('hs_termos','aceito');
-  document.getElementById('termos-screen').style.display='none';
-  document.getElementById('termos-screen').classList.add('hidden');
-  if(checkFirstAccess())initApp();
-});
 function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();}
 initApp();
 </script>
-<!-- CADASTRO -->
-<div id="cadastro-screen" class="hidden" style="position:fixed;inset:0;background:#0A0A0A;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;">
-  <div style="width:100%;max-width:400px;">
-    <div style="text-align:center;margin-bottom:28px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:4px;background:linear-gradient(135deg,#FF6B00,#9E2347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">HitsSoud</div>
-      <div style="font-size:13px;color:#888;margin-top:6px;">Crie sua conta gratuita</div>
-    </div>
-    <div style="background:#1A1A1A;border-radius:20px;padding:24px;border:1px solid #2A2A2A;">
-      <div style="font-size:11px;font-weight:900;color:#FF6B00;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;"><i class="fa fa-user"></i> Seus dados</div>
-      <input type="text" id="cad-nome" placeholder="Nome *" maxlength="30" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;"/>
-      <input type="text" id="cad-sobrenome" placeholder="Sobrenome *" maxlength="30" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;"/>
-      <input type="date" id="cad-nascimento" placeholder="Data de Nascimento *" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;"/>
-      <input type="email" id="cad-email" placeholder="E-mail *" maxlength="60" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;"/>
-      <input type="tel" id="cad-telefone" placeholder="Telefone *" maxlength="20" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:16px;"/>
-      <button id="btn-cadastrar" style="width:100%;padding:14px;background:linear-gradient(135deg,#FF6B00,#9E2347);border:none;border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;">Criar Conta <i class="fa fa-arrow-right"></i></button>
-      <div id="cad-erro" style="color:#ff4444;font-size:12px;text-align:center;margin-top:10px;display:none;">Preencha todos os campos!</div>
-    </div>
-    <p style="text-align:center;font-size:11px;color:#444;margin-top:16px;">Seus dados ficam salvos apenas no seu dispositivo.</p>
-  </div>
-</div>
-
-<!-- TERMOS -->
-<div id="termos-screen" class="hidden" style="position:fixed;inset:0;background:#0A0A0A;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;">
-  <div style="width:100%;max-width:400px;">
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:4px;background:linear-gradient(135deg,#FF6B00,#9E2347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">HitsSoud</div>
-      <div style="font-size:13px;color:#888;margin-top:6px;">Termos de Uso e Direitos Autorais</div>
-    </div>
-    <div style="background:#1A1A1A;border-radius:20px;padding:24px;border:1px solid #2A2A2A;margin-bottom:14px;">
-      <div style="font-size:11px;font-weight:900;color:#FF6B00;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;"><i class="fa fa-music"></i> Sobre o Conteúdo</div>
-      <p style="font-size:13px;color:#aaa;line-height:1.7;margin-bottom:10px;">O <strong style="color:#F0F0F0;">HitsSoud</strong> é um app gratuito e pessoal de reprodução de música.</p>
-      <p style="font-size:13px;color:#aaa;line-height:1.7;margin-bottom:10px;">Todo conteúdo é reproduzido diretamente do <strong style="color:#F0F0F0;">YouTube</strong> via API oficial. <strong style="color:#F0F0F0;">Nenhum arquivo é armazenado</strong> em nossos servidores.</p>
-      <div style="background:rgba(255,107,0,0.1);border:1px solid rgba(255,107,0,0.3);border-radius:10px;padding:12px 14px;">
-        <p style="font-size:12px;color:#F0F0F0;line-height:1.6;">🎵 Todo conteúdo pertence aos respectivos <strong>artistas, compositores e gravadoras</strong>.</p>
-      </div>
-    </div>
-    <div style="background:#1A1A1A;border-radius:20px;padding:24px;border:1px solid #2A2A2A;margin-bottom:14px;">
-      <div style="font-size:11px;font-weight:900;color:#FF6B00;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;"><i class="fa fa-shield"></i> Uso Permitido</div>
-      <p style="font-size:13px;color:#aaa;line-height:1.7;">✅ Uso <strong style="color:#F0F0F0;">pessoal e não comercial</strong> apenas.<br/>✅ Respeita os <strong style="color:#F0F0F0;">Termos de Serviço do YouTube</strong>.<br/>✅ Não é permitido uso para fins comerciais.</p>
-    </div>
-    <button id="btn-aceitar-termos" style="width:100%;padding:14px;background:linear-gradient(135deg,#FF6B00,#9E2347);border:none;border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;">✅ Entendi e Aceito os Termos</button>
-    <p style="text-align:center;font-size:11px;color:#444;margin-top:16px;">HitsSoud v2.2 · Todos os direitos reservados aos respectivos artistas</p>
-  </div>
-</div>
 </body>
 </html>
