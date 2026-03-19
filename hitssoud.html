@@ -1079,51 +1079,52 @@ document.addEventListener('click',function(e){
 var toastTimer;
 function showToast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2400);}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
-var RADIOS={
-  br:[
-    {name:'Jovem Pan FM',artist:'Ao Vivo • Brasil',url:'https://stream.zeno.fm/enr7439rr0hvv'},
-    {name:'Rádio Globo RJ',artist:'Ao Vivo • Brasil',url:'https://stream.zeno.fm/tf3mbe8rr0hvv'},
-    {name:'Band FM',artist:'Ao Vivo • Brasil',url:'https://stream.zeno.fm/dpnuqv5rr0hvv'},
-    {name:'Mix FM',artist:'Ao Vivo • Pop',url:'https://stream.zeno.fm/f3zpqrr0hvv'},
-    {name:'Transamérica',artist:'Ao Vivo • Pop/Dance',url:'https://stream.zeno.fm/o9q5prr0hvv'}
-  ],
-  gospel:[
-    {name:'Web Rádio Adoração',artist:'Ao Vivo • Gospel',url:'https://stream.zeno.fm/rg3v0bm5r0hvv'},
-    {name:'Rádio Gospel Mix',artist:'Ao Vivo • Gospel',url:'https://stream.zeno.fm/2pn7ypkrr0hvv'},
-    {name:'Rádio Melodia',artist:'Ao Vivo • Gospel',url:'https://stream.zeno.fm/yn65m04rr0hvv'}
-  ],
-  internacional:[
-    {name:'BBC Radio 1',artist:'Ao Vivo • UK',url:'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one'},
-    {name:'NPR Music',artist:'Ao Vivo • USA',url:'https://npr-ice.streamguys1.com/live.mp3'},
-    {name:'Radio FG',artist:'Ao Vivo • Dance',url:'https://stream.zeno.fm/4tznshrr0hvv'}
-  ],
-  noticias:[
-    {name:'CBN',artist:'Ao Vivo • Notícias',url:'https://stream.zeno.fm/mq0r5rr0hvv'},
-    {name:'BandNews FM',artist:'Ao Vivo • Notícias',url:'https://stream.zeno.fm/g6qvnrr0hvv'},
-    {name:'Rádio Eldorado',artist:'Ao Vivo • Notícias',url:'https://stream.zeno.fm/vbfmmrr0hvv'}
-  ]
-};
 var radioAudio=null,currentRadio=null;
-function playRadio(idx,cat){
-  var r=RADIOS[cat][idx];
-  if(!r)return;
+var RADIO_QUERIES={
+  br:{country:'BR',tags:'',limit:15},
+  gospel:{country:'BR',tags:'gospel',limit:15},
+  internacional:{country:'',tags:'pop',limit:15},
+  noticias:{country:'BR',tags:'news',limit:15}
+};
+async function fetchRadios(cat){
+  var q=RADIO_QUERIES[cat];
+  var url='https://de1.api.radio-browser.info/json/stations/search?limit='+q.limit+'&countrycode='+q.country+'&tags='+q.tags+'&hidebroken=true&order=clickcount&reverse=true';
+  try{
+    var r=await fetch(url);
+    var data=await r.json();
+    return data.filter(function(s){return s.url_resolved&&s.name;});
+  }catch(e){return[];}
+}
+function playRadio(url,name,artist){
   if(radioAudio){radioAudio.pause();radioAudio=null;}
   if(ytPlayer&&ytReady)ytPlayer.pauseVideo();
-  currentRadio=r;
-  radioAudio=new Audio(r.url);
+  currentRadio={url:url,name:name,artist:artist};
+  radioAudio=new Audio(url);
   radioAudio.play().catch(function(){showToast('❌ Erro ao conectar na rádio');});
-  document.getElementById('player-name').textContent=r.name;
-  document.getElementById('player-artist').textContent=r.artist;
+  document.getElementById('player-name').textContent=name;
+  document.getElementById('player-artist').textContent=artist;
   document.getElementById('player-thumb').innerHTML='📻';
-  showToast('📻 '+r.name);
+  showToast('📻 '+name);
 }
-function renderRadioList(cat){
-  var list=RADIOS[cat]||[];
+async function renderRadioList(cat){
+  var el=document.getElementById('radio-list');
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Buscando rádios...</div>';
+  var list=await fetchRadios(cat);
+  if(!list.length){el.innerHTML='<p style="color:var(--text-muted);padding:20px">Nenhuma rádio encontrada.</p>';return;}
   var h='';
-  list.forEach(function(r,i){
-    h+='<div class="track-item" onclick="playRadio('+i+',\''+cat+'\')"><div class="track-num"><i class="fa fa-radio" style="color:var(--orange);font-size:13px"></i></div><div class="track-thumb" style="background:linear-gradient(135deg,var(--wine),var(--orange));display:flex;align-items:center;justify-content:center;font-size:20px;">📻</div><div class="track-info"><div class="track-name">'+esc(r.name)+'</div><div class="track-artist">'+esc(r.artist)+'</div></div><div style="color:var(--orange);font-size:11px;font-weight:800;flex-shrink:0;">AO VIVO</div></div>';
+  list.forEach(function(r){
+    var name=r.name.trim();
+    var artist='Ao Vivo • '+(r.country||'Internacional');
+    var url=r.url_resolved;
+    var thumb=r.favicon||'';
+    h+='<div class="track-item" onclick="playRadio(\''+url+'\',\''+name.replace(/'/g,'')+'\'  ,\''+artist+'\')">';
+    h+='<div class="track-num"><i class="fa fa-radio" style="color:var(--orange);font-size:13px"></i></div>';
+    h+='<div class="track-thumb" style="background:linear-gradient(135deg,var(--wine),var(--orange));display:flex;align-items:center;justify-content:center;font-size:20px;">'+(thumb?'<img src="'+thumb+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.parentNode.innerHTML=\'📻\'"/>':'📻')+'</div>';
+    h+='<div class="track-info"><div class="track-name">'+esc(name)+'</div><div class="track-artist">'+esc(artist)+'</div></div>';
+    h+='<div style="color:var(--orange);font-size:11px;font-weight:800;flex-shrink:0;">AO VIVO</div>';
+    h+='</div>';
   });
-  document.getElementById('radio-list').innerHTML=h||'<p style="color:var(--text-muted);padding:20px">Nenhuma rádio.</p>';
+  el.innerHTML=h;
 }
 document.addEventListener('click',function(e){
   var tab=e.target.closest('[data-radio]');
