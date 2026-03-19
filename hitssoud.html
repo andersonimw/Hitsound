@@ -1267,10 +1267,10 @@ document.getElementById('btn-aceitar-termos').addEventListener('click',function(
   initApp();
 });
 async function generateMix(){
-  var topArtists=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(e){return e[0];});
+  var topArtists=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(e){return e[0];});
   if(!topArtists.length){
     if(playHistory.length){
-      topArtists=[playHistory[0].artist];
+      topArtists=playHistory.slice(0,3).map(function(h){return h.artist;});
     }else{
       document.getElementById('mix-section').classList.add('hidden');
       return;
@@ -1278,13 +1278,20 @@ async function generateMix(){
   }
   document.getElementById('mix-section').classList.remove('hidden');
   document.getElementById('mix-tracks').innerHTML='<div class="loading"><div class="spinner"></div>Gerando seu mix...</div>';
-  var query=topArtists[Math.floor(Math.random()*topArtists.length)];
-  var results=await searchYouTube(query+' musicas');
-  if(!results.length){
+  var allResults=[];
+  for(var i=0;i<Math.min(topArtists.length,3);i++){
+    var artist=topArtists[i];
+    var r1=await searchYouTube(artist+' musicas');
+    var r2=await searchYouTube(artist+' part');
+    allResults=allResults.concat(r1.slice(0,6)).concat(r2.slice(0,4));
+  }
+  if(!allResults.length){
     document.getElementById('mix-tracks').innerHTML='<p style="color:var(--text-muted);padding:20px 0;font-size:14px">Ouca mais musicas para gerar seu mix!</p>';
     return;
   }
-  var mixed=results.sort(function(){return Math.random()-.5;}).slice(0,8);
+  var seen={};
+  var unique=allResults.filter(function(t){if(seen[t.ytId])return false;seen[t.ytId]=true;return true;});
+  var mixed=unique.sort(function(){return Math.random()-.5;}).slice(0,20);
   _listMap['mix-tracks']=mixed;
   renderTracksList(mixed,'mix-tracks');
 }
