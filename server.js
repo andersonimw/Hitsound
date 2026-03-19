@@ -3,7 +3,37 @@ const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
-const YT_KEY = process.env.YOUTUBE_API_KEY;
+
+const YT_KEYS = [
+  'AIzaSyCLe0YiHDpQTwHLR99JZRgXGQOj_jKIzUM',
+  'AIzaSyDNYQ1nEQF-Z2duAhYNbm22jsIfmTSwRCY',
+  'AIzaSyDbf76nVTMhD-oNhaJXjZHNIBiwH7dN3Ew',
+  'AIzaSyArQU2Ji4tk-h2Fd_S7VnGqSukImW4RQr4'
+];
+
+let currentKey = 0;
+
+function getKey() {
+  return YT_KEYS[currentKey];
+}
+
+function rotateKey() {
+  currentKey = (currentKey + 1) % YT_KEYS.length;
+}
+
+async function fetchYT(url) {
+  for (let i = 0; i < YT_KEYS.length; i++) {
+    const fullUrl = url + '&key=' + getKey();
+    const r = await fetch(fullUrl);
+    const data = await r.json();
+    if (data.error && data.error.code === 403) {
+      rotateKey();
+      continue;
+    }
+    return data;
+  }
+  return { error: { message: 'Todas as cotas esgotadas.' } };
+}
 
 app.use(express.static(path.join(__dirname)));
 
@@ -15,9 +45,8 @@ app.get('/api/search', async function(req, res) {
   try {
     const q = req.query.q;
     if (!q) return res.json({ items: [] });
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=50&q=${encodeURIComponent(q)}&key=${YT_KEY}`;
-    const r = await fetch(url);
-    const data = await r.json();
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=50&q=${encodeURIComponent(q)}`;
+    const data = await fetchYT(url);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -26,9 +55,8 @@ app.get('/api/search', async function(req, res) {
 
 app.get('/api/trending', async function(req, res) {
   try {
-    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=BR&maxResults=50&key=${YT_KEY}`;
-    const r = await fetch(url);
-    const data = await r.json();
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=BR&maxResults=50`;
+    const data = await fetchYT(url);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
