@@ -303,9 +303,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 .np-heart.liked{color:var(--wine-light);}
 #karaoke-container{flex:1;overflow-y:auto;padding:8px 0 20px;scrollbar-width:none;}
 #karaoke-container::-webkit-scrollbar{display:none;}
-.karaoke-line{font-size:17px;font-weight:700;color:rgba(255,255,255,.3);text-align:center;padding:9px 14px;line-height:1.5;transition:all .3s;border-radius:10px;}
-.karaoke-line.active{color:#fff;font-size:21px;background:rgba(255,107,0,.15);}
-.karaoke-line.passed{color:rgba(255,255,255,.5);}
+.karaoke-line{font-size:15px;font-weight:600;color:rgba(255,255,255,.85);text-align:center;padding:7px 14px;line-height:1.7;border-radius:10px;}
 .karaoke-not-found{text-align:center;padding:36px 18px;color:rgba(255,255,255,.4);}
 #video-container{flex:1;display:flex;flex-direction:column;background:#000;border-radius:14px;overflow:hidden;min-height:180px;}
 #video-iframe{width:100%;flex:1;border:none;min-height:180px;}
@@ -947,7 +945,7 @@ function renderTopArtists(){var sorted=Object.entries(artistPlayCount).sort(func
 function renderWeeklyChart(){var days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];var max=Math.max.apply(null,days.map(function(d){return weeklyPlays[d]||0;}))||1;var h='';days.forEach(function(d){var val=weeklyPlays[d]||0;var pct=Math.max(4,Math.round((val/max)*100));h+='<div class="chart-bar-wrap"><div class="chart-bar" style="height:'+pct+'%"></div><div class="chart-bar-label">'+d+'</div></div>';});document.getElementById('weekly-chart').innerHTML=h;}
 
 // ── KARAOKE - LIMPEZA AGRESSIVA DO TÍTULO ─────────────────────────
-var lyricsLoaded=false,lyricsLines=[],karaokeInterval=null,currentLyricIdx=0;
+var lyricsLoaded=false,lyricsLines=[];
 function cleanForLyrics(str){
   return str
     .replace(/[\u{1F300}-\u{1FFFF}]/gu,'') // remove emojis
@@ -992,13 +990,13 @@ async function loadLyrics(tr){
   if(!found){try{var r3=await fetch('https://lrclib.net/api/search?q='+encodeURIComponent(title));if(r3.ok){var d3=await r3.json();if(d3&&d3.length>0&&d3[0].plainLyrics&&d3[0].plainLyrics.trim().length>20){lyricsLines=d3[0].plainLyrics.split('\n').filter(function(l){return l.trim();});found=true;}}}catch(e){}}
   if(found){
     lyricsLoaded=true;
-    var h='';for(var i=0;i<lyricsLines.length;i++)h+='<div class="karaoke-line" id="kl-'+i+'">'+esc(lyricsLines[i])+'</div>';
-    container.innerHTML=h;startKaraokeScroll();
+    var h='';for(var i=0;i<lyricsLines.length;i++)h+='<div class="karaoke-line">'+esc(lyricsLines[i])+'</div>';
+    container.innerHTML=h;
   }else{
     container.innerHTML='<div class="karaoke-not-found"><i class="fa fa-microphone-slash" style="font-size:34px;display:block;margin-bottom:12px;color:var(--orange);"></i>Letra não encontrada<br><small style="font-size:12px;margin-top:8px;display:block;opacity:.5">Funciona melhor com músicas conhecidas</small></div>';
   }
 }
-function startKaraokeScroll(){if(karaokeInterval)clearInterval(karaokeInterval);currentLyricIdx=0;karaokeInterval=setInterval(function(){if(!isPlaying||!lyricsLoaded||!lyricsLines.length)return;var d=ytPlayer?ytPlayer.getDuration()||0:0,c=ytPlayer?ytPlayer.getCurrentTime()||0:0;if(d>0){var idx=Math.floor((c/d)*lyricsLines.length);if(idx!==currentLyricIdx&&idx<lyricsLines.length){var prev=document.getElementById('kl-'+currentLyricIdx);if(prev){prev.classList.remove('active');prev.classList.add('passed');}currentLyricIdx=idx;var curr=document.getElementById('kl-'+idx);if(curr){curr.classList.add('active');curr.scrollIntoView({behavior:'smooth',block:'center'});}}}},1000);}
+
 
 // ── TABS NP ───────────────────────────────────────────────────────
 document.querySelectorAll('.np-tab').forEach(function(tab){tab.addEventListener('click',function(){var name=this.dataset.tab;activeTab=name;document.querySelectorAll('.np-tab').forEach(function(t){t.classList.remove('active');});document.querySelectorAll('.np-tab-content').forEach(function(c){c.classList.remove('active');});this.classList.add('active');document.getElementById('tab-'+name).classList.add('active');if(name==='karaoke'&&currentTrack)loadLyrics(currentTrack);if(name==='video'&&currentTrack)loadVideo(currentTrack);});});
