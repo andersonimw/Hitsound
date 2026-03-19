@@ -569,7 +569,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
       <div id="search-results" class="hidden"><h2 class="section-title" id="search-results-title">Resultados</h2><div class="tracks-list" id="search-tracks"></div></div>
     </section>
     <section id="view-top100" class="view hidden">
-      <div class="section-header"><h2 class="section-title">🏆 Top 100</h2></div>
+      <div class="section-header"><h2 class="section-title">🏆 Top 50</h2></div>
       <div class="filter-tabs">
         <button class="filter-tab active" data-q="top musicas brasil">🇧🇷 Brasil</button>
         <button class="filter-tab" data-q="top funk brasil">🕺 Funk</button>
@@ -861,7 +861,7 @@ function loadHistory(){try{var s=localStorage.getItem('hs_history');if(s){var d=
 function recordPlay(tr){if(!tr)return;var today=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date().getDay()];weeklyPlays[today]=(weeklyPlays[today]||0)+1;artistPlayCount[tr.artist]=(artistPlayCount[tr.artist]||0)+1;weeklyTracks[tr.name]=(weeklyTracks[tr.name]||0)+1;var ex=playHistory.findIndex(function(h){return h.ytId===tr.ytId;});if(ex>=0){playHistory[ex].count=(playHistory[ex].count||1)+1;}else{playHistory.unshift({name:tr.name,artist:tr.artist,ytId:tr.ytId,thumb:tr.thumb,count:1});}if(playHistory.length>100)playHistory=playHistory.slice(0,100);saveHistory();}
 
 // ── TOP 100 ───────────────────────────────────────────────────────
-async function loadTop100(query){var list=document.getElementById('top100-list');list.innerHTML='<div class="loading"><div class="spinner"></div>Carregando...</div>';if(top100Cache[query]){renderTop100(top100Cache[query]);return;}var results=await searchYouTube(query);if(results.length){top100Cache[query]=results;renderTop100(results);}else{list.innerHTML='<p style="color:var(--text-muted);padding:20px">Erro ao carregar.</p>';}}
+async function loadTop100(query){var list=document.getElementById('top100-list');list.innerHTML='<div class="loading"><div class="spinner"></div>Carregando Top 50...</div>';if(top100Cache[query]){renderTop100(top100Cache[query]);return;}var results=await searchYouTube(query);if(results.length){top100Cache[query]=results;renderTop100(results);}else{list.innerHTML='<p style="color:var(--text-muted);padding:20px">Erro ao carregar.</p>';}}
 function renderTop100(tracks){_listMap['top100-list']=tracks;var h='';for(var i=0;i<tracks.length;i++){var tr=tracks[i],lk=liked[tr.ytId],rc=i===0?'gold':i===1?'silver':i===2?'bronze':'normal';h+='<div class="top-item" data-li="'+i+'" data-cid="top100-list"><div class="top-rank '+rc+'">'+(i+1)+'</div><div class="top-thumb">'+mkImg(tr.thumb)+'</div><div class="top-info"><div class="top-name">'+esc(tr.name)+'</div><div class="top-sub">'+esc(tr.artist)+'</div></div><button class="track-like'+(lk?' liked':'')+'" data-act="like" data-li="'+i+'" data-cid="top100-list"><i class="'+(lk?'fa':'far')+' fa-heart"></i></button><button class="track-dots" data-act="dots" data-li="'+i+'" data-cid="top100-list"><i class="fa fa-ellipsis-vertical"></i></button></div>';}document.getElementById('top100-list').innerHTML=h||'<p style="color:var(--text-muted);padding:20px">Nenhuma música.</p>';}
 document.querySelectorAll('.filter-tab').forEach(function(tab){tab.addEventListener('click',function(){document.querySelectorAll('.filter-tab').forEach(function(t){t.classList.remove('active');});this.classList.add('active');loadTop100(this.dataset.q);});});
 
