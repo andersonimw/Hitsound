@@ -624,6 +624,16 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
       </div>
       <div class="tracks-list" id="pl-detail-tracks"></div>
     </section>
+    <section id="view-radio" class="view hidden">
+      <div class="section-header"><h2 class="section-title">📻 Rádios</h2></div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-radio="br">🇧🇷 Brasileiras</button>
+        <button class="filter-tab" data-radio="gospel">✝️ Gospel</button>
+        <button class="filter-tab" data-radio="internacional">🌍 Internacionais</button>
+        <button class="filter-tab" data-radio="noticias">📰 Notícias</button>
+      </div>
+      <div class="tracks-list" id="radio-list"></div>
+    </section>
     <section id="view-profile" class="view hidden">
       <div style="max-width:460px;margin:0 auto;">
         <div class="profile-hero">
@@ -711,6 +721,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   <button class="bn-item active" id="bn-home"><i class="fa fa-house"></i><span>Início</span></button>
   <button class="bn-item" id="bn-search"><i class="fa fa-search"></i><span>Buscar</span></button>
   <button class="bn-item" id="bn-top100"><i class="fa fa-trophy"></i><span>Top 50</span></button>
+  <button class="bn-item" id="bn-radio"><i class="fa fa-radio"></i><span>Rádio</span></button>
   <button class="bn-item" id="bn-library"><i class="fa fa-book"></i><span>Biblioteca</span></button>
   <button class="bn-item" id="bn-profile"><i class="fa fa-user"></i><span>Perfil</span></button>
 </nav>
@@ -1040,13 +1051,14 @@ document.getElementById('btn-hero-explore').addEventListener('click',function(){
 document.getElementById('progress-track').addEventListener('click',function(e){if(!ytPlayer||!ytReady)return;var r=this.getBoundingClientRect();ytPlayer.seekTo(ytPlayer.getDuration()*((e.clientX-r.left)/r.width),true);});
 document.getElementById('vol-track').addEventListener('click',function(e){var r=this.getBoundingClientRect();var pct=Math.min(100,Math.max(0,(e.clientX-r.left)/r.width*100));document.getElementById('vol-fill').style.width=pct+'%';if(ytReady)ytPlayer.setVolume(pct);});
 document.getElementById('btn-mute').addEventListener('click',function(){muted=!muted;this.innerHTML=muted?'<i class="fa fa-volume-xmark"></i>':'<i class="fa fa-volume-high"></i>';if(ytReady){muted?ytPlayer.mute():ytPlayer.unMute();}});
-function updateBottomNav(viewName){document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});var map={home:'bn-home',search:'bn-search',top100:'bn-top100',library:'bn-library',profile:'bn-profile'};if(map[viewName]){var el=document.getElementById(map[viewName]);if(el)el.classList.add('active');}}
-function showView(name){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');v.classList.add('hidden');});var el=document.getElementById('view-'+name);if(el){el.classList.remove('hidden');el.classList.add('active');}document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.view===name);});document.getElementById('content').scrollTop=0;updateBottomNav(name);if(name==='profile')updateProfileView();if(name==='top100'){var af=document.querySelector('.filter-tab.active');if(af)loadTop100(af.dataset.q);}}
+function updateBottomNav(viewName){document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});var map={home:'bn-home',search:'bn-search',top100:'bn-top100',radio:'bn-radio',library:'bn-library',profile:'bn-profile'};if(map[viewName]){var el=document.getElementById(map[viewName]);if(el)el.classList.add('active');}}
+function showView(name){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');v.classList.add('hidden');});var el=document.getElementById('view-'+name);if(el){el.classList.remove('hidden');el.classList.add('active');}document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.view===name);});document.getElementById('content').scrollTop=0;updateBottomNav(name);if(name==='profile')updateProfileView();if(name==='radio')renderRadioList('br');if(name==='top100'){var af=document.querySelector('.filter-tab.active');if(af)loadTop100(af.dataset.q);}}
 document.getElementById('btn-home-top').addEventListener('click',function(){document.getElementById('search-input').value='';document.getElementById('search-results-area').classList.remove('hidden');document.getElementById('search-results').classList.add('hidden');showView('home');});
 document.querySelectorAll('.nav-item').forEach(function(el){el.addEventListener('click',function(){showView(this.dataset.view);});});
 document.getElementById('bn-home').addEventListener('click',function(){document.getElementById('search-input').value='';document.getElementById('search-results-area').classList.remove('hidden');document.getElementById('search-results').classList.add('hidden');showView('home');});
 document.getElementById('bn-search').addEventListener('click',function(){showView('search');});
 document.getElementById('bn-top100').addEventListener('click',function(){showView('top100');});
+document.getElementById('bn-radio').addEventListener('click',function(){showView('radio');});
 document.getElementById('bn-library').addEventListener('click',function(){showView('library');});
 document.getElementById('bn-profile').addEventListener('click',function(){showView('profile');});
 document.addEventListener('click',function(e){
@@ -1067,6 +1079,60 @@ document.addEventListener('click',function(e){
 var toastTimer;
 function showToast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2400);}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
+var RADIOS={
+  br:[
+    {name:'Jovem Pan FM',artist:'Ao Vivo • Brasil',url:'https://partidoalto.r8.tv/jovempan'},
+    {name:'Rádio Globo',artist:'Ao Vivo • Brasil',url:'https://rdglobo.r8.tv/radioglobo'},
+    {name:'Band FM',artist:'Ao Vivo • Brasil',url:'https://bandfm.r8.tv/bandfm'},
+    {name:'Mix FM',artist:'Ao Vivo • Pop',url:'https://mixfm.r8.tv/mixfm'},
+    {name:'Transamérica',artist:'Ao Vivo • Pop/Dance',url:'https://transamerica.r8.tv/transamerica'}
+  ],
+  gospel:[
+    {name:'Web Rádio Adoração',artist:'Ao Vivo • Gospel',url:'https://stream.zeno.fm/adoracao'},
+    {name:'Rádio Gospel Mix',artist:'Ao Vivo • Gospel',url:'https://stream.zeno.fm/gospelmix'},
+    {name:'Rádio Melodia',artist:'Ao Vivo • Gospel',url:'https://stream.zeno.fm/melodia'}
+  ],
+  internacional:[
+    {name:'BBC Radio 1',artist:'Ao Vivo • UK',url:'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one'},
+    {name:'NPR Music',artist:'Ao Vivo • USA',url:'https://npr-ice.streamguys1.com/live.mp3'},
+    {name:'Radio FG',artist:'Ao Vivo • Dance',url:'https://radiofg.impek.com/fg'}
+  ],
+  noticias:[
+    {name:'CBN',artist:'Ao Vivo • Notícias',url:'https://cbn.r8.tv/cbn'},
+    {name:'BandNews FM',artist:'Ao Vivo • Notícias',url:'https://bandnewsfm.r8.tv/bandnewsfm'},
+    {name:'Rádio Eldorado',artist:'Ao Vivo • Notícias',url:'https://eldorado.r8.tv/eldorado'}
+  ]
+};
+var radioAudio=null,currentRadio=null;
+function playRadio(idx,cat){
+  var r=RADIOS[cat][idx];
+  if(!r)return;
+  if(radioAudio){radioAudio.pause();radioAudio=null;}
+  if(ytPlayer&&ytReady)ytPlayer.pauseVideo();
+  currentRadio=r;
+  radioAudio=new Audio(r.url);
+  radioAudio.play().catch(function(){showToast('❌ Erro ao conectar na rádio');});
+  document.getElementById('player-name').textContent=r.name;
+  document.getElementById('player-artist').textContent=r.artist;
+  document.getElementById('player-thumb').innerHTML='📻';
+  showToast('📻 '+r.name);
+}
+function renderRadioList(cat){
+  var list=RADIOS[cat]||[];
+  var h='';
+  list.forEach(function(r,i){
+    h+='<div class="track-item" onclick="playRadio('+i+',\''+cat+'\')"><div class="track-num"><i class="fa fa-radio" style="color:var(--orange);font-size:13px"></i></div><div class="track-thumb" style="background:linear-gradient(135deg,var(--wine),var(--orange));display:flex;align-items:center;justify-content:center;font-size:20px;">📻</div><div class="track-info"><div class="track-name">'+esc(r.name)+'</div><div class="track-artist">'+esc(r.artist)+'</div></div><div style="color:var(--orange);font-size:11px;font-weight:800;flex-shrink:0;">AO VIVO</div></div>';
+  });
+  document.getElementById('radio-list').innerHTML=h||'<p style="color:var(--text-muted);padding:20px">Nenhuma rádio.</p>';
+}
+document.addEventListener('click',function(e){
+  var tab=e.target.closest('[data-radio]');
+  if(tab){
+    document.querySelectorAll('[data-radio]').forEach(function(t){t.classList.remove('active');});
+    tab.classList.add('active');
+    renderRadioList(tab.dataset.radio);
+  }
+});
 function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();}
 initApp();
 </script>
