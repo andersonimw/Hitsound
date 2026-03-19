@@ -557,7 +557,11 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
           <button class="btn-outline" id="btn-hero-explore"><span>Explorar</span></button>
         </div>
       </div>
-      <div class="section-header"><h2 class="section-title">Em Alta</h2><span class="see-all" onclick="showView('top100')">Ver Top 100</span></div>
+      <div id="mix-section" class="hidden">
+  <div class="section-header"><h2 class="section-title">🎵 Seu Mix</h2><span class="see-all" id="btn-refresh-mix">Atualizar</span></div>
+  <div class="tracks-list" id="mix-tracks"></div>
+</div>
+<div class="section-header"><h2 class="section-title">Em Alta</h2><span class="see-all" onclick="showView('top100')">Ver Top 100</span></div>
       <div class="cards-grid" id="trending-cards"></div>
       <div class="section-header"><h2 class="section-title">Tocadas Recentemente</h2></div>
       <div class="tracks-list" id="recent-tracks"></div>
@@ -1262,7 +1266,30 @@ document.getElementById('btn-aceitar-termos').addEventListener('click',function(
   document.getElementById('termos-screen').style.display='none';
   initApp();
 });
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();}
+async function generateMix(){
+  var topArtists=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(e){return e[0];});
+  if(!topArtists.length){
+    if(playHistory.length){
+      topArtists=[playHistory[0].artist];
+    }else{
+      document.getElementById('mix-section').classList.add('hidden');
+      return;
+    }
+  }
+  document.getElementById('mix-section').classList.remove('hidden');
+  document.getElementById('mix-tracks').innerHTML='<div class="loading"><div class="spinner"></div>Gerando seu mix...</div>';
+  var query=topArtists[Math.floor(Math.random()*topArtists.length)];
+  var results=await searchYouTube(query+' musicas');
+  if(!results.length){
+    document.getElementById('mix-tracks').innerHTML='<p style="color:var(--text-muted);padding:20px 0;font-size:14px">Ouca mais musicas para gerar seu mix!</p>';
+    return;
+  }
+  var mixed=results.sort(function(){return Math.random()-.5;}).slice(0,8);
+  _listMap['mix-tracks']=mixed;
+  renderTracksList(mixed,'mix-tracks');
+}
+document.getElementById('btn-refresh-mix') && document.getElementById('btn-refresh-mix').addEventListener('click',function(){generateMix();});
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);}
 if(!checkFirstAccess()){}else{initApp();}
 </script>
 </body>
