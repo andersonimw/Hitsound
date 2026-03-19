@@ -500,7 +500,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
         <button class="np-ctrl" id="np-next"><i class="fa fa-forward-step"></i></button>
         <button class="np-ctrl" id="np-repeat"><i class="fa fa-repeat"></i></button>
       </div>
-      <div style="display:flex;justify-content:center;align-items:center;gap:20px;"><button class="np-heart" id="np-heart"><i class="fa fa-heart"></i></button><button class="np-ctrl" id="np-sleep" title="Timer de Sono"><i class="fa fa-moon"></i></button><button class="np-ctrl" id="np-queue-btn" title="Fila de Musicas"><i class="fa fa-list-ul"></i></button></div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:20px;"><button class="np-heart" id="np-heart"><i class="fa fa-heart"></i></button><button class="np-ctrl" id="np-sleep" title="Timer de Sono"><i class="fa fa-moon"></i></button></div>
     </div>
     <div class="np-tab-content" id="tab-karaoke">
       <div id="karaoke-container"><div class="karaoke-not-found"><i class="fa fa-microphone" style="font-size:34px;color:var(--orange);display:block;margin-bottom:12px;"></i>Clique em 🎤 Karaokê!</div></div>
@@ -747,15 +747,6 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 </div>
 
 <div id="toast"></div>
-<div id="queue-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9002;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border-radius:20px;padding:26px;width:320px;max-height:80vh;overflow-y:auto;border:1px solid var(--surface3);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h2 style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;color:var(--text);">🎵 Fila de Musicas</h2>
-      <button id="queue-close-btn" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fa fa-times"></i></button>
-    </div>
-    <div id="queue-list"></div>
-  </div>
-</div>
 <div id="sleep-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9002;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:20px;padding:26px;width:290px;border:1px solid var(--surface3);">
     <h2 style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:16px;color:var(--text);">😴 Timer de Sono</h2>
@@ -1029,25 +1020,6 @@ document.getElementById('np-shuffle').addEventListener('click',function(){shuffl
 document.getElementById('np-repeat').addEventListener('click',function(){repeat=!repeat;this.classList.toggle('active',repeat);document.getElementById('btn-repeat').classList.toggle('active',repeat);});
 document.getElementById('np-heart').addEventListener('click',function(){if(currentTrack)toggleLike(currentTrack.ytId);});
 document.getElementById('np-sleep').addEventListener('click',function(){document.getElementById('sleep-modal').style.display='flex';});
-document.getElementById('np-queue-btn').addEventListener('click',function(){renderQueueList();document.getElementById('queue-modal').style.display='flex';});
-document.getElementById('queue-close-btn').addEventListener('click',function(){document.getElementById('queue-modal').style.display='none';});
-function renderQueueList(){
-  var h='';
-  if(!queue.length){h='<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">Fila vazia</p>';}
-  else{
-    queue.forEach(function(tr,i){
-      var isCurrent=currentTrack&&currentTrack.ytId===tr.ytId;
-      h+='<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:'+(isCurrent?'rgba(255,107,0,.1)':'none')+';margin-bottom:4px;">';
-      h+='<div style="width:22px;text-align:center;font-size:12px;color:'+(isCurrent?'var(--orange)':'var(--text-muted)')+'">'+(isCurrent?'<i class="fa fa-volume-high"></i>':(i+1))+'</div>';
-      h+='<div style="width:38px;height:38px;border-radius:7px;overflow:hidden;flex-shrink:0;background:var(--surface3);">'+(tr.thumb?'<img src="'+tr.thumb+'" style="width:100%;height:100%;object-fit:cover;"/>':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">🎵</div>')+'</div>';
-      h+='<div style="flex:1;overflow:hidden;"><div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:'+(isCurrent?'var(--orange)':'var(--text)')+';">'+esc(tr.name)+'</div>';
-      h+='<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+esc(tr.artist)+'</div></div>';
-      h+='<button onclick="playTrackObj(queue['+i+']);document.getElementById('queue-modal').style.display='none';" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:4px;"><i class="fa fa-play"></i></button>';
-      h+='</div>';
-    });
-  }
-  document.getElementById('queue-list').innerHTML=h;
-}
 document.getElementById('np-slider').addEventListener('click',function(e){if(!ytPlayer||!ytReady)return;var r=this.getBoundingClientRect();ytPlayer.seekTo(ytPlayer.getDuration()*((e.clientX-r.left)/r.width),true);});
 document.getElementById('np-artist-lbl').addEventListener('click',function(){if(currentTrack)openArtistPage(currentTrack.artist);closeNowPlaying();});
 
