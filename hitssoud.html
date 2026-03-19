@@ -879,8 +879,7 @@ function renderWeeklyChart(){var days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb
 var lyricsLoaded=false,lyricsLines=[],karaokeInterval=null,currentLyricIdx=0;
 function cleanForLyrics(str){
   return str
-    .replace(/[\u{1F300}-\u{1FFFF}]/gu,'')
-    .replace(/\|.*/,'')
+    .replace(/[\u{1F300}-\u{1FFFF}]/gu,'') // remove emojis
     .replace(/\(.*?\)/g,'')
     .replace(/\[.*?\]/g,'')
     .replace(/ft\.?.*/gi,'')
@@ -893,9 +892,8 @@ function cleanForLyrics(str){
     .replace(/remix.*/gi,'')
     .replace(/lyrics.*/gi,'')
     .replace(/letra.*/gi,'')
-    .replace(/ao vivo.*/gi,'')
-    .replace(/\s*-\s*$/,'')
-    .replace(/^.*?-\s*/,'')
+    .replace(/-\s*$/,'')
+    .replace(/\|.*/,'')
     .trim();
 }
 async function loadLyrics(tr){
