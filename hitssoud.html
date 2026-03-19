@@ -1070,7 +1070,21 @@ function renderTrendingCards(tracks){_cardArr=tracks;var h='';for(var i=0;i<trac
 function renderTracksList(tracks,containerId){_listMap[containerId]=tracks;var h='';for(var i=0;i<tracks.length;i++){var tr=tracks[i],pl=currentTrack&&currentTrack.ytId===tr.ytId,lk=liked[tr.ytId];h+='<div class="track-item'+(pl?' playing':'')+'" data-li="'+i+'" data-cid="'+containerId+'"><div class="track-num">'+(pl?'<i class="fa fa-volume-high" style="color:var(--orange);font-size:11px"></i>':(i+1))+'</div><div class="track-thumb">'+mkImg(tr.thumb)+'</div><div class="track-info"><div class="track-name">'+esc(tr.name)+'</div><div class="track-artist">'+esc(tr.artist)+'</div></div><button class="track-like'+(lk?' liked':'')+'" data-act="like" data-li="'+i+'" data-cid="'+containerId+'"><i class="'+(lk?'fa':'far')+' fa-heart"></i></button><button class="track-dots" data-act="dots" data-li="'+i+'" data-cid="'+containerId+'"><i class="fa fa-ellipsis-vertical"></i></button></div>';}document.getElementById(containerId).innerHTML=h||'<p style="color:var(--text-muted);padding:20px 0;font-size:14px">Vazio.</p>';}
 function renderGenres(){var h='';for(var i=0;i<GENRES.length;i++){var g=GENRES[i];h+='<div class="genre-card" style="background:'+g.bg+'" data-gi="'+i+'"><span class="genre-emoji">'+g.emoji+'</span>'+esc(g.name)+'</div>';}document.getElementById('genres-grid').innerHTML=h;}
 function renderLibrary(){var grid=document.getElementById('library-grid'),sb=document.getElementById('playlist-list');if(!playlists.length){grid.innerHTML='<p style="color:var(--text-muted);font-size:14px;grid-column:1/-1;padding:10px 0">'+t('empty_lib')+'</p>';sb.innerHTML='';return;}var gh='',sh='';for(var i=0;i<playlists.length;i++){var p=playlists[i],cov=p.tracks.length?mkImg(p.tracks[0].thumb):'🎵',cnt=p.tracks.length+' faixa'+(p.tracks.length!==1?'s':'');gh+='<div class="card" data-pli="'+i+'"><div class="card-img">'+cov+'<div class="card-play"><i class="fa fa-play"></i></div></div><div class="card-name">'+esc(p.name)+'</div><div class="card-sub">'+cnt+'</div></div>';sh+='<div class="playlist-mini" data-pli="'+i+'"><div class="pm-img">'+cov+'</div><div><div class="pm-name">'+esc(p.name)+'</div><div class="pm-sub">Playlist · '+p.tracks.length+'</div></div></div>';}grid.innerHTML=gh;sb.innerHTML=sh;}
-function openPlaylist(idx){openPlaylistIdx=idx;var p=playlists[idx];document.getElementById('pl-detail-name').textContent=p.name;document.getElementById('pl-detail-count').textContent=p.tracks.length+' faixa'+(p.tracks.length!==1?'s':'');var cov=document.getElementById('pl-detail-cover');cov.innerHTML=p.tracks.length?mkImg(p.tracks[0].thumb):'🎵';renderTracksList(p.tracks,'pl-detail-tracks');showView('playlist');}
+function openPlaylist(idx){
+  openPlaylistIdx=idx;
+  var p=playlists[idx];
+  document.getElementById('pl-detail-name').textContent=p.name;
+  document.getElementById('pl-detail-count').textContent=p.tracks.length+' faixa'+(p.tracks.length!==1?'s':'');
+  var cov=document.getElementById('pl-detail-cover');
+  cov.innerHTML=p.tracks.length?mkImg(p.tracks[0].thumb):'🎵';
+  var h='';
+  for(var i=0;i<p.tracks.length;i++){
+    var tr=p.tracks[i];
+    h+='<div class="track-item"><div class="track-num">'+(i+1)+'</div><div class="track-thumb">'+mkImg(tr.thumb)+'</div><div class="track-info"><div class="track-name">'+esc(tr.name)+'</div><div class="track-artist">'+esc(tr.artist)+'</div></div><button onclick="removeFromPlaylist('+i+')" style="background:none;border:none;color:#ff4444;font-size:16px;cursor:pointer;padding:8px"><i class="fa fa-trash"></i></button></div>';
+  }
+  document.getElementById('pl-detail-tracks').innerHTML=h||'<p style="color:var(--text-muted);padding:20px">Playlist vazia</p>';
+  showView('playlist');
+}
 document.getElementById('btn-clear-data').addEventListener('click',function(){if(!confirm('Apagar TODOS os dados?'))return;localStorage.clear();playlists=[];liked={};tracksPlayed=0;playHistory=[];artistPlayCount={};weeklyPlays={};weeklyTracks={};alarms=[];showToast('🗑️ Dados apagados');location.reload();});
 document.getElementById('avatar-btn').addEventListener('click',function(){showView('profile');});
 function updateMediaSession(tr){if(!('mediaSession' in navigator))return;navigator.mediaSession.metadata=new MediaMetadata({title:tr.name,artist:tr.artist,album:'HitsSoud',artwork:tr.thumb?[{src:tr.thumb,sizes:'320x180',type:'image/jpeg'}]:[]});navigator.mediaSession.setActionHandler('play',function(){ytReady&&ytPlayer.playVideo();});navigator.mediaSession.setActionHandler('pause',function(){ytReady&&ytPlayer.pauseVideo();});navigator.mediaSession.setActionHandler('nexttrack',nextTrack);navigator.mediaSession.setActionHandler('previoustrack',prevTrack);}
@@ -1117,6 +1131,23 @@ document.getElementById('play-btn').addEventListener('click',togglePlay);
 document.getElementById('btn-next').addEventListener('click',nextTrack);
 document.getElementById('btn-prev').addEventListener('click',prevTrack);
 document.getElementById('btn-pl-back').addEventListener('click',function(){showView('library');});
+document.getElementById('btn-pl-delete').addEventListener('click',function(){
+  if(openPlaylistIdx<0)return;
+  if(!window.confirm('Excluir esta playlist?'))return;
+  playlists.splice(openPlaylistIdx,1);
+  savePlaylists();
+  renderLibrary();
+  showView('library');
+  showToast('🗑️ Playlist excluída');
+  openPlaylistIdx=-1;
+});
+window.removeFromPlaylist=function(idx){
+  if(openPlaylistIdx<0)return;
+  playlists[openPlaylistIdx].tracks.splice(idx,1);
+  savePlaylists();
+  openPlaylist(openPlaylistIdx);
+  showToast('🗑️ Música removida');
+};
 document.getElementById('btn-pl-play').addEventListener('click',function(){if(openPlaylistIdx<0)return;var p=playlists[openPlaylistIdx];if(!p.tracks.length){showToast('⚠️ Playlist vazia!');return;}queue=p.tracks.slice();playTrackObj(queue[0]);});
 document.getElementById('btn-shuffle').addEventListener('click',function(){shuffle=!shuffle;this.classList.toggle('active',shuffle);if(npOpen)document.getElementById('np-shuffle').classList.toggle('active',shuffle);});
 document.getElementById('btn-repeat').addEventListener('click',function(){repeat=!repeat;this.classList.toggle('active',repeat);if(npOpen)document.getElementById('np-repeat').classList.toggle('active',repeat);});
