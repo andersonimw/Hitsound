@@ -984,7 +984,11 @@ async function loadLyrics(tr){
   var artist=cleanForLyrics(rawArtist);
   var title=cleanForLyrics(rawTitle);
   // Se o título contém " - " é provável que seja "Artista - Título"
-  if(rawTitle.indexOf(' - ')>0){
+  if(rawTitle.indexOf(' | ')>0){
+    var parts=rawTitle.split(' | ');
+    artist=cleanForLyrics(parts[0]);
+    title=cleanForLyrics(parts.slice(1).join(' | '));
+  } else if(rawTitle.indexOf(' - ')>0){
     var parts=rawTitle.split(' - ');
     artist=cleanForLyrics(parts[0]);
     title=cleanForLyrics(parts.slice(1).join(' - '));
