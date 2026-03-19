@@ -626,12 +626,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
     </section>
     <section id="view-radio" class="view hidden">
       <div class="section-header"><h2 class="section-title">📻 Rádios</h2></div>
-      <div class="filter-tabs">
-        <button class="filter-tab active" data-radio="br">🇧🇷 Brasileiras</button>
-        <button class="filter-tab" data-radio="gospel">✝️ Gospel</button>
-        <button class="filter-tab" data-radio="internacional">🌍 Internacionais</button>
-        <button class="filter-tab" data-radio="noticias">📰 Notícias</button>
-      </div>
+
       <div class="tracks-list" id="radio-list"></div>
     </section>
     <section id="view-profile" class="view hidden">
@@ -1081,10 +1076,7 @@ function showToast(msg){var el=document.getElementById('toast');el.textContent=m
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
 var radioAudio=null,currentRadio=null;
 var RADIO_QUERIES={
-  br:{country:'BR',tags:'',limit:15},
-  gospel:{country:'BR',tags:'gospel',limit:15},
-  internacional:{country:'',tags:'pop',limit:15},
-  noticias:{country:'BR',tags:'news',limit:15}
+  br:{country:'BR',tags:'',limit:100}
 };
 async function fetchRadios(cat){
   var q=RADIO_QUERIES[cat];
