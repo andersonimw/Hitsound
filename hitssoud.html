@@ -342,6 +342,23 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   .view.active{padding-bottom:calc(var(--player-h) + var(--nav-h) + 20px);}
   #toast{bottom:calc(var(--player-h) + var(--nav-h) + 12px);}
 }
+
+.carousel-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:12px;margin-bottom:28px;scrollbar-width:none;}
+.carousel-row::-webkit-scrollbar{display:none;}
+.carousel-card{flex:0 0 160px;cursor:pointer;}
+.carousel-card .card-img{width:160px;height:160px;border-radius:14px;overflow:hidden;position:relative;background:var(--surface2);}
+.carousel-card .card-img img{width:100%;height:100%;object-fit:cover;}
+.carousel-card .card-play{position:absolute;bottom:8px;right:8px;width:36px;height:36px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;}
+.carousel-card:hover .card-play{opacity:1;}
+.carousel-card .card-name{font-size:13px;font-weight:700;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.carousel-card .card-sub{font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.radio-carousel-card{flex:0 0 160px;cursor:pointer;position:relative;}
+.radio-carousel-card .rc-img{width:160px;height:160px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,var(--wine),var(--orange));display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;}
+.radio-carousel-card .rc-img img{width:100%;height:100%;object-fit:cover;}
+.radio-carousel-card .rc-play{position:absolute;bottom:8px;right:8px;width:36px;height:36px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;}
+.radio-carousel-card:hover .rc-play{opacity:1;}
+.radio-carousel-card .rc-name{font-size:13px;font-weight:700;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.radio-carousel-card .rc-sub{font-size:11px;color:var(--text-muted);}
 </style>
 </head>
 <body>
@@ -571,6 +588,10 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 </div>
 <div class="section-header"><h2 class="section-title">Em Alta</h2><span class="see-all" onclick="showView('top100')">Ver Top 100</span></div>
       <div class="cards-grid" id="trending-cards"></div>
+      <div class="section-header"><h2 class="section-title">🎙️ Seus Artistas</h2></div>
+      <div class="carousel-row" id="artist-carousel"></div>
+      <div class="section-header"><h2 class="section-title">📻 Suas Estações</h2><span class="see-all" onclick="showView('radio')">Ver todas</span></div>
+      <div class="carousel-row" id="radio-carousel"></div>
       <div class="section-header"><h2 class="section-title">Tocadas Recentemente</h2></div>
       <div class="tracks-list" id="recent-tracks"></div>
     </section>
@@ -1070,10 +1091,62 @@ function playYT(id){if(!ytReady){pendingVideoId=id;return;}ytPlayer.loadVideoByI
 function startProgressSync(){clearInterval(progressInterval);progressInterval=setInterval(function(){if(!ytPlayer||!isPlaying)return;var c=ytPlayer.getCurrentTime()||0,d=ytPlayer.getDuration()||0;if(d>0){var pct=(c/d*100)+'%';document.getElementById('progress-fill').style.width=pct;document.getElementById('time-current').textContent=fmt(Math.floor(c));document.getElementById('time-total').textContent=fmt(Math.floor(d));if(npOpen){document.getElementById('np-slider-fill').style.width=pct;document.getElementById('np-time-current').textContent=fmt(Math.floor(c));document.getElementById('np-time-total').textContent=fmt(Math.floor(d));}}},500);}
 function fmt(s){return Math.floor(s/60)+':'+(s%60+'').padStart(2,'0');}
 async function searchYouTube(query){try{var r=await fetch('/api/search?q='+encodeURIComponent(query));var d=await r.json();if(d.error){showToast('❌ '+(d.error.message||d.error));return[];}return(d.items||[]).filter(function(it){return it.id&&it.id.videoId;}).map(function(it){return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id.videoId,thumb:it.snippet.thumbnails.medium.url};});}catch(e){showToast('❌ Erro de conexão');return[];}}
-async function loadTrending(){try{var r=await fetch('/api/trending');var d=await r.json();if(d.error||!d.items){renderTrendingLocal();return;}var tracks=d.items.map(function(it){return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id,thumb:it.snippet.thumbnails.medium.url};});queue=tracks;renderTrendingCards(tracks.slice(0,6));renderTracksList(tracks,'recent-tracks');}catch(e){renderTrendingLocal();}}
+async function loadTrending(){renderArtistCarousel();renderRadioCarousel();try{var r=await fetch('/api/trending');var d=await r.json();if(d.error||!d.items){renderTrendingLocal();return;}var tracks=d.items.map(function(it){return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id,thumb:it.snippet.thumbnails.medium.url};});queue=tracks;renderTrendingCards(tracks.slice(0,6));renderTracksList(tracks,'recent-tracks');}catch(e){renderTrendingLocal();}}
 function renderTrendingLocal(){queue=TRACKS.slice();renderTrendingCards(queue.slice(0,6));renderTracksList(queue,'recent-tracks');}
 function mkImg(thumb){if(!thumb)return '<span>🎵</span>';return '<img src="'+thumb+'" loading="lazy" alt=""/>';}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderArtistCarousel(){
+  var el=document.getElementById('artist-carousel');
+  if(!el)return;
+  var counts={};
+  for(var k in artistPlayCount){counts[k]=artistPlayCount[k];}
+  var artists=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];}).slice(0,10);
+  if(!artists.length){
+    // fallback: artistas populares
+    artists=['Fernandinho','Hillsong','Akon','The Weeknd','Dua Lipa','Mc Kekel','Ludmilla','Ivete Sangalo'];
+  }
+  var h='';
+  for(var i=0;i<artists.length;i++){
+    var a=artists[i];
+    var thumb='';
+    // busca thumb do histórico
+    for(var j=0;j<playHistory.length;j++){
+      if(playHistory[j].artist===a&&playHistory[j].thumb){thumb=playHistory[j].thumb;break;}
+    }
+    var img=thumb?'<img src="'+thumb+'"/>':'🎤';
+    h+='<div class="carousel-card" onclick="openArtistPage(''+a.replace(/'/g,"\'")+'')">';
+    h+='<div class="card-img">'+img+'<div class="card-play"><i class="fa fa-play" style="color:#fff;font-size:14px"></i></div></div>';
+    h+='<div class="card-name">'+a+'</div>';
+    h+='<div class="card-sub">Artista</div></div>';
+  }
+  el.innerHTML=h;
+}
+
+function renderRadioCarousel(){
+  var el=document.getElementById('radio-carousel');
+  if(!el)return;
+  var radios=[
+    {name:'Gospel BR',tags:'gospel',country:'BR',emoji:'✝️'},
+    {name:'Funk BR',tags:'funk',country:'BR',emoji:'🎤'},
+    {name:'Sertanejo',tags:'sertanejo',country:'BR',emoji:'🤠'},
+    {name:'Pop Brasil',tags:'pop',country:'BR',emoji:'🎵'},
+    {name:'Pagode',tags:'pagode',country:'BR',emoji:'🥁'},
+    {name:'Rap BR',tags:'rap',country:'BR',emoji:'🎙️'},
+    {name:'Rock BR',tags:'rock',country:'BR',emoji:'🎸'},
+    {name:'Eletrônico',tags:'electronic',country:'BR',emoji:'🎛️'}
+  ];
+  var h='';
+  for(var i=0;i<radios.length;i++){
+    var r=radios[i];
+    h+='<div class="radio-carousel-card" onclick="showView('radio')">';
+    h+='<div class="rc-img">'+r.emoji+'<div class="rc-play"><i class="fa fa-play" style="color:#fff;font-size:14px"></i></div></div>';
+    h+='<div class="rc-name">'+r.name+'</div>';
+    h+='<div class="rc-sub">Rádio</div></div>';
+  }
+  el.innerHTML=h;
+}
+
 function renderTrendingCards(tracks){_cardArr=tracks;var h='';for(var i=0;i<tracks.length;i++){var tr=tracks[i];h+='<div class="card" data-ci="'+i+'"><div class="card-img">'+mkImg(tr.thumb)+'<div class="card-play"><i class="fa fa-play"></i></div><button class="card-dots" data-ci="'+i+'"><i class="fa fa-ellipsis-vertical"></i></button></div><div class="card-name">'+esc(tr.name)+'</div><div class="card-sub">'+esc(tr.artist)+'</div></div>';}document.getElementById('trending-cards').innerHTML=h;}
 function renderTracksList(tracks,containerId){_listMap[containerId]=tracks;var h='';for(var i=0;i<tracks.length;i++){var tr=tracks[i],pl=currentTrack&&currentTrack.ytId===tr.ytId,lk=liked[tr.ytId];h+='<div class="track-item'+(pl?' playing':'')+'" data-li="'+i+'" data-cid="'+containerId+'"><div class="track-num">'+(pl?'<i class="fa fa-volume-high" style="color:var(--orange);font-size:11px"></i>':(i+1))+'</div><div class="track-thumb">'+mkImg(tr.thumb)+'</div><div class="track-info"><div class="track-name">'+esc(tr.name)+'</div><div class="track-artist">'+esc(tr.artist)+'</div></div><button class="track-like'+(lk?' liked':'')+'" data-act="like" data-li="'+i+'" data-cid="'+containerId+'"><i class="'+(lk?'fa':'far')+' fa-heart"></i></button><button class="track-dots" data-act="dots" data-li="'+i+'" data-cid="'+containerId+'"><i class="fa fa-ellipsis-vertical"></i></button></div>';}document.getElementById(containerId).innerHTML=h||'<p style="color:var(--text-muted);padding:20px 0;font-size:14px">Vazio.</p>';}
 function renderGenres(){var h='';for(var i=0;i<GENRES.length;i++){var g=GENRES[i];h+='<div class="genre-card" style="background:'+g.bg+'" data-gi="'+i+'"><span class="genre-emoji">'+g.emoji+'</span>'+esc(g.name)+'</div>';}document.getElementById('genres-grid').innerHTML=h;}
