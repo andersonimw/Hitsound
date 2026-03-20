@@ -97,7 +97,7 @@ app.get('/api/reels', async function(req, res) {
   try {
     const artist = req.query.artist;
     if (!artist) return res.json({ items: [] });
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=6&videoDuration=short&q=${encodeURIComponent(artist + ' shorts')}`;
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=6&videoDuration=short&q=${encodeURIComponent(artist + ' #shorts')}`;
     const data = await fetchYT(url);
     res.json(data);
   } catch (e) {
