@@ -73,9 +73,21 @@ app.get('/api/artist-videos', async function(req, res) {
   try {
     const artist = req.query.artist;
     if (!artist) return res.json({ items: [] });
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=5&q=${encodeURIComponent(artist)}`;
-    const data = await fetchYT(url);
-    res.json(data);
+    // Primeiro busca o canal oficial do artista
+    const chUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=1&q=${encodeURIComponent(artist)}`;
+    const chData = await fetchYT(chUrl);
+    if(chData.items && chData.items.length > 0) {
+      const channelId = chData.items[0].id.channelId;
+      // Busca os videos mais recentes do canal
+      const vUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=6&channelId=${channelId}`;
+      const vData = await fetchYT(vUrl);
+      res.json(vData);
+    } else {
+      // Fallback: busca por nome do artista
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=6&q=${encodeURIComponent(artist)}`;
+      const data = await fetchYT(url);
+      res.json(data);
+    }
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
