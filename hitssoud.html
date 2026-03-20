@@ -92,14 +92,6 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 .section-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--text);font-weight:400;}
 .see-all{font-size:12px;font-weight:800;color:var(--orange);cursor:pointer;text-transform:uppercase;letter-spacing:1px;}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:14px;margin-bottom:28px;}
-.cards-scroll{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;margin-bottom:28px;scrollbar-width:none;}
-.cards-scroll::-webkit-scrollbar{display:none;}
-.card-big{background:var(--surface);border-radius:16px;padding:0;cursor:pointer;transition:all .22s;border:1px solid transparent;position:relative;flex-shrink:0;width:160px;overflow:hidden;}
-.card-big:hover{transform:translateY(-3px);border-color:rgba(255,107,0,.2);}
-.card-big-img{width:160px;height:160px;object-fit:cover;display:block;}
-.card-big-info{padding:10px 12px;}
-.card-big-name{font-weight:800;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
-.card-big-sub{font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .card{background:var(--surface);border-radius:14px;padding:12px;cursor:pointer;transition:all .22s;border:1px solid transparent;position:relative;}
 .card:hover{background:var(--surface2);border-color:rgba(255,107,0,.2);transform:translateY(-3px);}
 .card:hover .card-play{opacity:1;transform:translateY(0) scale(1);}
@@ -576,14 +568,6 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
       <div id="mix-section" class="hidden">
   <div class="section-header"><h2 class="section-title">🎵 Seu Mix</h2><span class="see-all" id="btn-refresh-mix">Atualizar</span></div>
   <div class="tracks-list" id="mix-tracks"></div>
-</div>
-<div id="albuns-section">
-  <div class="section-header"><h2 class="section-title">🎵 Álbuns em Destaque</h2><span class="see-all" id="btn-refresh-albuns">Atualizar</span></div>
-  <div class="cards-scroll" id="albuns-cards"></div>
-</div>
-<div id="radios-section">
-  <div class="section-header"><h2 class="section-title">📻 Suas Estações</h2></div>
-  <div class="cards-scroll" id="radios-favoritas"></div>
 </div>
 <div class="section-header"><h2 class="section-title">Em Alta</h2><span class="see-all" onclick="showView('top100')">Ver Top 100</span></div>
       <div class="cards-grid" id="trending-cards"></div>
@@ -1351,60 +1335,7 @@ async function generateMix(){
   renderTracksList(mixed,'mix-tracks');
 }
 document.getElementById('btn-refresh-mix') && document.getElementById('btn-refresh-mix').addEventListener('click',function(){generateMix();});
-document.getElementById('btn-refresh-albuns') && document.getElementById('btn-refresh-albuns').addEventListener('click',function(){renderAlbunsDestaque();});
-var radioPlayCount={};
-var _origPlayRadio=playRadio;
-function playRadio(url,name,artist){
-  radioPlayCount[name]=(radioPlayCount[name]||0)+1;
-  try{localStorage.setItem('hs_radio_count',JSON.stringify(radioPlayCount));}catch(e){}
-  _origPlayRadio(url,name,artist);
-  renderRadiosFavoritas();
-}
-function loadRadioCount(){try{var s=localStorage.getItem('hs_radio_count');if(s)radioPlayCount=JSON.parse(s);}catch(e){}}
-async function renderAlbunsDestaque(){
-  var el=document.getElementById('albuns-cards');
-  if(!el)return;
-  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
-  var topArtists=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,2).map(function(e){return e[0];});
-  var queries=[];
-  if(topArtists.length)queries=queries.concat(topArtists.map(function(a){return a+' album'}));
-  queries.push('albuns gospel brasil 2025');
-  queries.push('melhores albuns brasil');
-  var allResults=[];
-  for(var i=0;i<Math.min(queries.length,3);i++){
-    var r=await searchYouTube(queries[i]);
-    allResults=allResults.concat(r.slice(0,4));
-  }
-  var seen={};
-  var unique=allResults.filter(function(t){if(seen[t.ytId])return false;seen[t.ytId]=true;return true;});
-  var h='';
-  unique.slice(0,12).forEach(function(tr,i){
-    h+='<div class="card-big" onclick="playTrackObj('+JSON.stringify(tr).replace(/"/g,"'")+')">'; 
-    h+='<img class="card-big-img" src="'+(tr.thumb||'')+'" onerror="this.src=''"/>';
-    h+='<div class="card-big-info"><div class="card-big-name">'+esc(tr.name)+'</div><div class="card-big-sub">'+esc(tr.artist)+'</div></div>';
-    h+='</div>';
-  });
-  el.innerHTML=h||'<p style="color:var(--text-muted);padding:20px">Nenhum álbum encontrado.</p>';
-}
-async function renderRadiosFavoritas(){
-  var el=document.getElementById('radios-favoritas');
-  if(!el)return;
-  var sorted=Object.entries(radioPlayCount).sort(function(a,b){return b[1]-a[1];});
-  if(!sorted.length){
-    el.innerHTML='<p style="color:var(--text-muted);font-size:13px;padding:10px">Ouça rádios para ver suas favoritas aqui!</p>';
-    return;
-  }
-  var h='';
-  sorted.slice(0,8).forEach(function(entry){
-    var name=entry[0];
-    h+='<div class="card-big" onclick="showView('radio')">';
-    h+='<div style="width:160px;height:160px;background:linear-gradient(135deg,var(--wine),var(--orange));display:flex;align-items:center;justify-content:center;font-size:50px;">📻</div>';
-    h+='<div class="card-big-info"><div class="card-big-name">'+esc(name)+'</div><div class="card-big-sub">'+entry[1]+'x ouvida</div></div>';
-    h+='</div>';
-  });
-  el.innerHTML=h;
-}
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();loadRadioCount();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);setTimeout(renderAlbunsDestaque,3000);setTimeout(renderRadiosFavoritas,1000);}
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);}
 if(!checkFirstAccess()){}else{initApp();}
 </script>
 </body>
