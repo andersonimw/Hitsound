@@ -565,7 +565,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
           <button class="btn-outline" id="btn-hero-explore"><span>Explorar</span></button>
         </div>
       </div>
-      <div id="avids-section" style="display:none;"><div class="section-header"><h2 class="section-title">🎬 Novidades</h2><span class="see-all" id="btn-avids-refresh">Atualizar</span></div><div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px;scrollbar-width:none;" id="avids-list"></div></div><div id="mix-section" class="hidden">
+      <div id="mix-section" class="hidden">
   <div class="section-header"><h2 class="section-title">🎵 Seu Mix</h2><span class="see-all" id="btn-refresh-mix">Atualizar</span></div>
   <div class="tracks-list" id="mix-tracks"></div>
 </div>
@@ -1335,32 +1335,7 @@ async function generateMix(){
   renderTracksList(mixed,'mix-tracks');
 }
 document.getElementById('btn-refresh-mix') && document.getElementById('btn-refresh-mix').addEventListener('click',function(){generateMix();});
-async function loadArtistVideos(){
-  var top=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,2).map(function(e){return e[0];});
-  if(!top.length)return;
-  var el=document.getElementById('avids-list');
-  var sec=document.getElementById('avids-section');
-  if(!el||!sec)return;
-  sec.style.display='block';
-  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
-  var all=[];
-  for(var i=0;i<top.length;i++){
-    var r=await searchYouTube(top[i]+' novo');
-    all=all.concat(r.slice(0,3));
-  }
-  if(!all.length){sec.style.display='none';return;}
-  var h='';
-  all.forEach(function(v){
-    var tr=JSON.stringify(v).replace(/"/g,"'");
-    h+='<div style="flex-shrink:0;width:150px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;" onclick="playTrackObj('+tr+')">';
-    h+='<img src="'+v.thumb+'" style="width:150px;height:150px;object-fit:cover;display:block;" loading="lazy"/>';
-    h+='<div style="padding:8px;"><div style="font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(v.name)+'</div>';
-    h+='<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+esc(v.artist)+'</div></div></div>';
-  });
-  el.innerHTML=h;
-}
-document.getElementById('btn-avids-refresh')&&document.getElementById('btn-avids-refresh').addEventListener('click',loadArtistVideos);
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);}
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);}
 if(!checkFirstAccess()){}else{initApp();}
 </script>
 </body>
