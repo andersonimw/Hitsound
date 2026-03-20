@@ -1404,7 +1404,7 @@ async function loadArtistVideos(){
   if(!all.length){sec.style.display='none';return;}
   var h='';
   all.forEach(function(v){
-    h+='<div style="flex-shrink:0;width:110px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="window.open(\'https://www.youtube.com/shorts/'+v.ytId+'\',\'_blank\')">'; 
+    h+='<div style="flex-shrink:0;width:110px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="playTrackObj({name:v.name,artist:v.artist,ytId:v.ytId,thumb:v.thumb})">'; 
     h+='<img src="'+v.thumb+'" style="width:110px;height:195px;object-fit:cover;display:block;" loading="lazy"/>';
     h+='<div style="padding:6px;"><div style="font-size:10px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(v.name)+'</div>';
     h+='<div style="font-size:9px;color:var(--text-muted);margin-top:1px;">'+esc(v.artist)+'</div></div></div>';
