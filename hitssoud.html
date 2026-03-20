@@ -352,9 +352,56 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 .carousel-card .cc-name{font-size:13px;font-weight:700;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .carousel-card .cc-sub{font-size:11px;color:var(--text-muted);}
 
+
+#splash-screen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:#000;z-index:99999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity 0.8s ease;
+}
+#splash-screen.hide{opacity:0;pointer-events:none;}
+.splash-logo{width:160px;height:160px;animation:splashZoom 1.2s ease forwards;}
+.splash-title{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:6px;color:#fff;margin-top:16px;animation:splashFade 1.5s ease forwards;}
+.splash-waves{display:flex;align-items:center;gap:4px;margin-top:20px;height:40px;}
+.splash-wave{width:4px;border-radius:4px;background:#ff6b00;animation:splashWave 0.8s ease-in-out infinite alternate;}
+.splash-wave:nth-child(1){height:10px;animation-delay:0s;}
+.splash-wave:nth-child(2){height:22px;animation-delay:0.1s;}
+.splash-wave:nth-child(3){height:34px;animation-delay:0.2s;}
+.splash-wave:nth-child(4){height:40px;animation-delay:0.3s;}
+.splash-wave:nth-child(5){height:34px;animation-delay:0.4s;}
+.splash-wave:nth-child(6){height:22px;animation-delay:0.5s;}
+.splash-wave:nth-child(7){height:10px;animation-delay:0.6s;}
+.splash-wave:nth-child(8){height:22px;animation-delay:0.7s;}
+.splash-wave:nth-child(9){height:34px;animation-delay:0.8s;}
+.splash-wave:nth-child(10){height:40px;animation-delay:0.9s;}
+.splash-wave:nth-child(11){height:34px;animation-delay:1.0s;}
+.splash-wave:nth-child(12){height:22px;animation-delay:1.1s;}
+.splash-wave:nth-child(13){height:10px;animation-delay:1.2s;}
+@keyframes splashZoom{0%{opacity:0;transform:scale(0.5);}60%{transform:scale(1.1);}100%{opacity:1;transform:scale(1);}}
+@keyframes splashFade{0%{opacity:0;letter-spacing:12px;}100%{opacity:1;letter-spacing:6px;}}
+@keyframes splashWave{0%{transform:scaleY(0.4);}100%{transform:scaleY(1);}}
 </style>
 </head>
 <body>
+<div id="splash-screen">
+  <img src="icon-512.png" class="splash-logo" alt="HitsSoud"/>
+  <div class="splash-title">HITSSOUD</div>
+  <div class="splash-waves">
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+    <div class="splash-wave"></div>
+  </div>
+</div>
 <div id="yt-container"><div id="yt-player"></div></div>
 
 <!-- ALARME -->
@@ -1395,6 +1442,17 @@ async function generateMix(){
 document.getElementById('btn-refresh-mix') && document.getElementById('btn-refresh-mix').addEventListener('click',function(){generateMix();});
 function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);}
 if(!checkFirstAccess()){}else{initApp();}
+</script>
+<script>
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    var s = document.getElementById('splash-screen');
+    if(s){
+      s.classList.add('hide');
+      setTimeout(function(){s.remove();}, 900);
+    }
+  }, 2500);
+});
 </script>
 </body>
 </html>
