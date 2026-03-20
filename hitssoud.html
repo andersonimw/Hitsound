@@ -89,6 +89,15 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 .btn-outline{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--text);border:1.5px solid var(--surface3);padding:10px 18px;border-radius:50px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif;}
 .btn-outline:hover{border-color:var(--orange);}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:4px;}
+.videos-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:28px;scrollbar-width:none;}
+.videos-scroll::-webkit-scrollbar{display:none;}
+.video-card{flex-shrink:0;width:160px;border-radius:14px;overflow:hidden;background:var(--surface);cursor:pointer;position:relative;}
+.video-card video{width:160px;height:160px;object-fit:cover;display:block;}
+.video-card-info{padding:8px 10px;}
+.video-card-name{font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.video-card-artist{font-size:10px;color:var(--text-muted);margin-top:2px;}
+.video-card-play{position:absolute;top:0;left:0;right:0;height:160px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);opacity:0;transition:opacity .2s;}
+.video-card:hover .video-card-play{opacity:1;}
 .section-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--text);font-weight:400;}
 .see-all{font-size:12px;font-weight:800;color:var(--orange);cursor:pointer;text-transform:uppercase;letter-spacing:1px;}
 .stories-row{display:flex;gap:14px;overflow-x:auto;padding:4px 0 12px;margin-bottom:20px;scrollbar-width:none;}
@@ -649,6 +658,10 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
       <div id="stories-section">
   <div class="stories-row" id="stories-row"></div>
 </div>
+<div id="artist-videos-section" class="hidden">
+  <div class="section-header"><h2 class="section-title">🎬 Novidades dos Artistas</h2><span class="see-all" id="btn-refresh-videos">Atualizar</span></div>
+  <div class="videos-scroll" id="artist-videos-list"></div>
+</div>
 <div id="mix-section" class="hidden">
   <div class="section-header"><h2 class="section-title">🎵 Seu Mix</h2><span class="see-all" id="btn-refresh-mix">Atualizar</span></div>
   <div class="tracks-list" id="mix-tracks"></div>
@@ -846,6 +859,21 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 </div>
 
 <div id="toast"></div>
+<div id="video-fullscreen" style="display:none;position:fixed;inset:0;background:#000;z-index:9500;flex-direction:column;">
+  <div style="display:flex;align-items:center;padding:50px 16px 12px;gap:12px;">
+    <button id="vfs-close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;"><i class="fa fa-arrow-left"></i></button>
+    <div style="flex:1;overflow:hidden;">
+      <div id="vfs-name" style="font-size:14px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      <div id="vfs-artist" style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;"></div>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+    <iframe id="vfs-iframe" width="100%" height="300" src="" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+  </div>
+  <div style="padding:16px;display:flex;gap:10px;">
+    <button id="vfs-play-music" style="flex:1;padding:12px;background:linear-gradient(135deg,var(--orange),var(--wine-light));border:none;border-radius:50px;color:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer;"><i class="fa fa-music"></i> Tocar só o áudio</button>
+  </div>
+</div>
 <div id="story-viewer" style="display:none;">
   <div class="story-progress" id="story-progress"></div>
   <div class="story-header">
@@ -1594,7 +1622,56 @@ document.getElementById('story-viewer').addEventListener('click',function(e){
   if(e.clientX<w/2){showStorySlide(Math.max(0,currentStoryIdx-1));}
   else{showStorySlide(currentStoryIdx+1);}
 });
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);setTimeout(buildStories,1500);}
+var artistVideosCache={};
+async function loadArtistVideos(){
+  var el=document.getElementById('artist-videos-list');
+  var section=document.getElementById('artist-videos-section');
+  if(!el||!section)return;
+  var topArtists=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(e){return e[0];});
+  if(!topArtists.length){section.classList.add('hidden');return;}
+  section.classList.remove('hidden');
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  var allVideos=[];
+  for(var i=0;i<topArtists.length;i++){
+    try{
+      var r=await fetch('/api/artist-videos?artist='+encodeURIComponent(topArtists[i]));
+      var d=await r.json();
+      if(d.items){
+        var vids=d.items.filter(function(it){return it.id&&it.id.videoId;}).map(function(it){
+          return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id.videoId,thumb:it.snippet.thumbnails.medium.url};
+        });
+        allVideos=allVideos.concat(vids.slice(0,3));
+      }
+    }catch(e){}
+  }
+  if(!allVideos.length){section.classList.add('hidden');return;}
+  var h='';
+  allVideos.forEach(function(v){
+    h+='<div class="video-card" onclick="openVideoFullscreen(''+v.ytId+'',''+esc(v.name).replace(/'/g,'')+'',''+esc(v.artist).replace(/'/g,'')+'','+JSON.stringify({name:v.name,artist:v.artist,ytId:v.ytId,thumb:v.thumb})+')">';
+    h+='<img src="'+v.thumb+'" style="width:160px;height:160px;object-fit:cover;display:block;" loading="lazy"/>';
+    h+='<div class="video-card-play"><i class="fa fa-play" style="color:#fff;font-size:28px;"></i></div>';
+    h+='<div class="video-card-info"><div class="video-card-name">'+esc(v.name)+'</div><div class="video-card-artist">'+esc(v.artist)+'</div></div>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+function openVideoFullscreen(ytId,name,artist,trObj){
+  document.getElementById('vfs-name').textContent=name;
+  document.getElementById('vfs-artist').textContent=artist;
+  document.getElementById('vfs-iframe').src='https://www.youtube.com/embed/'+ytId+'?autoplay=1&playsinline=1&rel=0';
+  document.getElementById('vfs-play-music').onclick=function(){
+    if(trObj)playTrackObj(trObj);
+    closeVideoFullscreen();
+  };
+  document.getElementById('video-fullscreen').style.display='flex';
+}
+function closeVideoFullscreen(){
+  document.getElementById('vfs-iframe').src='';
+  document.getElementById('video-fullscreen').style.display='none';
+}
+document.getElementById('vfs-close').addEventListener('click',closeVideoFullscreen);
+document.getElementById('btn-refresh-videos')&&document.getElementById('btn-refresh-videos').addEventListener('click',function(){loadArtistVideos();});
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);setTimeout(buildStories,1500);setTimeout(loadArtistVideos,2500);}
 if(!checkFirstAccess()){}else{initApp();}
 </script>
 <script>
