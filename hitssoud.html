@@ -746,6 +746,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
         </div>
         <div class="profile-card">
           <div class="profile-card-title"><i class="fa fa-gear"></i> Configurações</div>
+          <button class="profile-link" id="btn-sugestoes"><i class="fa fa-comment"></i> Sugestões e Feedback<i class="fa fa-chevron-right chevron"></i></button>
           <button class="profile-link" id="btn-clear-data"><i class="fa fa-rotate-left"></i> Limpar todos os dados<i class="fa fa-chevron-right chevron"></i></button>
         </div>
         <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:8px;padding-bottom:20px;">HitsSoud v2.2 · Feito com ❤️</p>
@@ -818,6 +819,22 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 </div>
 
 <div id="toast"></div>
+
+<!-- SUGESTÕES -->
+<div id="sugestoes-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9002;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px;padding:26px;width:320px;border:1px solid var(--surface3);">
+    <h2 style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:8px;color:var(--text);">💬 Sugestões</h2>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Nos conte o que podemos melhorar!</p>
+    <input type="text" id="sug-nome" placeholder="Seu nome (opcional)" style="width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:11px 14px;color:var(--text);font-family:Nunito,sans-serif;font-size:13px;outline:none;margin-bottom:10px;display:block;"/>
+    <textarea id="sug-msg" placeholder="Escreva sua sugestão ou reclamação..." style="width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:11px 14px;color:var(--text);font-family:Nunito,sans-serif;font-size:13px;outline:none;margin-bottom:12px;display:block;height:120px;resize:none;"></textarea>
+    <div id="sug-erro" style="color:#ff4444;font-size:12px;margin-bottom:8px;display:none;">Por favor escreva sua sugestão!</div>
+    <div id="sug-ok" style="color:#27AE60;font-size:12px;margin-bottom:8px;display:none;">✅ Sugestão enviada! Obrigado!</div>
+    <div style="display:flex;gap:10px;">
+      <button id="sug-fechar" style="flex:1;padding:12px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:50px;color:var(--text);font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer;">Cancelar</button>
+      <button id="sug-enviar" style="flex:1;padding:12px;background:linear-gradient(135deg,var(--orange),var(--wine-light));border:none;border-radius:50px;color:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer;">Enviar 📤</button>
+    </div>
+  </div>
+</div>
 <div id="sleep-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9002;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:20px;padding:26px;width:290px;border:1px solid var(--surface3);">
     <h2 style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:16px;color:var(--text);">😴 Timer de Sono</h2>
@@ -1198,6 +1215,42 @@ function openPlaylist(idx){
   document.getElementById('pl-detail-tracks').innerHTML=h||'<p style="color:var(--text-muted);padding:20px">Playlist vazia</p>';
   showView('playlist');
 }
+document.getElementById('btn-sugestoes').addEventListener('click',function(){
+  document.getElementById('sug-nome').value='';
+  document.getElementById('sug-msg').value='';
+  document.getElementById('sug-erro').style.display='none';
+  document.getElementById('sug-ok').style.display='none';
+  document.getElementById('sugestoes-modal').style.display='flex';
+});
+document.getElementById('sug-fechar').addEventListener('click',function(){
+  document.getElementById('sugestoes-modal').style.display='none';
+});
+document.getElementById('sug-enviar').addEventListener('click',async function(){
+  var nome=document.getElementById('sug-nome').value.trim()||'Anonimo';
+  var msg=document.getElementById('sug-msg').value.trim();
+  if(!msg){document.getElementById('sug-erro').style.display='block';return;}
+  document.getElementById('sug-erro').style.display='none';
+  this.textContent='Enviando...';
+  try{
+    var r=await fetch('https://formspree.io/f/mgonqawb',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:nome,message:msg,app:'HitsSoud'})
+    });
+    if(r.ok){
+      document.getElementById('sug-ok').style.display='block';
+      document.getElementById('sug-msg').value='';
+      this.textContent='Enviar 📤';
+      setTimeout(function(){document.getElementById('sugestoes-modal').style.display='none';},2000);
+    }else{
+      showToast('❌ Erro ao enviar. Tente novamente!');
+      this.textContent='Enviar 📤';
+    }
+  }catch(e){
+    showToast('❌ Erro de conexão!');
+    this.textContent='Enviar 📤';
+  }
+});
 document.getElementById('btn-clear-data').addEventListener('click',function(){if(!confirm('Apagar TODOS os dados?'))return;localStorage.clear();playlists=[];liked={};tracksPlayed=0;playHistory=[];artistPlayCount={};weeklyPlays={};weeklyTracks={};alarms=[];showToast('🗑️ Dados apagados');location.reload();});
 document.getElementById('avatar-btn').addEventListener('click',function(){showView('profile');});
 function updateMediaSession(tr){if(!('mediaSession' in navigator))return;navigator.mediaSession.metadata=new MediaMetadata({title:tr.name,artist:tr.artist,album:'HitsSoud',artwork:tr.thumb?[{src:tr.thumb,sizes:'320x180',type:'image/jpeg'}]:[]});navigator.mediaSession.setActionHandler('play',function(){ytReady&&ytPlayer.playVideo();});navigator.mediaSession.setActionHandler('pause',function(){ytReady&&ytPlayer.pauseVideo();});navigator.mediaSession.setActionHandler('nexttrack',nextTrack);navigator.mediaSession.setActionHandler('previoustrack',prevTrack);}
