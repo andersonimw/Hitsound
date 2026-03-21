@@ -3,6 +3,7 @@ const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
+const LASTFM_KEY = process.env.LASTFM_API_KEY || "";
 
 const YT_KEYS = [
   process.env.YOUTUBE_API_KEY,
@@ -65,6 +66,31 @@ app.get('/api/trending', async function(req, res) {
     const data = await fetchYT(url);
     res.json(data);
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/lastfm-novidades', async function(req, res) {
+  try {
+    const lastfmUrl = `https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=brazil&limit=30&api_key=${LASTFM_KEY}&format=json`;
+    const lfRes = await fetch(lastfmUrl);
+    const lfData = await lfRes.json();
+    const tracks = (lfData.tracks && lfData.tracks.track) ? lfData.tracks.track : [];
+    var results = [];
+    for (var i = 0; i < Math.min(tracks.length, 15); i++) {
+      var t = tracks[i];
+      var q = encodeURIComponent(t.artist.name + ' ' + t.name);
+      try {
+        var ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${q}`;
+        var ytData = await fetchYT(ytUrl);
+        if (ytData.items && ytData.items.length > 0) {
+          var it = ytData.items[0];
+          results.push({ name: t.name, artist: t.artist.name, ytId: it.id.videoId, thumb: it.snippet.thumbnails.medium.url });
+        }
+      } catch(e) {}
+    }
+    res.json({ items: results });
+  } catch(e) {
     res.status(500).json({ error: e.message });
   }
 });
