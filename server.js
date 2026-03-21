@@ -76,7 +76,7 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     const genreTagsMap = {
       'brasil':        ['geo:brazil'],
       'internacional': ['chart:global'],
-      'gospel':        ['christian music', 'gospel brasileiro'],
+      'gospel':        ['christian music', 'gospel', 'musica gospel brasileira'],
       'sertanejo':     ['sertanejo', 'sertanejo universitario'],
       'funk':          ['funk brasileiro', 'funk carioca'],
       'rap':           ['rap brasileiro', 'hip-hop'],
