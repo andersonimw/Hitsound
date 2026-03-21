@@ -342,9 +342,28 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   .view.active{padding-bottom:calc(var(--player-h) + var(--nav-h) + 20px);}
   #toast{bottom:calc(var(--player-h) + var(--nav-h) + 12px);}
 }
+
+#reel-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99998;display:none;flex-direction:column;}
+#reel-modal.open{display:flex;}
+#reel-modal-header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(0,0,0,0.8);}
+#reel-modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;}
+#reel-modal-title{font-size:14px;font-weight:700;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#reel-modal-artist{font-size:11px;color:#aaa;}
+#reel-iframe{width:100%;flex:1;border:none;}
+
 </style>
 </head>
 <body>
+<div id="reel-modal">
+  <div id="reel-modal-header">
+    <button id="reel-modal-close" onclick="closeReelModal()"><i class="fa fa-arrow-left"></i></button>
+    <div>
+      <div id="reel-modal-title">-</div>
+      <div id="reel-modal-artist">-</div>
+    </div>
+  </div>
+  <iframe id="reel-iframe" src="" allowfullscreen allow="autoplay; fullscreen"></iframe>
+</div>
 <div id="yt-container"><div id="yt-player"></div></div>
 
 <!-- ALARME -->
@@ -1050,6 +1069,18 @@ document.querySelectorAll('.np-tab').forEach(function(tab){tab.addEventListener(
 
 // ── VIDEO ─────────────────────────────────────────────────────────
 var videoLoaded=false;
+
+function openReelModal(v){
+  document.getElementById('reel-modal-title').textContent=v.name;
+  document.getElementById('reel-modal-artist').textContent=v.artist;
+  document.getElementById('reel-iframe').src='https://www.youtube.com/embed/'+v.ytId+'?autoplay=1&playsinline=1&rel=0&modestbranding=1';
+  document.getElementById('reel-modal').classList.add('open');
+}
+function closeReelModal(){
+  document.getElementById('reel-iframe').src='';
+  document.getElementById('reel-modal').classList.remove('open');
+}
+
 function loadVideo(tr){if(videoLoaded&&document.getElementById('video-iframe').dataset.trackId===tr.ytId)return;var iframe=document.getElementById('video-iframe');iframe.dataset.trackId=tr.ytId;iframe.src='https://www.youtube.com/embed/'+tr.ytId+'?autoplay=1&playsinline=1&rel=0&modestbranding=1';document.getElementById('video-info-name').textContent=tr.name;document.getElementById('video-info-artist').textContent=tr.artist;videoLoaded=true;}
 
 // ── NOW PLAYING ───────────────────────────────────────────────────
@@ -1404,7 +1435,7 @@ async function loadArtistVideos(){
   if(!all.length){sec.style.display='none';return;}
   var h='';
   all.forEach(function(v){
-    h+='<div style="flex-shrink:0;width:110px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="playTrackObj('+JSON.stringify(v).replace(/"/g,'\'')+')">'; 
+    h+='<div style="flex-shrink:0;width:110px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="openReelModal('+JSON.stringify(v).replace(/"/g,'\'')+')">'; 
     h+='<img src="'+v.thumb+'" style="width:110px;height:195px;object-fit:cover;display:block;" loading="lazy"/>';
     h+='<div style="padding:6px;"><div style="font-size:10px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(v.name)+'</div>';
     h+='<div style="font-size:9px;color:var(--text-muted);margin-top:1px;">'+esc(v.artist)+'</div></div></div>';
@@ -1436,7 +1467,7 @@ async function loadReels(){
   if(!all.length){sec.style.display='none';return;}
   var h='';
   all.forEach(function(v){
-    h+='<div style="flex-shrink:0;width:150px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="playTrackObj('+JSON.stringify(v).replace(/"/g,'\'')+')">'; 
+    h+='<div style="flex-shrink:0;width:150px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="openReelModal('+JSON.stringify(v).replace(/"/g,'\'')+')">'; 
     h+='<img src="'+v.thumb+'" style="width:150px;height:150px;object-fit:cover;display:block;" loading="lazy"/>';
     h+='<div style="padding:8px;"><div style="font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(v.name)+'</div>';
     h+='<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+esc(v.artist)+'</div></div></div>';
