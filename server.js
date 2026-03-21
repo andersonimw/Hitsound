@@ -76,10 +76,10 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     const genreMap = {
       'brasil':        { method: 'geo.gettoptracks', country: 'brazil' },
       'internacional': { method: 'chart.gettoptracks' },
-      'gospel':        { method: 'tag.gettoptracks', tag: 'gospel' },
+      'gospel':        { method: 'tag.gettoptracks', tag: 'christian music' },
       'sertanejo':     { method: 'tag.gettoptracks', tag: 'sertanejo' },
-      'funk':          { method: 'tag.gettoptracks', tag: 'funk' },
-      'rap':           { method: 'tag.gettoptracks', tag: 'rap' },
+      'funk':          { method: 'tag.gettoptracks', tag: 'funk brasileiro' },
+      'rap':           { method: 'tag.gettoptracks', tag: 'hip-hop' },
       'pagode':        { method: 'tag.gettoptracks', tag: 'pagode' },
       'rock':          { method: 'tag.gettoptracks', tag: 'rock' },
       'pop':           { method: 'tag.gettoptracks', tag: 'pop' },
