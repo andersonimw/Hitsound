@@ -351,6 +351,8 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 #reel-modal-artist{font-size:11px;color:#aaa;}
 #reel-iframe{width:100%;flex:1;border:none;}
 
+.avids-tab{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--surface3);background:var(--surface);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.avids-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
 </style>
 </head>
 <body>
@@ -586,6 +588,17 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
       </div>
       <div id="avids-section" style="display:none;">
   <div class="section-header"><h2 class="section-title">🔥 Em Alta Agora</h2><span class="see-all" id="btn-avids-refresh">Atualizar</span></div>
+  <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;" id="avids-tabs">
+    <button class="avids-tab active" data-genre="brasil">🇧🇷 Brasil</button>
+    <button class="avids-tab" data-genre="internacional">🌍 Internacional</button>
+    <button class="avids-tab" data-genre="gospel">✝️ Gospel</button>
+    <button class="avids-tab" data-genre="sertanejo">🤠 Sertanejo</button>
+    <button class="avids-tab" data-genre="funk">🕺 Funk</button>
+    <button class="avids-tab" data-genre="rap">🎤 Rap</button>
+    <button class="avids-tab" data-genre="pagode">🥁 Pagode</button>
+    <button class="avids-tab" data-genre="rock">🎸 Rock</button>
+    <button class="avids-tab" data-genre="pop">🎹 Pop</button>
+  </div>
   <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px;scrollbar-width:none;" id="avids-list"></div>
 </div>
 <div id="reels-section" style="display:none;">
@@ -1412,16 +1425,17 @@ async function generateMix(){
   renderTracksList(mixed,'mix-tracks');
 }
 document.getElementById('btn-refresh-mix') && document.getElementById('btn-refresh-mix').addEventListener('click',function(){generateMix();});
-async function loadArtistVideos(){
+async function loadArtistVideos(genre){
+  genre = genre || 'brasil';
   var el=document.getElementById('avids-list');
   var sec=document.getElementById('avids-section');
   if(!el||!sec)return;
   sec.style.display='block';
   el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
   try{
-    var r=await fetch('/api/lastfm-novidades');
+    var r=await fetch('/api/lastfm-novidades?genre='+genre);
     var d=await r.json();
-    if(!d.items||!d.items.length){sec.style.display='none';return;}
+    if(!d.items||!d.items.length){el.innerHTML='<p style="color:var(--text-muted);padding:10px;">Nenhuma música encontrada.</p>';return;}
     var h='';
     d.items.forEach(function(v){
       var obj=JSON.stringify(v).replace(/"/g,"'");
@@ -1433,7 +1447,17 @@ async function loadArtistVideos(){
     el.innerHTML=h;
   }catch(e){sec.style.display='none';}
 }
-document.getElementById('btn-avids-refresh')&&document.getElementById('btn-avids-refresh').addEventListener('click',loadArtistVideos);
+document.getElementById('btn-avids-refresh')&&document.getElementById('btn-avids-refresh').addEventListener('click',function(){
+  var active=document.querySelector('.avids-tab.active');
+  loadArtistVideos(active?active.dataset.genre:'brasil');
+});
+document.getElementById('avids-tabs')&&document.getElementById('avids-tabs').addEventListener('click',function(e){
+  var tab=e.target.closest('.avids-tab');
+  if(!tab)return;
+  document.querySelectorAll('.avids-tab').forEach(function(t){t.classList.remove('active');});
+  tab.classList.add('active');
+  loadArtistVideos(tab.dataset.genre);
+});
 async function loadReels(){
   var top=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,2).map(function(e){return e[0];});
   if(!top.length)return;

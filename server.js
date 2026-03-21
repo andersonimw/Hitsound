@@ -72,20 +72,43 @@ app.get('/api/trending', async function(req, res) {
 
 app.get('/api/lastfm-novidades', async function(req, res) {
   try {
-    const lastfmUrl = `https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=brazil&limit=30&api_key=${LASTFM_KEY}&format=json`;
+    const genre = req.query.genre || 'brasil';
+    const genreMap = {
+      'brasil':        { method: 'geo.gettoptracks', country: 'brazil' },
+      'internacional': { method: 'chart.gettoptracks' },
+      'gospel':        { method: 'tag.gettoptracks', tag: 'gospel' },
+      'sertanejo':     { method: 'tag.gettoptracks', tag: 'sertanejo' },
+      'funk':          { method: 'tag.gettoptracks', tag: 'funk' },
+      'rap':           { method: 'tag.gettoptracks', tag: 'rap' },
+      'pagode':        { method: 'tag.gettoptracks', tag: 'pagode' },
+      'rock':          { method: 'tag.gettoptracks', tag: 'rock' },
+      'pop':           { method: 'tag.gettoptracks', tag: 'pop' },
+    };
+    const g = genreMap[genre] || genreMap['brasil'];
+    var lastfmUrl = '';
+    if (g.method === 'geo.gettoptracks') {
+      lastfmUrl = `https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=${g.country}&limit=15&api_key=${LASTFM_KEY}&format=json`;
+    } else if (g.method === 'chart.gettoptracks') {
+      lastfmUrl = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=15&api_key=${LASTFM_KEY}&format=json`;
+    } else {
+      lastfmUrl = `https://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=${encodeURIComponent(g.tag)}&limit=15&api_key=${LASTFM_KEY}&format=json`;
+    }
     const lfRes = await fetch(lastfmUrl);
     const lfData = await lfRes.json();
-    const tracks = (lfData.tracks && lfData.tracks.track) ? lfData.tracks.track : [];
+    var rawTracks = [];
+    if (lfData.tracks && lfData.tracks.track) rawTracks = lfData.tracks.track;
+    else if (lfData.toptracks && lfData.toptracks.track) rawTracks = lfData.toptracks.track;
     var results = [];
-    for (var i = 0; i < Math.min(tracks.length, 15); i++) {
-      var t = tracks[i];
-      var q = encodeURIComponent(t.artist.name + ' ' + t.name);
+    for (var i = 0; i < Math.min(rawTracks.length, 15); i++) {
+      var t = rawTracks[i];
+      var artistName = t.artist && t.artist.name ? t.artist.name : (typeof t.artist === 'string' ? t.artist : '');
+      var q = encodeURIComponent(artistName + ' ' + t.name);
       try {
         var ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${q}`;
         var ytData = await fetchYT(ytUrl);
         if (ytData.items && ytData.items.length > 0) {
           var it = ytData.items[0];
-          results.push({ name: t.name, artist: t.artist.name, ytId: it.id.videoId, thumb: it.snippet.thumbnails.medium.url });
+          results.push({ name: t.name, artist: artistName, ytId: it.id.videoId, thumb: it.snippet.thumbnails.medium.url });
         }
       } catch(e) {}
     }
