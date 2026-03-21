@@ -1413,26 +1413,24 @@ async function generateMix(){
 }
 document.getElementById('btn-refresh-mix') && document.getElementById('btn-refresh-mix').addEventListener('click',function(){generateMix();});
 async function loadArtistVideos(){
+  var top=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,2).map(function(e){return e[0];});
+  if(!top.length)return;
   var el=document.getElementById('avids-list');
   var sec=document.getElementById('avids-section');
   if(!el||!sec)return;
   sec.style.display='block';
   el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
-  try{
-    var r=await fetch('/api/lastfm-novidades');
-    var d=await r.json();
-    if(!d.items||!d.items.length){sec.style.display='none';return;}
-    var h='';
-    d.items.forEach(function(v){
-      var obj=JSON.stringify(v).replace(/"/g,"'");
-      h+='<div style="flex-shrink:0;width:110px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="openReelModal('+obj+')">';
-      h+='<img src="'+v.thumb+'" style="width:110px;height:195px;object-fit:cover;display:block;" loading="lazy"/>';
-      h+='<div style="padding:6px;"><div style="font-size:10px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(v.name)+'</div>';
-      h+='<div style="font-size:9px;color:var(--text-muted);margin-top:1px;">'+esc(v.artist)+'</div></div></div>';
-    });
-    el.innerHTML=h;
-  }catch(e){sec.style.display='none';}
-}
+  var all=[];
+  for(var i=0;i<top.length;i++){
+    try{
+      var r=await fetch('/api/artist-videos?artist='+encodeURIComponent(top[i]));
+      var d=await r.json();
+      if(d.items){
+        var vids=d.items.filter(function(it){return it.id&&it.id.videoId;}).map(function(it){
+          return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id.videoId,thumb:it.snippet.thumbnails.medium.url};
+        });
+        all=all.concat(vids.slice(0,3));
+      }
     }catch(e){}
   }
   if(!all.length){sec.style.display='none';return;}
