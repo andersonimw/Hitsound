@@ -78,13 +78,13 @@ app.get('/api/artist-videos', async function(req, res) {
     const chData = await fetchYT(chUrl);
     if(chData.items && chData.items.length > 0) {
       const channelId = chData.items[0].id.channelId;
-      // Busca os videos mais recentes do canal
-      const vUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=6&channelId=${channelId}`;
+      // Busca albuns e lancamentos recentes do canal oficial
+      const vUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=6&channelId=${channelId}&q=album+lancamento+novo+clipe`;
       const vData = await fetchYT(vUrl);
       res.json(vData);
     } else {
-      // Fallback: busca por nome do artista
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=6&q=${encodeURIComponent(artist)}`;
+      // Fallback: busca lancamentos por nome do artista
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=6&q=${encodeURIComponent(artist + ' album lancamento novo')}`;
       const data = await fetchYT(url);
       res.json(data);
     }
