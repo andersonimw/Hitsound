@@ -73,35 +73,50 @@ app.get('/api/trending', async function(req, res) {
 app.get('/api/lastfm-novidades', async function(req, res) {
   try {
     const genre = req.query.genre || 'brasil';
-    const genreMap = {
-      'brasil':        { method: 'geo.gettoptracks', country: 'brazil' },
-      'internacional': { method: 'chart.gettoptracks' },
-      'gospel':        { method: 'tag.gettoptracks', tag: 'christian music' },
-      'sertanejo':     { method: 'tag.gettoptracks', tag: 'sertanejo' },
-      'funk':          { method: 'tag.gettoptracks', tag: 'funk brasileiro' },
-      'rap':           { method: 'tag.gettoptracks', tag: 'hip-hop' },
-      'pagode':        { method: 'tag.gettoptracks', tag: 'pagode' },
-      'rock':          { method: 'tag.gettoptracks', tag: 'rock' },
-      'pop':           { method: 'tag.gettoptracks', tag: 'pop' },
+    const genreTagsMap = {
+      'brasil':        ['geo:brazil'],
+      'internacional': ['chart:global'],
+      'gospel':        ['christian music', 'gospel brasileiro'],
+      'sertanejo':     ['sertanejo', 'sertanejo universitario'],
+      'funk':          ['funk brasileiro', 'funk carioca'],
+      'rap':           ['rap brasileiro', 'hip-hop'],
+      'pagode':        ['pagode', 'samba'],
+      'rock':          ['rock', 'classic rock'],
+      'pop':           ['pop', 'brazilian pop'],
     };
-    const g = genreMap[genre] || genreMap['brasil'];
-    var lastfmUrl = '';
-    if (g.method === 'geo.gettoptracks') {
-      lastfmUrl = `https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=${g.country}&limit=15&api_key=${LASTFM_KEY}&format=json`;
-    } else if (g.method === 'chart.gettoptracks') {
-      lastfmUrl = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=15&api_key=${LASTFM_KEY}&format=json`;
-    } else {
-      lastfmUrl = `https://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=${encodeURIComponent(g.tag)}&limit=15&api_key=${LASTFM_KEY}&format=json`;
+    const tags = genreTagsMap[genre] || genreTagsMap['brasil'];
+    async function fetchTracks(tag) {
+      var url = '';
+      if (tag === 'geo:brazil') {
+        url = `https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=brazil&limit=15&api_key=${LASTFM_KEY}&format=json`;
+      } else if (tag === 'chart:global') {
+        url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=15&api_key=${LASTFM_KEY}&format=json`;
+      } else {
+        url = `https://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=${encodeURIComponent(tag)}&limit=10&api_key=${LASTFM_KEY}&format=json`;
+      }
+      const r = await fetch(url);
+      const d = await r.json();
+      if (d.tracks && d.tracks.track) return d.tracks.track;
+      if (d.toptracks && d.toptracks.track) return d.toptracks.track;
+      return [];
     }
-    const lfRes = await fetch(lastfmUrl);
-    const lfData = await lfRes.json();
-    var rawTracks = [];
-    if (lfData.tracks && lfData.tracks.track) rawTracks = lfData.tracks.track;
-    else if (lfData.toptracks && lfData.toptracks.track) rawTracks = lfData.toptracks.track;
+    var allTracks = [];
+    for (var ti = 0; ti < tags.length; ti++) {
+      try {
+        var t = await fetchTracks(tags[ti]);
+        allTracks = allTracks.concat(t);
+      } catch(e) {}
+    }
+    // Embaralha para misturar as fontes
+    allTracks = allTracks.sort(function(){ return Math.random() - 0.5; });
     var results = [];
-    for (var i = 0; i < Math.min(rawTracks.length, 15); i++) {
-      var t = rawTracks[i];
+    var seen = {};
+    for (var i = 0; i < allTracks.length && results.length < 15; i++) {
+      var t = allTracks[i];
       var artistName = t.artist && t.artist.name ? t.artist.name : (typeof t.artist === 'string' ? t.artist : '');
+      var key = artistName + t.name;
+      if (seen[key]) continue;
+      seen[key] = true;
       var q = encodeURIComponent(artistName + ' ' + t.name);
       try {
         var ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${q}`;
