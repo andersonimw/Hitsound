@@ -1782,20 +1782,17 @@ async function loadRanking() {
 async function registerPlay() {
   try {
     var cadastro = localStorage.getItem('hs_cadastro');
-    if (!cadastro) { console.log('RANKING: sem cadastro'); return; }
+    if (!cadastro) return;
     var dados = JSON.parse(cadastro);
     var userId = dados.email || dados.telefone;
     var userName = dados.nome || 'Usuário';
-    if (!userId) { console.log('RANKING: sem userId'); return; }
-    console.log('RANKING: registrando play para', userName);
-    var r = await fetch('/api/ranking/play', {
+    if (!userId) return;
+    await fetch('/api/ranking/play', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ userId, userName })
     });
-    var d = await r.json();
-    console.log('RANKING: resposta', JSON.stringify(d));
-  } catch(e) { console.log('RANKING erro:', e.message); }
+  } catch(e) {}
 }
 </script>
 </body>
