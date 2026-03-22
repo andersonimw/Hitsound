@@ -1047,6 +1047,7 @@ async function fetchYT(url) {
   return { error: { message: 'Todas as cotas esgotadas.' } };
 }
 
+app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 app.get('/', function(req, res) {
