@@ -1674,34 +1674,16 @@ function loadQuizQuestion(){
   document.getElementById('quiz-q-num').textContent=quizCurrent+1;
   document.getElementById('quiz-timer').textContent='⏱ '+quizTimeLeft;
   document.getElementById('quiz-feedback').style.display='none';
-  document.getElementById('quiz-play-btn').style.display='none';
-  document.getElementById('quiz-playing').style.display='block';
-  document.getElementById('quiz-playing').textContent='🎵 Tocando...';
+  document.getElementById('quiz-play-btn').style.display='inline-block';
+  document.getElementById('quiz-playing').style.display='none';
   var correct=quizQuestions[quizCurrent];
-  // Opções sempre diferentes da correta
-  var pool=quizQuestions.filter(function(q,i){return i!==quizCurrent&&q.ytId!==correct.ytId&&q.name!==correct.name;});
-  var others=pool.sort(function(){return Math.random()-.5;}).slice(0,3);
+  var others=quizQuestions.filter(function(q,i){return i!==quizCurrent;}).sort(function(){return Math.random()-.5;}).slice(0,3);
   var options=[correct].concat(others).sort(function(){return Math.random()-.5;});
   var h='';
   options.forEach(function(o){
-    h+='<button class="quiz-option" data-id="'+o.ytId+'" data-correct="'+correct.ytId+'"><div style="font-size:12px;font-weight:800;">'+esc(o.name)+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+esc(o.artist)+'</div></button>';
+    h+='<button class="quiz-option" onclick="answerQuiz(&quot;'+o.ytId+'&quot;,&quot;'+correct.ytId+'&quot;)"><div style="font-size:12px;font-weight:800;">'+esc(o.name)+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+esc(o.artist)+'</div></button>';
   });
   document.getElementById('quiz-options').innerHTML=h;
-  document.querySelectorAll('.quiz-option').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      answerQuiz(this.dataset.id, this.dataset.correct);
-    });
-  });
-  // Toca automaticamente
-  playYT(correct.ytId);
-  // Para após 15 segundos
-  setTimeout(function(){
-    if(!quizAnswered){
-      ytReady&&ytPlayer&&ytPlayer.pauseVideo&&ytPlayer.pauseVideo();
-      document.getElementById('quiz-playing').textContent='🎵 Trecho encerrado!';
-    }
-  },15000);
-  // Timer de contagem
   quizTimer=setInterval(function(){
     quizTimeLeft--;
     document.getElementById('quiz-timer').textContent='⏱ '+quizTimeLeft;
@@ -1710,6 +1692,18 @@ function loadQuizQuestion(){
       if(!quizAnswered)answerQuiz('timeout',correct.ytId);
     }
   },1000);
+}
+
+function playQuizTrack(){
+  var correct=quizQuestions[quizCurrent];
+  if(!correct)return;
+  document.getElementById('quiz-play-btn').style.display='none';
+  document.getElementById('quiz-playing').style.display='block';
+  playYT(correct.ytId);
+  setTimeout(function(){
+    ytReady&&ytPlayer&&ytPlayer.pauseVideo&&ytPlayer.pauseVideo();
+    document.getElementById('quiz-playing').textContent='🎵 Trecho tocado!';
+  },10000);
 }
 
 function answerQuiz(chosen, correctId){
@@ -1723,17 +1717,18 @@ function answerQuiz(chosen, correctId){
   document.getElementById('quiz-score').textContent=quizScore;
   document.querySelectorAll('.quiz-option').forEach(function(btn){
     btn.disabled=true;
-    if(btn.dataset.id===correctId)btn.classList.add('correct');
-    else if(btn.dataset.id===chosen&&!correct)btn.classList.add('wrong');
+    var ytId=btn.getAttribute('onclick').match(/'([^']+)','([^']+)'/);
+    if(ytId&&ytId[1]===correctId)btn.classList.add('correct');
+    else if(ytId&&ytId[1]===chosen&&!correct)btn.classList.add('wrong');
   });
   var fb=document.getElementById('quiz-feedback');
   fb.style.display='block';
   fb.style.background=correct?'rgba(29,185,84,0.2)':'rgba(229,57,53,0.2)';
-  fb.innerHTML=correct?'✅ <strong>Correto!</strong> +'+pts+' pts':'❌ <strong>Errou!</strong> Era: <strong>'+esc(quizQuestions[quizCurrent].name)+'</strong>';
+  fb.innerHTML=correct?'✅ <strong>Correto!</strong> +'+pts+' pts':'❌ <strong>Errou!</strong> Era: '+esc(quizQuestions[quizCurrent].name);
   setTimeout(function(){
     quizCurrent++;
     loadQuizQuestion();
-  },2500);
+  },2000);
 }
 
 function endQuiz(){
@@ -1742,7 +1737,8 @@ function endQuiz(){
   document.getElementById('quiz-game').style.display='none';
   document.getElementById('quiz-result').style.display='block';
   document.getElementById('quiz-final-score').textContent=quizScore;
-  var emoji,msg;
+  var emoji='🏆';
+  var msg='';
   if(quizScore>=800){emoji='🏆';msg='Incrível! Você é um expert em música!';}
   else if(quizScore>=500){emoji='🎵';msg='Muito bom! Você manja bastante!';}
   else if(quizScore>=200){emoji='😅';msg='Bom começo! Continue praticando!';}
@@ -1750,6 +1746,10 @@ function endQuiz(){
   document.getElementById('quiz-result-emoji').textContent=emoji;
   document.getElementById('quiz-result-msg').textContent=msg;
 }
+
+document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn').addEventListener('click',function(){
+  playQuizTrack();
+});
 
 function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);}
 if(!checkFirstAccess()){}else{initApp();}
