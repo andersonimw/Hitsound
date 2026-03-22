@@ -1217,6 +1217,20 @@ app.get('/api/ranking', async function(req, res) {
   }
 });
 
+// Rota de diagnóstico temporária
+app.get('/debug-user', function(req, res) {
+  res.send(`<!DOCTYPE html><html><body style="background:#111;color:#fff;font-family:monospace;padding:20px;">
+  <h2>Debug localStorage</h2>
+  <div id="out"></div>
+  <script>
+    var keys = ['userId','userName','userNome','user','currentUser'];
+    var h = '';
+    keys.forEach(function(k){ h += '<p><b>'+k+':</b> '+localStorage.getItem(k)+'</p>'; });
+    document.getElementById('out').innerHTML = h;
+  </script>
+  </body></html>`);
+});
+
 app.listen(PORT, function() {
   console.log('HitsSoud rodando na porta ' + PORT);
 });
