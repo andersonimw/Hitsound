@@ -1848,7 +1848,7 @@ async function loadComments(ytId) {
     var myEmail = cadastro ? JSON.parse(cadastro).email : null;
     el.innerHTML = data.map(function(c) {
       var isAdmin = myEmail === 'anderson.live.1991@gmail.com';
-      var del = isAdmin ? '<button class="comment-delete" onclick="deleteComment(''+c._id+'',''+ytId+'')"><i class="fa fa-trash"></i> apagar</button>' : '';
+      var del = isAdmin ? '<button class="comment-delete" onclick="deleteComment(&quot;'+c._id+'&quot;,&quot;'+ytId+'&quot;)"><i class="fa fa-trash"></i> apagar</button>' : '';
       var d = new Date(c.createdAt);
       var time = d.getDate()+'/'+(d.getMonth()+1)+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
       return '<div class="comment-item"><span class="comment-author">'+esc(c.userName)+'</span><span class="comment-text">'+esc(c.text)+'</span><div style="display:flex;justify-content:space-between;align-items:center;"><span class="comment-time">'+time+'</span>'+del+'</div></div>';
