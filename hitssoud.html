@@ -1645,9 +1645,7 @@ document.getElementById('btn-restart-quiz')&&document.getElementById('btn-restar
   document.getElementById('quiz-start').style.display='block';
 });
 
-document.getElementById('btn-quiz-play-btn')&&document.getElementById('quiz-play-btn').addEventListener('click',function(){
-  playQuizTrack();
-});
+
 
 async function startQuiz(){
   document.getElementById('quiz-start').style.display='none';
@@ -1683,7 +1681,7 @@ function loadQuizQuestion(){
   var options=[correct].concat(others).sort(function(){return Math.random()-.5;});
   var h='';
   options.forEach(function(o){
-    h+='<button class="quiz-option" onclick="answerQuiz(''+o.ytId+'',''+correct.ytId+'')"><div style="font-size:12px;font-weight:800;">'+esc(o.name)+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+esc(o.artist)+'</div></button>';
+    h+='<button class="quiz-option" onclick="answerQuiz(&quot;'+o.ytId+'&quot;,&quot;'+correct.ytId+'&quot;)"><div style="font-size:12px;font-weight:800;">'+esc(o.name)+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+esc(o.artist)+'</div></button>';
   });
   document.getElementById('quiz-options').innerHTML=h;
   quizTimer=setInterval(function(){
