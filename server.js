@@ -1064,15 +1064,15 @@ app.get('/api/lastfm-novidades', async function(req, res) {
   try {
     const genre = req.query.genre || 'brasil';
     const genreTagsMap = {
-      'brasil':        ['geo:brazil'],
-      'internacional': ['chart:global'],
-      'gospel':        ['christian music', 'gospel', 'musica gospel brasileira'],
-      'sertanejo':     ['sertanejo', 'sertanejo universitario'],
-      'funk':          ['funk brasileiro', 'funk carioca'],
-      'rap':           ['rap brasileiro', 'hip-hop'],
-      'pagode':        ['pagode', 'samba'],
-      'rock':          ['rock', 'classic rock'],
-      'pop':           ['pop', 'brazilian pop'],
+      'brasil':        ['geo:brazil', 'musica brasileira'],
+      'internacional': ['chart:global', 'pop', 'hip-hop'],
+      'gospel':        ['christian music', 'gospel', 'ccm', 'musica gospel brasileira', 'gospel brasileiro'],
+      'sertanejo':     ['sertanejo', 'sertanejo universitario', 'sertanejo romantico'],
+      'funk':          ['funk brasileiro', 'funk carioca', 'funk ostentacao', 'baile funk'],
+      'rap':           ['rap brasileiro', 'hip-hop', 'trap brasileiro', 'rap nacional'],
+      'pagode':        ['pagode', 'samba', 'pagode brasileiro', 'samba cancao'],
+      'rock':          ['rock', 'classic rock', 'rock brasileiro', 'rock nacional'],
+      'pop':           ['pop', 'brazilian pop', 'pop brasileiro', 'dance pop'],
     };
     const tags = genreTagsMap[genre] || genreTagsMap['brasil'];
     async function fetchTracks(tag) {
