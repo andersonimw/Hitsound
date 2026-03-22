@@ -1186,6 +1186,25 @@ app.get('/api/podcasts', async function(req, res) {
   }
 });
 
+// Rota GET temporaria para testar ranking
+app.get('/api/ranking/test', async function(req, res) {
+  try {
+    const userId = 'anderson.live.1991@gmail.com';
+    const userName = 'Anderson';
+    const month = new Date().toISOString().slice(0, 7);
+    let record = await Play.findOne({ userId, month });
+    if (record) {
+      record.count += 1;
+      await record.save();
+    } else {
+      record = await Play.create({ userId, userName, count: 1, month });
+    }
+    res.json({ ok: true, count: record.count, userName });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Rota para registrar play
 app.post('/api/ranking/play', async function(req, res) {
   try {
