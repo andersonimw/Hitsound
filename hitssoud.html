@@ -1380,13 +1380,24 @@ document.getElementById('btn-drawer').addEventListener('click',function(){openDr
 function openDrawer(){
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawer-overlay').classList.add('open');
+  updateProfileView();
   var pc = document.getElementById('drawer-profile-content');
   var orig = document.getElementById('view-profile');
-  if(orig) pc.innerHTML = orig.innerHTML;
+  if(orig&&pc){
+    pc.innerHTML='';
+    pc.appendChild(orig);
+  }
 }
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
+  var pc = document.getElementById('drawer-profile-content');
+  var orig = document.getElementById('view-profile');
+  if(orig&&pc){
+    document.getElementById('main').appendChild(orig);
+    orig.classList.add('hidden');
+    orig.classList.remove('active');
+  }
 }
 document.addEventListener('click',function(e){
   var ctxEl=document.getElementById('ctx-menu');
