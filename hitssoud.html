@@ -90,6 +90,14 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 .btn-outline:hover{border-color:var(--orange);}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:4px;}
 .section-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--text);font-weight:400;}
+.ranking-card{min-width:80px;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card);border-radius:16px;padding:12px 8px;position:relative;}
+.ranking-card .rank-pos{position:absolute;top:6px;left:6px;font-size:11px;font-weight:700;color:var(--text);}
+.ranking-card .rank-avatar{width:52px;height:52px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;}
+.ranking-card .rank-name{font-size:11px;font-weight:600;color:var(--text);text-align:center;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ranking-card .rank-count{font-size:10px;color:var(--text-secondary);text-align:center;}
+.ranking-card.gold .rank-avatar{background:linear-gradient(135deg,#f7c948,#e6a817);}
+.ranking-card.silver .rank-avatar{background:linear-gradient(135deg,#b0b8c1,#8a9199);}
+.ranking-card.bronze .rank-avatar{background:linear-gradient(135deg,#cd7f32,#a0522d);}
 .see-all{font-size:12px;font-weight:800;color:var(--orange);cursor:pointer;text-transform:uppercase;letter-spacing:1px;}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:14px;margin-bottom:28px;}
 .card{background:var(--surface);border-radius:14px;padding:12px;cursor:pointer;transition:all .22s;border:1px solid transparent;position:relative;}
@@ -593,6 +601,14 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
           <button class="btn-outline" id="btn-hero-explore"><span>Explorar</span></button>
         </div>
       </div>
+      <!-- RANKING DE OUVINTES -->
+      <div id="ranking-section" style="margin:16px 0;">
+        <div class="section-header">
+          <h2 class="section-title">🏆 Ranking do Mês</h2>
+        </div>
+        <div id="ranking-list" style="display:flex;gap:12px;overflow-x:auto;padding:8px 0 12px;scrollbar-width:none;"></div>
+      </div>
+
       <div id="avids-section" style="display:none;">
   <div class="section-header"><h2 class="section-title">🔥 Em Alta Agora</h2><span class="see-all" id="btn-avids-refresh">Atualizar</span></div>
   <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;" id="avids-tabs">
@@ -1248,7 +1264,7 @@ document.getElementById('sug-enviar').addEventListener('click',async function(){
 document.getElementById('btn-clear-data').addEventListener('click',function(){if(!confirm('Apagar TODOS os dados?'))return;localStorage.clear();playlists=[];liked={};tracksPlayed=0;playHistory=[];artistPlayCount={};weeklyPlays={};weeklyTracks={};alarms=[];showToast('🗑️ Dados apagados');location.reload();});
 document.getElementById('avatar-btn').addEventListener('click',function(){showView('profile');});
 function updateMediaSession(tr){if(!('mediaSession' in navigator))return;navigator.mediaSession.metadata=new MediaMetadata({title:tr.name,artist:tr.artist,album:'HitsSoud',artwork:tr.thumb?[{src:tr.thumb,sizes:'512x512',type:'image/jpeg'}]:[]});navigator.mediaSession.setActionHandler('play',function(){ytReady&&ytPlayer.playVideo();});navigator.mediaSession.setActionHandler('pause',function(){ytReady&&ytPlayer.pauseVideo();});navigator.mediaSession.setActionHandler('nexttrack',nextTrack);navigator.mediaSession.setActionHandler('previoustrack',prevTrack);}
-function playTrackObj(tr){if(radioAudio){radioAudio.pause();radioAudio=null;currentRadio=null;}currentTrack=tr;tracksPlayed++;recordPlay(tr);document.getElementById('player-name').textContent=tr.name;document.getElementById('player-artist').textContent=tr.artist;var th=document.getElementById('player-thumb');th.innerHTML=tr.thumb?'<img src="'+tr.thumb+'"/>':'🎵';document.getElementById('player-heart').className='fa fa-heart player-heart'+(liked[tr.ytId]?' liked':'');document.getElementById('progress-fill').style.width='0%';document.getElementById('time-current').textContent='0:00';document.getElementById('time-total').textContent='0:00';playYT(tr.ytId);showToast('▶ '+tr.name);updateMediaSession(tr);if(npOpen){updateNowPlaying();lyricsLoaded=false;videoLoaded=false;if(activeTab==='karaoke')loadLyrics(tr);if(activeTab==='video')loadVideo(tr);}for(var cid in _listMap)renderTracksList(_listMap[cid],cid);}
+function playTrackObj(tr){if(radioAudio){radioAudio.pause();radioAudio=null;currentRadio=null;}currentTrack=tr;tracksPlayed++;recordPlay(tr);registerPlay();document.getElementById('player-name').textContent=tr.name;document.getElementById('player-artist').textContent=tr.artist;var th=document.getElementById('player-thumb');th.innerHTML=tr.thumb?'<img src="'+tr.thumb+'"/>':'🎵';document.getElementById('player-heart').className='fa fa-heart player-heart'+(liked[tr.ytId]?' liked':'');document.getElementById('progress-fill').style.width='0%';document.getElementById('time-current').textContent='0:00';document.getElementById('time-total').textContent='0:00';playYT(tr.ytId);showToast('▶ '+tr.name);updateMediaSession(tr);if(npOpen){updateNowPlaying();lyricsLoaded=false;videoLoaded=false;if(activeTab==='karaoke')loadLyrics(tr);if(activeTab==='video')loadVideo(tr);}for(var cid in _listMap)renderTracksList(_listMap[cid],cid);}
 function togglePlay(){if(radioAudio){radioAudio.pause();radioAudio=null;currentRadio=null;}if(!currentTrack){if(queue[0])playTrackObj(queue[0]);return;}if(!ytReady)return;isPlaying?ytPlayer.pauseVideo():ytPlayer.playVideo();}
 function nextTrack(){if(!queue.length)return;if(nextQueue.length){playTrackObj(nextQueue.shift());return;}if(shuffle){playTrackObj(queue[Math.floor(Math.random()*queue.length)]);return;}var idx=queue.findIndex(function(t){return currentTrack&&t.ytId===currentTrack.ytId;});playTrackObj(queue[(idx+1)%queue.length]);}
 function prevTrack(){if(!queue.length)return;if(ytPlayer&&ytPlayer.getCurrentTime()>5){ytPlayer.seekTo(0);return;}var idx=queue.findIndex(function(t){return currentTrack&&t.ytId===currentTrack.ytId;});playTrackObj(queue[(idx-1+queue.length)%queue.length]);}
@@ -1350,7 +1366,7 @@ document.querySelectorAll('.sleep-opt').forEach(function(btn){
 });
 document.getElementById('btn-mute').addEventListener('click',function(){muted=!muted;this.innerHTML=muted?'<i class="fa fa-volume-xmark"></i>':'<i class="fa fa-volume-high"></i>';if(ytReady){muted?ytPlayer.mute():ytPlayer.unMute();}});
 function updateBottomNav(viewName){document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});var map={home:'bn-home',search:'bn-search',top100:'bn-top100',radio:'bn-radio',library:'bn-library',profile:'bn-profile',podcast:'bn-podcast',quiz:'bn-quiz'};if(map[viewName]){var el=document.getElementById(map[viewName]);if(el)el.classList.add('active');}}
-function showView(name){history.pushState({view:name},'',location.pathname);document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');v.classList.add('hidden');});var el=document.getElementById('view-'+name);if(el){el.classList.remove('hidden');el.classList.add('active');}document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.view===name);});document.getElementById('content').scrollTop=0;updateBottomNav(name);if(name==='profile')updateProfileView();if(name==='radio')renderRadioList('br');if(name==='podcast')loadPodcasts('brasil');if(name==='top100'){var af=document.querySelector('.filter-tab.active');if(af)loadTop100(af.dataset.q);}}
+function showView(name){history.pushState({view:name},'',location.pathname);document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');v.classList.add('hidden');});var el=document.getElementById('view-'+name);if(el){el.classList.remove('hidden');el.classList.add('active');}document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.view===name);});document.getElementById('content').scrollTop=0;updateBottomNav(name);if(name==='profile')updateProfileView();if(name==='radio')renderRadioList('br');if(name==='podcast')loadPodcasts('brasil');if(name==='home')loadRanking();if(name==='top100'){var af=document.querySelector('.filter-tab.active');if(af)loadTop100(af.dataset.q);}}
 window.addEventListener('popstate',function(e){if(e.state&&e.state.view){showView(e.state.view);}else{showView('home');}});
 document.getElementById('btn-home-top').addEventListener('click',function(){document.getElementById('search-input').value='';document.getElementById('search-results-area').classList.remove('hidden');document.getElementById('search-results').classList.add('hidden');showView('home');});
 document.querySelectorAll('.nav-item').forEach(function(el){el.addEventListener('click',function(){showView(this.dataset.view);});});
@@ -1737,6 +1753,44 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
 
 function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);}
 if(!checkFirstAccess()){}else{initApp();}
+
+// Ranking de ouvintes
+async function loadRanking() {
+  try {
+    const res = await fetch('/api/ranking');
+    const data = await res.json();
+    const el = document.getElementById('ranking-list');
+    if (!el) return;
+    if (!data.length) { el.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;padding:8px;">Nenhum dado ainda. Toque músicas para aparecer aqui!</p>'; return; }
+    const medals = ['gold','silver','bronze'];
+    const emojis = ['🥇','🥈','🥉'];
+    el.innerHTML = data.map((u, i) => {
+      const cls = medals[i] || '';
+      const initial = (u.userName || '?')[0].toUpperCase();
+      const pos = emojis[i] || (i+1)+'º';
+      return `<div class="ranking-card ${cls}">
+        <span class="rank-pos">${pos}</span>
+        <div class="rank-avatar">${initial}</div>
+        <span class="rank-name">${u.userName || 'Usuário'}</span>
+        <span class="rank-count">${u.count} plays</span>
+      </div>`;
+    }).join('');
+  } catch(e) { console.log('Ranking erro:', e); }
+}
+
+// Registrar play no ranking
+async function registerPlay() {
+  try {
+    const userId = localStorage.getItem('userId');
+    const userName = localStorage.getItem('userName') || localStorage.getItem('userNome') || 'Usuário';
+    if (!userId) return;
+    await fetch('/api/ranking/play', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ userId, userName })
+    });
+  } catch(e) {}
+}
 </script>
 </body>
 </html>
