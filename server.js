@@ -1,4 +1,19 @@
 const express = require('express');
+const mongoose = require('mongoose');
+
+// Conectar ao MongoDB
+mongoose.connect(process.env.MONGODB_URI).then(() => {
+  console.log('MongoDB conectado!');
+}).catch(e => console.log('Erro MongoDB:', e.message));
+
+// Schema do ranking
+const playSchema = new mongoose.Schema({
+  userId: String,
+  userName: String,
+  count: { type: Number, default: 0 },
+  month: String
+});
+const Play = mongoose.model('Play', playSchema);
 const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
@@ -1166,6 +1181,37 @@ app.get('/api/podcasts', async function(req, res) {
     const r = await fetch(url);
     const d = await r.json();
     res.json(d);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Rota para registrar play
+app.post('/api/ranking/play', async function(req, res) {
+  try {
+    const { userId, userName } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId obrigatorio' });
+    const month = new Date().toISOString().slice(0, 7);
+    let record = await Play.findOne({ userId, month });
+    if (record) {
+      record.count += 1;
+      if (userName) record.userName = userName;
+      await record.save();
+    } else {
+      record = await Play.create({ userId, userName: userName || userId, count: 1, month });
+    }
+    res.json({ ok: true, count: record.count });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Rota para buscar ranking do mes
+app.get('/api/ranking', async function(req, res) {
+  try {
+    const month = new Date().toISOString().slice(0, 7);
+    const top = await Play.find({ month }).sort({ count: -1 }).limit(20);
+    res.json(top);
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
