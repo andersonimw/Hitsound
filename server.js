@@ -1223,7 +1223,7 @@ app.get('/debug-user', function(req, res) {
   <h2>Debug localStorage</h2>
   <div id="out"></div>
   <script>
-    var keys = ['userId','userName','userNome','user','currentUser'];
+    var keys = ['userId','userName','userNome','user','currentUser','hs_cadastro'];
     var h = '';
     keys.forEach(function(k){ h += '<p><b>'+k+':</b> '+localStorage.getItem(k)+'</p>'; });
     document.getElementById('out').innerHTML = h;

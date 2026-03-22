@@ -1781,8 +1781,11 @@ async function loadRanking() {
 // Registrar play no ranking
 async function registerPlay() {
   try {
-    const userId = localStorage.getItem('userId');
-    const userName = localStorage.getItem('userName') || localStorage.getItem('userNome') || 'Usuário';
+    var cadastro = localStorage.getItem('hs_cadastro');
+    if (!cadastro) return;
+    var dados = JSON.parse(cadastro);
+    var userId = dados.email || dados.telefone;
+    var userName = dados.nome || 'Usuário';
     if (!userId) return;
     await fetch('/api/ranking/play', {
       method: 'POST',
