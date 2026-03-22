@@ -353,6 +353,21 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 
 .avids-tab{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--surface3);background:var(--surface);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
 .avids-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+#btn-drawer{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:6px;display:flex;align-items:center;}
+#drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;}
+#drawer-overlay.open{opacity:1;pointer-events:all;}
+#drawer{position:fixed;top:0;left:-320px;width:300px;height:100%;background:var(--bg);z-index:1000;transition:left .3s;overflow-y:auto;box-shadow:4px 0 20px rgba(0,0,0,0.4);}
+#drawer.open{left:0;}
+#drawer-header{display:flex;align-items:center;justify-content:space-between;padding:20px 16px;border-bottom:1px solid var(--surface3);}
+#btn-close-drawer{background:none;border:none;color:var(--text);font-size:18px;cursor:pointer;}
+#drawer-profile-content{padding:16px;}
+.quiz-genre-btn{padding:8px 16px;border-radius:20px;border:1px solid var(--surface3);background:var(--surface);color:var(--text-muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;}
+.quiz-genre-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.quiz-option{padding:14px;border-radius:12px;border:2px solid var(--surface3);background:var(--surface);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;text-align:left;}
+.quiz-option:hover{border-color:var(--primary);}
+.quiz-option.correct{background:#1db954;border-color:#1db954;color:#fff;}
+.quiz-option.wrong{background:#e53935;border-color:#e53935;color:#fff;}
 </style>
 </head>
 <body>
@@ -538,7 +553,16 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   </div>
 </div>
 
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div id="drawer-header">
+    <div class="logo">Hits<span>Soud</span></div>
+    <button id="btn-close-drawer" onclick="closeDrawer()"><i class="fa fa-times"></i></button>
+  </div>
+  <div id="drawer-profile-content"></div>
+</div>
 <header id="topbar">
+  <button id="btn-drawer"><i class="fa fa-bars"></i></button>
   <div class="logo">Hits<span>Soud</span></div>
   <button id="btn-home-top"><i class="fa fa-house"></i></button>
   <div id="search-bar">
@@ -679,6 +703,47 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 
       <div class="tracks-list" id="radio-list"></div>
     </section>
+    <section id="view-quiz" class="view hidden">
+      <div class="section-header"><h2 class="section-title">🎮 Quiz Musical</h2></div>
+      <div id="quiz-container" style="max-width:460px;margin:0 auto;padding:10px;">
+        <div id="quiz-start" style="text-align:center;padding:30px 0;">
+          <div style="font-size:60px;margin-bottom:16px;">🎵</div>
+          <h3 style="color:var(--text);margin-bottom:8px;">Adivinhe a Música!</h3>
+          <p style="color:var(--text-muted);margin-bottom:24px;">Ouça o trecho e escolha a resposta certa. Quanto mais rápido, mais pontos!</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;" id="quiz-genre-btns">
+            <button class="quiz-genre-btn active" data-genre="brasil">🇧🇷 Brasil</button>
+            <button class="quiz-genre-btn" data-genre="internacional">🌍 Internacional</button>
+            <button class="quiz-genre-btn" data-genre="sertanejo">🤠 Sertanejo</button>
+            <button class="quiz-genre-btn" data-genre="funk">🕺 Funk</button>
+            <button class="quiz-genre-btn" data-genre="gospel">✝️ Gospel</button>
+            <button class="quiz-genre-btn" data-genre="pop">🎹 Pop</button>
+            <button class="quiz-genre-btn" data-genre="rock">🎸 Rock</button>
+          </div>
+          <button id="btn-start-quiz" class="btn-primary" style="font-size:16px;padding:14px 40px;">▶ Começar Quiz</button>
+        </div>
+        <div id="quiz-game" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="color:var(--text-muted);font-size:13px;">Pergunta <span id="quiz-q-num">1</span>/10</div>
+            <div style="color:var(--primary);font-weight:800;font-size:16px;">⭐ <span id="quiz-score">0</span></div>
+            <div id="quiz-timer" style="color:var(--text);font-weight:800;font-size:16px;">⏱ 15</div>
+          </div>
+          <div style="background:var(--surface);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Qual é essa música?</div>
+            <button id="quiz-play-btn" class="btn-primary" style="padding:12px 30px;font-size:15px;">▶ Ouvir Trecho</button>
+            <div id="quiz-playing" style="display:none;color:var(--primary);margin-top:10px;font-size:13px;">🎵 Tocando...</div>
+          </div>
+          <div id="quiz-options" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;"></div>
+          <div id="quiz-feedback" style="display:none;text-align:center;padding:16px;border-radius:12px;margin-bottom:16px;"></div>
+        </div>
+        <div id="quiz-result" style="display:none;text-align:center;padding:30px 0;">
+          <div style="font-size:60px;margin-bottom:16px;" id="quiz-result-emoji">🏆</div>
+          <h3 style="color:var(--text);margin-bottom:8px;">Quiz Finalizado!</h3>
+          <div style="font-size:32px;font-weight:800;color:var(--primary);margin-bottom:8px;">⭐ <span id="quiz-final-score">0</span> pts</div>
+          <p style="color:var(--text-muted);margin-bottom:24px;" id="quiz-result-msg"></p>
+          <button id="btn-restart-quiz" class="btn-primary" style="font-size:16px;padding:14px 40px;">🔄 Jogar Novamente</button>
+        </div>
+      </div>
+    </section>
     <section id="view-podcast" class="view hidden">
       <div class="section-header"><h2 class="section-title">🎙️ Podcasts</h2></div>
       <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;" id="podcast-tabs">
@@ -784,7 +849,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   <button class="bn-item" id="bn-top100"><i class="fa fa-trophy"></i><span>Top 50</span></button>
   <button class="bn-item" id="bn-radio"><i class="fa fa-radio"></i><span>Rádio</span></button>
   <button class="bn-item" id="bn-library"><i class="fa fa-book"></i><span>Biblioteca</span></button>
-  <button class="bn-item" id="bn-profile"><i class="fa fa-user"></i><span>Perfil</span></button>
+  <button class="bn-item" id="bn-quiz"><i class="fa fa-gamepad"></i><span>Quiz</span></button>
 </nav>
 
 <div id="modal-overlay" class="hidden">
@@ -1300,7 +1365,7 @@ document.querySelectorAll('.sleep-opt').forEach(function(btn){
   });
 });
 document.getElementById('btn-mute').addEventListener('click',function(){muted=!muted;this.innerHTML=muted?'<i class="fa fa-volume-xmark"></i>':'<i class="fa fa-volume-high"></i>';if(ytReady){muted?ytPlayer.mute():ytPlayer.unMute();}});
-function updateBottomNav(viewName){document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});var map={home:'bn-home',search:'bn-search',top100:'bn-top100',radio:'bn-radio',library:'bn-library',profile:'bn-profile',podcast:'bn-podcast'};if(map[viewName]){var el=document.getElementById(map[viewName]);if(el)el.classList.add('active');}}
+function updateBottomNav(viewName){document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});var map={home:'bn-home',search:'bn-search',top100:'bn-top100',radio:'bn-radio',library:'bn-library',podcast:'bn-podcast',quiz:'bn-quiz'};if(map[viewName]){var el=document.getElementById(map[viewName]);if(el)el.classList.add('active');}}
 function showView(name){history.pushState({view:name},'',location.pathname);document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');v.classList.add('hidden');});var el=document.getElementById('view-'+name);if(el){el.classList.remove('hidden');el.classList.add('active');}document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.view===name);});document.getElementById('content').scrollTop=0;updateBottomNav(name);if(name==='profile')updateProfileView();if(name==='radio')renderRadioList('br');if(name==='podcast')loadPodcasts('brasil');if(name==='top100'){var af=document.querySelector('.filter-tab.active');if(af)loadTop100(af.dataset.q);}}
 window.addEventListener('popstate',function(e){if(e.state&&e.state.view){showView(e.state.view);}else{showView('home');}});
 document.getElementById('btn-home-top').addEventListener('click',function(){document.getElementById('search-input').value='';document.getElementById('search-results-area').classList.remove('hidden');document.getElementById('search-results').classList.add('hidden');showView('home');});
@@ -1310,7 +1375,19 @@ document.getElementById('bn-podcast').addEventListener('click',function(){showVi
 document.getElementById('bn-top100').addEventListener('click',function(){showView('top100');});
 document.getElementById('bn-radio').addEventListener('click',function(){showView('radio');});
 document.getElementById('bn-library').addEventListener('click',function(){showView('library');});
-document.getElementById('bn-profile').addEventListener('click',function(){showView('profile');});
+document.getElementById('bn-quiz').addEventListener('click',function(){showView('quiz');});
+document.getElementById('btn-drawer').addEventListener('click',function(){openDrawer();});
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  var pc = document.getElementById('drawer-profile-content');
+  var orig = document.getElementById('view-profile');
+  if(orig) pc.innerHTML = orig.innerHTML;
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
 document.addEventListener('click',function(e){
   var ctxEl=document.getElementById('ctx-menu');
   if(!ctxEl.classList.contains('hidden')&&!ctxEl.contains(e.target))closeCtxMenu();
@@ -1543,6 +1620,139 @@ document.getElementById('podcast-tabs') && document.getElementById('podcast-tabs
   tab.classList.add('active');
   loadPodcasts(tab.dataset.cat);
 });
+var quizGenre='brasil';
+var quizQuestions=[];
+var quizCurrent=0;
+var quizScore=0;
+var quizTimer=null;
+var quizTimeLeft=15;
+var quizAnswered=false;
+
+document.getElementById('quiz-genre-btns')&&document.getElementById('quiz-genre-btns').addEventListener('click',function(e){
+  var btn=e.target.closest('.quiz-genre-btn');
+  if(!btn)return;
+  document.querySelectorAll('.quiz-genre-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  quizGenre=btn.dataset.genre;
+});
+
+document.getElementById('btn-start-quiz')&&document.getElementById('btn-start-quiz').addEventListener('click',function(){
+  startQuiz();
+});
+
+document.getElementById('btn-restart-quiz')&&document.getElementById('btn-restart-quiz').addEventListener('click',function(){
+  document.getElementById('quiz-result').style.display='none';
+  document.getElementById('quiz-start').style.display='block';
+});
+
+document.getElementById('btn-quiz-play-btn')&&document.getElementById('quiz-play-btn').addEventListener('click',function(){
+  playQuizTrack();
+});
+
+async function startQuiz(){
+  document.getElementById('quiz-start').style.display='none';
+  document.getElementById('quiz-game').style.display='block';
+  document.getElementById('quiz-result').style.display='none';
+  quizQuestions=[];
+  quizCurrent=0;
+  quizScore=0;
+  document.getElementById('quiz-score').textContent='0';
+  document.getElementById('quiz-feedback').style.display='none';
+  try{
+    var r=await fetch('/api/lastfm-novidades?genre='+quizGenre);
+    var d=await r.json();
+    if(!d.items||d.items.length<4){showToast('❌ Poucas músicas para o quiz!');document.getElementById('quiz-start').style.display='block';document.getElementById('quiz-game').style.display='none';return;}
+    var items=d.items.sort(function(){return Math.random()-.5;});
+    quizQuestions=items.slice(0,Math.min(10,items.length));
+    loadQuizQuestion();
+  }catch(e){showToast('❌ Erro ao carregar quiz');document.getElementById('quiz-start').style.display='block';document.getElementById('quiz-game').style.display='none';}
+}
+
+function loadQuizQuestion(){
+  if(quizCurrent>=quizQuestions.length){endQuiz();return;}
+  quizAnswered=false;
+  clearInterval(quizTimer);
+  quizTimeLeft=15;
+  document.getElementById('quiz-q-num').textContent=quizCurrent+1;
+  document.getElementById('quiz-timer').textContent='⏱ '+quizTimeLeft;
+  document.getElementById('quiz-feedback').style.display='none';
+  document.getElementById('quiz-play-btn').style.display='inline-block';
+  document.getElementById('quiz-playing').style.display='none';
+  var correct=quizQuestions[quizCurrent];
+  var others=quizQuestions.filter(function(q,i){return i!==quizCurrent;}).sort(function(){return Math.random()-.5;}).slice(0,3);
+  var options=[correct].concat(others).sort(function(){return Math.random()-.5;});
+  var h='';
+  options.forEach(function(o){
+    h+='<button class="quiz-option" onclick="answerQuiz(''+o.ytId+'',''+correct.ytId+'')"><div style="font-size:12px;font-weight:800;">'+esc(o.name)+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+esc(o.artist)+'</div></button>';
+  });
+  document.getElementById('quiz-options').innerHTML=h;
+  quizTimer=setInterval(function(){
+    quizTimeLeft--;
+    document.getElementById('quiz-timer').textContent='⏱ '+quizTimeLeft;
+    if(quizTimeLeft<=0){
+      clearInterval(quizTimer);
+      if(!quizAnswered)answerQuiz('timeout',correct.ytId);
+    }
+  },1000);
+}
+
+function playQuizTrack(){
+  var correct=quizQuestions[quizCurrent];
+  if(!correct)return;
+  document.getElementById('quiz-play-btn').style.display='none';
+  document.getElementById('quiz-playing').style.display='block';
+  playYT(correct.ytId);
+  setTimeout(function(){
+    ytReady&&ytPlayer&&ytPlayer.pauseVideo&&ytPlayer.pauseVideo();
+    document.getElementById('quiz-playing').textContent='🎵 Trecho tocado!';
+  },10000);
+}
+
+function answerQuiz(chosen, correctId){
+  if(quizAnswered)return;
+  quizAnswered=true;
+  clearInterval(quizTimer);
+  ytReady&&ytPlayer&&ytPlayer.pauseVideo&&ytPlayer.pauseVideo();
+  var correct=chosen===correctId;
+  var pts=correct?Math.max(10,quizTimeLeft*10):0;
+  quizScore+=pts;
+  document.getElementById('quiz-score').textContent=quizScore;
+  document.querySelectorAll('.quiz-option').forEach(function(btn){
+    btn.disabled=true;
+    var ytId=btn.getAttribute('onclick').match(/'([^']+)','([^']+)'/);
+    if(ytId&&ytId[1]===correctId)btn.classList.add('correct');
+    else if(ytId&&ytId[1]===chosen&&!correct)btn.classList.add('wrong');
+  });
+  var fb=document.getElementById('quiz-feedback');
+  fb.style.display='block';
+  fb.style.background=correct?'rgba(29,185,84,0.2)':'rgba(229,57,53,0.2)';
+  fb.innerHTML=correct?'✅ <strong>Correto!</strong> +'+pts+' pts':'❌ <strong>Errou!</strong> Era: '+esc(quizQuestions[quizCurrent].name);
+  setTimeout(function(){
+    quizCurrent++;
+    loadQuizQuestion();
+  },2000);
+}
+
+function endQuiz(){
+  clearInterval(quizTimer);
+  ytReady&&ytPlayer&&ytPlayer.pauseVideo&&ytPlayer.pauseVideo();
+  document.getElementById('quiz-game').style.display='none';
+  document.getElementById('quiz-result').style.display='block';
+  document.getElementById('quiz-final-score').textContent=quizScore;
+  var emoji='🏆';
+  var msg='';
+  if(quizScore>=800){emoji='🏆';msg='Incrível! Você é um expert em música!';}
+  else if(quizScore>=500){emoji='🎵';msg='Muito bom! Você manja bastante!';}
+  else if(quizScore>=200){emoji='😅';msg='Bom começo! Continue praticando!';}
+  else{emoji='🎧';msg='Ouça mais músicas e tente novamente!';}
+  document.getElementById('quiz-result-emoji').textContent=emoji;
+  document.getElementById('quiz-result-msg').textContent=msg;
+}
+
+document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn').addEventListener('click',function(){
+  playQuizTrack();
+});
+
 function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);}
 if(!checkFirstAccess()){}else{initApp();}
 </script>
