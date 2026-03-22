@@ -1186,6 +1186,51 @@ app.get('/api/podcasts', async function(req, res) {
   }
 });
 
+// Schema de comentarios
+const commentSchema = new mongoose.Schema({
+  ytId: String,
+  userId: String,
+  userName: String,
+  text: String,
+  createdAt: { type: Date, default: Date.now }
+});
+const Comment = mongoose.model('Comment', commentSchema);
+
+// Buscar comentarios de uma musica
+app.get('/api/comments', async function(req, res) {
+  try {
+    const ytId = req.query.ytId;
+    if (!ytId) return res.status(400).json({ error: 'ytId obrigatorio' });
+    const comments = await Comment.find({ ytId }).sort({ createdAt: -1 }).limit(50);
+    res.json(comments);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Adicionar comentario
+app.post('/api/comments', async function(req, res) {
+  try {
+    const { ytId, userId, userName, text } = req.body;
+    if (!ytId || !userId || !text) return res.status(400).json({ error: 'Campos obrigatorios' });
+    if (text.length > 200) return res.status(400).json({ error: 'Comentario muito longo' });
+    const comment = await Comment.create({ ytId, userId, userName, text });
+    res.json(comment);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Apagar comentario (admin)
+app.delete('/api/comments/:id', async function(req, res) {
+  try {
+    await Comment.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Rota para registrar play
 app.post('/api/ranking/play', async function(req, res) {
   try {
