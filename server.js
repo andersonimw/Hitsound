@@ -1159,6 +1159,18 @@ app.get('/api/reels', async function(req, res) {
   }
 });
 
+app.get('/api/podcasts', async function(req, res) {
+  try {
+    const q = req.query.q || 'podcast brasil';
+    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=podcast&limit=15&country=BR`;
+    const r = await fetch(url);
+    const d = await r.json();
+    res.json(d);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, function() {
   console.log('HitsSoud rodando na porta ' + PORT);
 });

@@ -679,6 +679,19 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 
       <div class="tracks-list" id="radio-list"></div>
     </section>
+    <section id="view-podcast" class="view hidden">
+      <div class="section-header"><h2 class="section-title">🎙️ Podcasts</h2></div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;" id="podcast-tabs">
+        <button class="avids-tab active" data-cat="brasil">🇧🇷 Brasil</button>
+        <button class="avids-tab" data-cat="sociedade">💬 Sociedade</button>
+        <button class="avids-tab" data-cat="crime">🔍 Crime</button>
+        <button class="avids-tab" data-cat="esporte">⚽ Esporte</button>
+        <button class="avids-tab" data-cat="humor">😂 Humor</button>
+        <button class="avids-tab" data-cat="tecnologia">💻 Tecnologia</button>
+        <button class="avids-tab" data-cat="negocios">💼 Negócios</button>
+      </div>
+      <div id="podcast-list" class="tracks-list" style="margin-top:12px;"></div>
+    </section>
     <section id="view-profile" class="view hidden">
       <div style="max-width:460px;margin:0 auto;">
         <div class="profile-hero">
@@ -766,7 +779,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 
 <nav id="bottom-nav">
   <button class="bn-item active" id="bn-home"><i class="fa fa-house"></i><span>Início</span></button>
-  <button class="bn-item" id="bn-search"><i class="fa fa-search"></i><span>Buscar</span></button>
+  <button class="bn-item" id="bn-podcast"><i class="fa fa-podcast"></i><span>Podcast</span></button>
   <button class="bn-item" id="bn-top100"><i class="fa fa-trophy"></i><span>Top 50</span></button>
   <button class="bn-item" id="bn-radio"><i class="fa fa-radio"></i><span>Rádio</span></button>
   <button class="bn-item" id="bn-library"><i class="fa fa-book"></i><span>Biblioteca</span></button>
@@ -1286,13 +1299,13 @@ document.querySelectorAll('.sleep-opt').forEach(function(btn){
   });
 });
 document.getElementById('btn-mute').addEventListener('click',function(){muted=!muted;this.innerHTML=muted?'<i class="fa fa-volume-xmark"></i>':'<i class="fa fa-volume-high"></i>';if(ytReady){muted?ytPlayer.mute():ytPlayer.unMute();}});
-function updateBottomNav(viewName){document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});var map={home:'bn-home',search:'bn-search',top100:'bn-top100',radio:'bn-radio',library:'bn-library',profile:'bn-profile'};if(map[viewName]){var el=document.getElementById(map[viewName]);if(el)el.classList.add('active');}}
-function showView(name){history.pushState({view:name},'',location.pathname);document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');v.classList.add('hidden');});var el=document.getElementById('view-'+name);if(el){el.classList.remove('hidden');el.classList.add('active');}document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.view===name);});document.getElementById('content').scrollTop=0;updateBottomNav(name);if(name==='profile')updateProfileView();if(name==='radio')renderRadioList('br');if(name==='top100'){var af=document.querySelector('.filter-tab.active');if(af)loadTop100(af.dataset.q);}}
+function updateBottomNav(viewName){document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});var map={home:'bn-home',search:'bn-search',top100:'bn-top100',radio:'bn-radio',library:'bn-library',profile:'bn-profile',podcast:'bn-podcast'};if(map[viewName]){var el=document.getElementById(map[viewName]);if(el)el.classList.add('active');}}
+function showView(name){history.pushState({view:name},'',location.pathname);document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');v.classList.add('hidden');});var el=document.getElementById('view-'+name);if(el){el.classList.remove('hidden');el.classList.add('active');}document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.view===name);});document.getElementById('content').scrollTop=0;updateBottomNav(name);if(name==='profile')updateProfileView();if(name==='radio')renderRadioList('br');if(name==='podcast')loadPodcasts('brasil');if(name==='top100'){var af=document.querySelector('.filter-tab.active');if(af)loadTop100(af.dataset.q);}}
 window.addEventListener('popstate',function(e){if(e.state&&e.state.view){showView(e.state.view);}else{showView('home');}});
 document.getElementById('btn-home-top').addEventListener('click',function(){document.getElementById('search-input').value='';document.getElementById('search-results-area').classList.remove('hidden');document.getElementById('search-results').classList.add('hidden');showView('home');});
 document.querySelectorAll('.nav-item').forEach(function(el){el.addEventListener('click',function(){showView(this.dataset.view);});});
 document.getElementById('bn-home').addEventListener('click',function(){document.getElementById('search-input').value='';document.getElementById('search-results-area').classList.remove('hidden');document.getElementById('search-results').classList.add('hidden');showView('home');});
-document.getElementById('bn-search').addEventListener('click',function(){showView('search');});
+document.getElementById('bn-podcast').addEventListener('click',function(){showView('podcast');});
 document.getElementById('bn-top100').addEventListener('click',function(){showView('top100');});
 document.getElementById('bn-radio').addEventListener('click',function(){showView('radio');});
 document.getElementById('bn-library').addEventListener('click',function(){showView('library');});
@@ -1490,6 +1503,54 @@ async function loadReels(){
   el.innerHTML=h;
 }
 document.getElementById('btn-reels-refresh')&&document.getElementById('btn-reels-refresh').addEventListener('click',loadReels);
+async function loadPodcasts(cat){
+  cat = cat || 'brasil';
+  var el = document.getElementById('podcast-list');
+  if(!el) return;
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  var termMap = {
+    'brasil': 'podcast brasil',
+    'sociedade': 'podcast sociedade brasil',
+    'crime': 'podcast crime verdadeiro brasil',
+    'esporte': 'podcast esporte futebol brasil',
+    'humor': 'podcast humor comedia brasil',
+    'tecnologia': 'podcast tecnologia brasil',
+    'negocios': 'podcast negocios empreendedorismo brasil'
+  };
+  var term = termMap[cat] || 'podcast brasil';
+  try {
+    var r = await fetch('/api/podcasts?q=' + encodeURIComponent(term));
+    var d = await r.json();
+    if(!d.results || !d.results.length){ el.innerHTML='<p style="color:var(--text-muted);padding:10px;">Nenhum podcast encontrado.</p>'; return; }
+    var h = '';
+    d.results.forEach(function(p){
+      h += '<div style="display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;background:var(--surface);margin-bottom:8px;cursor:pointer;border:1px solid var(--surface3);" onclick="playPodcast(''+esc(p.trackName)+'',''+esc(p.artistName)+'',''+p.artworkUrl100+'')">';
+      h += '<img src="'+p.artworkUrl100+'" style="width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" loading="lazy"/>';
+      h += '<div style="overflow:hidden;"><div style="font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(p.trackName)+'</div>';
+      h += '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+esc(p.artistName)+'</div>';
+      h += '<div style="font-size:10px;color:var(--primary);margin-top:4px;">🎙️ '+esc(p.primaryGenreName||'Podcast')+'</div></div></div>';
+    });
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML='<p style="color:var(--text-muted);padding:10px;">Erro ao carregar podcasts.</p>'; }
+}
+function playPodcast(name, artist, thumb){
+  var tr = {name: name, artist: artist, thumb: thumb, ytId: null};
+  var q = name + ' ' + artist + ' podcast';
+  fetch('/api/search?q=' + encodeURIComponent(q)).then(function(r){ return r.json(); }).then(function(d){
+    if(d.items && d.items.length){
+      tr.ytId = d.items[0].id.videoId;
+      tr.thumb = d.items[0].snippet.thumbnails.medium.url;
+      playTrackObj(tr);
+    }
+  }).catch(function(){});
+}
+document.getElementById('podcast-tabs') && document.getElementById('podcast-tabs').addEventListener('click', function(e){
+  var tab = e.target.closest('.avids-tab');
+  if(!tab) return;
+  document.querySelectorAll('#podcast-tabs .avids-tab').forEach(function(t){ t.classList.remove('active'); });
+  tab.classList.add('active');
+  loadPodcasts(tab.dataset.cat);
+});
 function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);}
 if(!checkFirstAccess()){}else{initApp();}
 </script>
