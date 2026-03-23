@@ -804,7 +804,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
           <div id="profile-top-tracks"></div>
         </div>
         <div class="profile-card">
-          <div class="profile-card-title"><i class="fa fa-heart" style="color:var(--wine-light);"></i> Músicas Curtidas</div>
+          <div class="profile-card-title" style="display:flex;justify-content:space-between;align-items:center;"><span><i class="fa fa-heart" style="color:var(--wine-light);"></i> Músicas Curtidas</span><button onclick="playAllLiked()" style="background:var(--orange);border:none;border-radius:20px;padding:5px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;"><i class="fa fa-play"></i> Tocar</button></div>
           <div id="profile-liked-list"></div>
         </div>
         <div class="profile-card">
@@ -1323,6 +1323,13 @@ function renderLikedTracks(){
     h+='</div>';
   });
   el.innerHTML=h;
+}
+function playAllLiked(){
+  var tracks=Object.values(likedTracks);
+  if(!tracks.length){showToast('⚠️ Nenhuma música curtida!');return;}
+  queue=tracks;
+  playTrackObj(tracks[0]);
+  showToast('▶ Tocando '+tracks.length+' favoritas!');
 }
 function playLikedTrack(idx){
   var tracks=Object.values(likedTracks);
