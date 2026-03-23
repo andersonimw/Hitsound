@@ -804,6 +804,10 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
           <div id="profile-top-tracks"></div>
         </div>
         <div class="profile-card">
+          <div class="profile-card-title"><i class="fa fa-heart" style="color:var(--wine-light);"></i> Músicas Curtidas</div>
+          <div id="profile-liked-list"></div>
+        </div>
+        <div class="profile-card">
           <div class="profile-card-title"><i class="fa fa-microphone"></i> Artistas Favoritos</div>
           <div id="profile-top-artists"></div>
         </div>
@@ -982,7 +986,7 @@ function t(k){return(TR[lang]||TR.pt)[k]||TR.pt[k]||k;}
 var TRACKS=[{name:'Blinding Lights',artist:'The Weeknd',ytId:'4NRXx6U8ABQ',thumb:'https://i.ytimg.com/vi/4NRXx6U8ABQ/mqdefault.jpg'},{name:'Flowers',artist:'Miley Cyrus',ytId:'G7KNmW9a75Y',thumb:'https://i.ytimg.com/vi/G7KNmW9a75Y/mqdefault.jpg'},{name:'As It Was',artist:'Harry Styles',ytId:'H5v3kku4y6Q',thumb:'https://i.ytimg.com/vi/H5v3kku4y6Q/mqdefault.jpg'},{name:'Anti-Hero',artist:'Taylor Swift',ytId:'b1kbLwvqugk',thumb:'https://i.ytimg.com/vi/b1kbLwvqugk/mqdefault.jpg'},{name:'Cruel Summer',artist:'Taylor Swift',ytId:'ic8j13piAhQ',thumb:'https://i.ytimg.com/vi/ic8j13piAhQ/mqdefault.jpg'},{name:'Die For You',artist:'The Weeknd',ytId:'RFGMWuJGy-s',thumb:'https://i.ytimg.com/vi/RFGMWuJGy-s/mqdefault.jpg'},{name:'Levitating',artist:'Dua Lipa',ytId:'TUVcZfQe-Kw',thumb:'https://i.ytimg.com/vi/TUVcZfQe-Kw/mqdefault.jpg'},{name:'Stay',artist:'The Kid LAROI',ytId:'hBRVQ4h4IMQ',thumb:'https://i.ytimg.com/vi/hBRVQ4h4IMQ/mqdefault.jpg'}];
 var GENRES=[{name:'Pop',emoji:'🎤',bg:'linear-gradient(135deg,#FF6B00,#c42b00)'},{name:'Rock',emoji:'🎸',bg:'linear-gradient(135deg,#7B1C3A,#3a0008)'},{name:'Hip-Hop',emoji:'🎧',bg:'linear-gradient(135deg,#1a1a2e,#16213e)'},{name:'R&B',emoji:'🎹',bg:'linear-gradient(135deg,#6b3fa0,#3d1f6b)'},{name:'Eletronica',emoji:'⚡',bg:'linear-gradient(135deg,#0077b6,#023e8a)'},{name:'Sertanejo',emoji:'🤠',bg:'linear-gradient(135deg,#8b5e3c,#4a2c0a)'},{name:'Funk',emoji:'🕺',bg:'linear-gradient(135deg,#d4a017,#7a5800)'},{name:'Pagode',emoji:'🥁',bg:'linear-gradient(135deg,#2d6a4f,#1b4332)'},{name:'Reggae',emoji:'🌴',bg:'linear-gradient(135deg,#2dc653,#0a5c2e)'},{name:'K-Pop',emoji:'💫',bg:'linear-gradient(135deg,#e040fb,#7b1fa2)'},{name:'Gospel',emoji:'✝️',bg:'linear-gradient(135deg,#b5860d,#6a4e0a)'},{name:'Jazz',emoji:'🎷',bg:'linear-gradient(135deg,#9b2226,#520000)'}];
 var SLOGANS=['🎵 Todos os ritmos em um só lugar!','🎶 Flutue com o melhor do HitsSoud!','🎧 Suas músicas preferidas em um só lugar!','🔥 O app que toca o que é bom!','🎤 Música sem limite, só no HitsSoud!'];
-var ytPlayer=null,ytReady=false,pendingVideoId=null,progressInterval=null,currentTrack=null,isPlaying=false,liked={},shuffle=false,repeat=false,muted=false,playlists=[],queue=TRACKS.slice(),nextQueue=[],ctxTrack=null,ctxPlSubOpen=false,openPlaylistIdx=-1,modalCallback=null,_cardArr=[],_listMap={},tracksPlayed=0,npOpen=false,activeTab='player',npCtxOpen=false,vinylMode=false;
+var ytPlayer=null,ytReady=false,pendingVideoId=null,progressInterval=null,currentTrack=null,isPlaying=false,liked={},likedTracks={},shuffle=false,repeat=false,muted=false,playlists=[],queue=TRACKS.slice(),nextQueue=[],ctxTrack=null,ctxPlSubOpen=false,openPlaylistIdx=-1,modalCallback=null,_cardArr=[],_listMap={},tracksPlayed=0,npOpen=false,activeTab='player',npCtxOpen=false,vinylMode=false;
 var playHistory=[],artistPlayCount={},weeklyPlays={},weeklyTracks={},top100Cache={},alarms=[],alarmTrackSelected=null;
 var userProfile={name:'HitsSoud',bio:'Seu app de música pessoal',photo:null};
 
@@ -1104,7 +1108,7 @@ async function openArtistPage(artistName){closeNowPlaying();showView('artist');d
 document.getElementById('btn-artist-back').addEventListener('click',function(){showView('home');});
 
 // ── PERFIL STATS ──────────────────────────────────────────────────
-function updateProfileView(){var sp=document.getElementById('stat-playlists');if(sp)sp.textContent=playlists.length;var sl=document.getElementById('stat-liked');if(sl)sl.textContent=Object.values(liked).filter(Boolean).length;var st=document.getElementById('stat-tracks');if(st)st.textContent=tracksPlayed;renderWrapped();renderTopTracks();renderTopArtists();renderWeeklyRanking();renderWeeklyChart();renderAlarmListProfile();}
+function updateProfileView(){var sp=document.getElementById('stat-playlists');if(sp)sp.textContent=playlists.length;var sl=document.getElementById('stat-liked');if(sl)sl.textContent=Object.values(liked).filter(Boolean).length;var st=document.getElementById('stat-tracks');if(st)st.textContent=tracksPlayed;renderWrapped();renderTopTracks();renderTopArtists();renderWeeklyRanking();renderWeeklyChart();renderAlarmListProfile();renderLikedTracks();}
 function renderTopTracks(){var sorted=playHistory.slice().sort(function(a,b){return(b.count||1)-(a.count||1);}).slice(0,5);var h='';if(!sorted.length){h='<p style="color:var(--text-muted);font-size:13px">Nenhuma música tocada ainda.</p>';}else{sorted.forEach(function(tr,i){h+='<div class="top-item" onclick=\'playTrackObj('+JSON.stringify({name:tr.name,artist:tr.artist,ytId:tr.ytId,thumb:tr.thumb})+')\' ><div class="top-rank '+(i===0?'gold':i===1?'silver':i===2?'bronze':'normal')+'">'+(i+1)+'</div><div class="top-thumb">'+mkImg(tr.thumb)+'</div><div class="top-info"><div class="top-name">'+esc(tr.name)+'</div><div class="top-sub">'+esc(tr.artist)+'</div></div><div class="top-plays">'+tr.count+'x</div></div>';});}document.getElementById('profile-top-tracks').innerHTML=h;}
 function renderTopArtists(){var sorted=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,5);var h='';if(!sorted.length){h='<p style="color:var(--text-muted);font-size:13px">Nenhum artista ainda.</p>';}else{sorted.forEach(function(entry,i){var name=entry[0],count=entry[1];h+='<div class="top-item" onclick="openArtistPage(\''+esc(name)+'\')"><div class="top-rank '+(i===0?'gold':i===1?'silver':i===2?'bronze':'normal')+'">'+(i+1)+'</div><div class="top-thumb" style="background:linear-gradient(135deg,var(--wine),var(--orange));display:flex;align-items:center;justify-content:center;font-size:18px;">🎤</div><div class="top-info"><div class="top-name">'+esc(name)+'</div><div class="top-sub">'+count+' reproduções</div></div><div class="top-plays">'+count+'x</div></div>';});}document.getElementById('profile-top-artists').innerHTML=h;}
 function renderWeeklyChart(){var days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];var max=Math.max.apply(null,days.map(function(d){return weeklyPlays[d]||0;}))||1;var h='';days.forEach(function(d){var val=weeklyPlays[d]||0;var pct=Math.max(4,Math.round((val/max)*100));h+='<div class="chart-bar-wrap"><div class="chart-bar" style="height:'+pct+'%"></div><div class="chart-bar-label">'+d+'</div></div>';});document.getElementById('weekly-chart').innerHTML=h;}
@@ -1215,7 +1219,7 @@ document.getElementById('ctx-more-artist').addEventListener('click',function(){i
 document.getElementById('ctx-artist-page').addEventListener('click',function(){if(ctxTrack)openArtistPage(ctxTrack.artist);closeCtxMenu();});
 
 function savePlaylists(){try{localStorage.setItem('hs_playlists',JSON.stringify(playlists));}catch(e){}}
-function loadPlaylists(){try{var s=localStorage.getItem('hs_playlists');if(s)playlists=JSON.parse(s);}catch(e){playlists=[];}}
+function loadPlaylists(){try{var s=localStorage.getItem('hs_playlists');if(s)playlists=JSON.parse(s);}catch(e){playlists=[];}}loadLiked();
 function applyLang(l){lang=l;document.getElementById('lang-label').textContent=TR[l].label;document.querySelectorAll('.lang-option').forEach(function(o){o.classList.toggle('active',o.dataset.lang===l);});try{localStorage.setItem('hs_lang',l);}catch(e){}}
 document.getElementById('lang-btn').addEventListener('click',function(e){e.stopPropagation();document.getElementById('lang-dropdown').classList.toggle('hidden');});
 document.querySelectorAll('.lang-option').forEach(function(el){el.addEventListener('click',function(){applyLang(this.dataset.lang);document.getElementById('lang-dropdown').classList.add('hidden');});});
@@ -1287,7 +1291,43 @@ function playTrackObj(tr){if(radioAudio){radioAudio.pause();radioAudio=null;curr
 function togglePlay(){if(radioAudio){radioAudio.pause();radioAudio=null;currentRadio=null;}if(!currentTrack){if(queue[0])playTrackObj(queue[0]);return;}if(!ytReady)return;isPlaying?ytPlayer.pauseVideo():ytPlayer.playVideo();}
 function nextTrack(){if(!queue.length)return;if(nextQueue.length){playTrackObj(nextQueue.shift());return;}if(shuffle){playTrackObj(queue[Math.floor(Math.random()*queue.length)]);return;}var idx=queue.findIndex(function(t){return currentTrack&&t.ytId===currentTrack.ytId;});playTrackObj(queue[(idx+1)%queue.length]);}
 function prevTrack(){if(!queue.length)return;if(ytPlayer&&ytPlayer.getCurrentTime()>5){ytPlayer.seekTo(0);return;}var idx=queue.findIndex(function(t){return currentTrack&&t.ytId===currentTrack.ytId;});playTrackObj(queue[(idx-1+queue.length)%queue.length]);}
-function toggleLike(ytId){liked[ytId]=!liked[ytId];showToast(liked[ytId]?t('toast_liked'):t('toast_unliked'));if(currentTrack&&currentTrack.ytId===ytId){document.getElementById('player-heart').className='fa fa-heart player-heart'+(liked[ytId]?' liked':'');if(npOpen)document.getElementById('np-heart').className='np-heart'+(liked[ytId]?' liked':'');}for(var cid in _listMap)renderTracksList(_listMap[cid],cid);}
+function toggleLike(ytId){
+  var tr=currentTrack&&currentTrack.ytId===ytId?currentTrack:ctxTrack;
+  if(liked[ytId]){
+    delete liked[ytId];
+    delete likedTracks[ytId];
+  } else {
+    liked[ytId]=true;
+    if(tr) likedTracks[ytId]={name:tr.name,artist:tr.artist,ytId:tr.ytId,thumb:tr.thumb};
+  }
+  saveLiked();
+  showToast(liked[ytId]?t('toast_liked'):t('toast_unliked'));
+  if(currentTrack&&currentTrack.ytId===ytId){document.getElementById('player-heart').className='fa fa-heart player-heart'+(liked[ytId]?' liked':'');if(npOpen)document.getElementById('np-heart').className='np-heart'+(liked[ytId]?' liked':'');}
+  for(var cid in _listMap)renderTracksList(_listMap[cid],cid);
+  if(document.getElementById('profile-liked-list'))renderLikedTracks();
+}
+function saveLiked(){try{localStorage.setItem('hs_liked',JSON.stringify({liked:liked,tracks:likedTracks}));}catch(e){}}
+function loadLiked(){try{var s=localStorage.getItem('hs_liked');if(s){var d=JSON.parse(s);liked=d.liked||{};likedTracks=d.tracks||{};}}catch(e){liked={};likedTracks={};}}
+function renderLikedTracks(){
+  var el=document.getElementById('profile-liked-list');
+  if(!el)return;
+  var tracks=Object.values(likedTracks);
+  if(!tracks.length){el.innerHTML='<p style="color:var(--text-muted);font-size:13px;padding:8px 0;">Nenhuma música curtida ainda.</p>';return;}
+  var h='';
+  tracks.forEach(function(tr,i){
+    h+='<div class="track-item" onclick="playLikedTrack('+i+')" style="cursor:pointer;">';
+    h+='<div class="track-num">'+(i+1)+'</div>';
+    h+='<div class="track-thumb">'+mkImg(tr.thumb)+'</div>';
+    h+='<div class="track-info"><div class="track-name">'+esc(tr.name)+'</div><div class="track-artist">'+esc(tr.artist)+'</div></div>';
+    h+='<button class="track-like liked" onclick="event.stopPropagation();toggleLike(\"'+tr.ytId+'\")" ><i class="fa fa-heart"></i></button>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+function playLikedTrack(idx){
+  var tracks=Object.values(likedTracks);
+  if(tracks[idx]){queue=tracks;playTrackObj(tracks[idx]);}
+}
 function openCtxMenu(e,tr){ctxTrack=tr;ctxPlSubOpen=false;document.getElementById('ctx-name').textContent=tr.name;document.getElementById('ctx-artist').textContent=tr.artist;document.getElementById('ctx-like-label').textContent=liked[tr.ytId]?'Remover dos favoritos':'Curtir música';document.getElementById('ctx-heart-icon').className=liked[tr.ytId]?'fa fa-heart-crack':'fa fa-heart';document.getElementById('ctx-playlists-sub').classList.add('hidden');document.getElementById('ctx-arrow').style.transform='';var menu=document.getElementById('ctx-menu');menu.classList.remove('hidden');menu.style.left='0';menu.style.top='0';requestAnimationFrame(function(){var vw=window.innerWidth,vh=window.innerHeight,mw=menu.offsetWidth,mh=menu.offsetHeight,x=e.clientX,y=e.clientY;if(x+mw>vw-8)x=vw-mw-8;if(y+mh>vh-8)y=vh-mh-8;if(x<8)x=8;if(y<8)y=8;menu.style.left=x+'px';menu.style.top=y+'px';});}
 function closeCtxMenu(){document.getElementById('ctx-menu').classList.add('hidden');ctxTrack=null;}
 function buildCtxPlSub(){var sub=document.getElementById('ctx-playlists-sub'),h='';if(!playlists.length){h='<div class="ctx-pl-empty">Sem playlists ainda.</div><div class="ctx-pl-item" id="ctx-create-pl"><i class="fa fa-plus"></i> Criar nova playlist</div>';}else{for(var i=0;i<playlists.length;i++)h+='<div class="ctx-pl-item" data-addpl="'+i+'"><i class="fa fa-music"></i> '+esc(playlists[i].name)+'<span style="margin-left:auto;font-size:11px;color:var(--text-muted)">'+playlists[i].tracks.length+'</span></div>';h+='<div class="ctx-pl-item" id="ctx-create-pl" style="border-top:1px solid var(--surface3)"><i class="fa fa-plus"></i> Nova playlist</div>';}sub.innerHTML=h;sub.querySelectorAll('[data-addpl]').forEach(function(el){el.addEventListener('click',function(){ctxAddToPlaylist(parseInt(this.dataset.addpl));});});var cp=document.getElementById('ctx-create-pl');if(cp)cp.addEventListener('click',ctxCreateAndAdd);}
