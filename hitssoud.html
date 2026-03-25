@@ -1618,7 +1618,7 @@ async function generateMix(){
     if(t.artist) t.artist=t.artist.replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&');
   });
   // Palavras que indicam lixo (não é música)
-  var BLOCK_WORDS=/audition|announce|official announce|making of|behind the scene|entrevista|interview|react|reage|podcast|louvores que tocam|daily bread|compilation|full album|álbum completo|album completo|news|noticia|trend|#trend/i;
+  var BLOCK_WORDS=/audition|announce|official announce|making of|behind the scene|entrevista|interview|react|reage|podcast|louvores que tocam|daily bread|compilation|full album|álbum completo|album completo|news|noticia|trend|#trend|as \d+ mais|top \d+|dream academy|reality|temporada|episode|episodio|\[hybe x/i;
   // Canais suspeitos (não são artistas)
   var BLOCK_CHANNELS=/daily bread|topic oficial|audition|hybe india|announcement/i;
   var seen={};
