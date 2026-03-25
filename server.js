@@ -1,3 +1,11 @@
+
+// Previne crash por erros não tratados
+process.on('uncaughtException', function(err) {
+  console.error('[CRASH EVITADO] uncaughtException:', err.message);
+});
+process.on('unhandledRejection', function(reason) {
+  console.error('[CRASH EVITADO] unhandledRejection:', reason);
+});
 const express = require('express');
 const mongoose = require('mongoose');
 
