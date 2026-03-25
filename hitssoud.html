@@ -1515,16 +1515,7 @@ function closeDrawer(){
 function openJamSession(){
   showToast('🎵 Sessão ao Vivo - Em breve!');
 }
-document.getElementById('drawer').classList.add('open');
-  document.getElementById('drawer-overlay').classList.add('open');
-  var pc = document.getElementById('drawer-profile-content');
-  var orig = document.getElementById('view-profile');
-  if(orig) pc.innerHTML = orig.innerHTML;
-}
-function closeDrawer(){
-  document.getElementById('drawer').classList.remove('open');
-  document.getElementById('drawer-overlay').classList.remove('open');
-}
+
 document.addEventListener('click',function(e){
   var ctxEl=document.getElementById('ctx-menu');
   if(!ctxEl.classList.contains('hidden')&&!ctxEl.contains(e.target))closeCtxMenu();
