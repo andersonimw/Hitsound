@@ -1082,7 +1082,7 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     const genreTagsMap = {
       'brasil':        ['geo:brazil', 'musica brasileira'],
       'internacional': ['chart:global', 'pop', 'hip-hop'],
-      'gospel':        ['christian music', 'gospel', 'ccm', 'musica gospel brasileira', 'gospel brasileiro'],
+      'gospel':        ['gospel brasileiro', 'musica gospel brasileira', 'gospel brasil', 'louvor', 'christian music'],
       'sertanejo':     ['sertanejo', 'sertanejo universitario', 'sertanejo romantico'],
       'funk':          ['funk brasileiro', 'funk carioca', 'funk ostentacao', 'baile funk'],
       'rap':           ['rap brasileiro', 'hip-hop', 'trap brasileiro', 'rap nacional'],
@@ -1092,13 +1092,14 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     };
     const tags = genreTagsMap[genre] || genreTagsMap['brasil'];
     async function fetchTracks(tag) {
+      var page = Math.floor(Math.random() * 3) + 1;
       var url = '';
       if (tag === 'geo:brazil') {
-        url = `https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=brazil&limit=15&api_key=${LASTFM_KEY}&format=json`;
+        url = `https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=brazil&limit=20&page=${page}&api_key=${LASTFM_KEY}&format=json`;
       } else if (tag === 'chart:global') {
-        url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=15&api_key=${LASTFM_KEY}&format=json`;
+        url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=20&page=${page}&api_key=${LASTFM_KEY}&format=json`;
       } else {
-        url = `https://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=${encodeURIComponent(tag)}&limit=10&api_key=${LASTFM_KEY}&format=json`;
+        url = `https://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=${encodeURIComponent(tag)}&limit=15&page=${page}&api_key=${LASTFM_KEY}&format=json`;
       }
       const r = await fetch(url);
       const d = await r.json();
@@ -1117,12 +1118,15 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     allTracks = allTracks.sort(function(){ return Math.random() - 0.5; });
     var results = [];
     var seen = {};
+    var seenArtists = {};
     for (var i = 0; i < allTracks.length && results.length < 15; i++) {
       var t = allTracks[i];
       var artistName = t.artist && t.artist.name ? t.artist.name : (typeof t.artist === 'string' ? t.artist : '');
       var key = artistName + t.name;
       if (seen[key]) continue;
+      if (seenArtists[artistName] >= 2) continue;
       seen[key] = true;
+      seenArtists[artistName] = (seenArtists[artistName] || 0) + 1;
       var q = encodeURIComponent(artistName + ' ' + t.name);
       try {
         var ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${q}`;
