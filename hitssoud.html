@@ -222,6 +222,9 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 .extra-btn{background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:4px;}
 .vol-slider{width:68px;height:4px;background:var(--surface3);border-radius:2px;cursor:pointer;}
 .vol-fill{height:100%;background:var(--orange);border-radius:2px;pointer-events:none;}
+.drawer-item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text);transition:background .15s;}
+.drawer-item:hover{background:var(--surface2);}
+.drawer-item i{width:20px;text-align:center;color:var(--text-muted);}
 .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-muted);}
 .spinner{width:28px;height:28px;border:3px solid var(--surface3);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;margin-right:10px;}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -572,7 +575,28 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   </div>
 </div>
 
+<!-- DRAWER OVERLAY -->
+<div id="drawer-overlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;"></div>
+
+<!-- DRAWER LATERAL -->
+<div id="drawer" style="position:fixed;top:0;left:-280px;width:280px;height:100%;background:var(--surface);z-index:901;display:flex;flex-direction:column;transition:left .3s cubic-bezier(.4,0,.2,1);box-shadow:4px 0 24px rgba(0,0,0,.5);overflow-y:auto;">
+  <div style="padding:20px 16px 12px;border-bottom:1px solid var(--surface3);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;background:linear-gradient(135deg,var(--orange),var(--wine-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">HitsSoud</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Menu</div>
+  </div>
+  <div style="padding:12px 8px;flex:1;">
+    <div class="drawer-item" onclick="closeDrawer();showView('home')"><i class="fa fa-house"></i><span>Início</span></div>
+    <div class="drawer-item" onclick="closeDrawer();showView('search')"><i class="fa fa-search"></i><span>Buscar</span></div>
+    <div class="drawer-item" onclick="closeDrawer();showView('top100')"><i class="fa fa-trophy"></i><span>Top 50</span></div>
+    <div class="drawer-item" onclick="closeDrawer();showView('library')"><i class="fa fa-book"></i><span>Biblioteca</span></div>
+    <div class="drawer-item" onclick="closeDrawer();showView('profile')"><i class="fa fa-user"></i><span>Perfil</span></div>
+    <hr style="border:none;border-top:1px solid var(--surface3);margin:10px 6px;">
+    <div class="drawer-item" onclick="closeDrawer();openJamSession()" style="color:var(--orange);"><i class="fa fa-music"></i><span>🎵 Sessão ao Vivo</span></div>
+  </div>
+</div>
+
 <header id="topbar">
+  <button id="btn-hamburger" onclick="openDrawer()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 8px;flex-shrink:0;"><i class="fa fa-bars"></i></button>
   <div class="logo">Hits<span>Soud</span></div>
   <button id="btn-home-top"><i class="fa fa-house"></i></button>
   <div id="search-bar">
@@ -1481,7 +1505,18 @@ document.getElementById('bn-library').addEventListener('click',function(){showVi
 document.getElementById('bn-profile').addEventListener('click',function(){showView('profile');});
 document.getElementById('bn-quiz').addEventListener('click',function(){showView('quiz');});
 function openDrawer(){
-  document.getElementById('drawer').classList.add('open');
+  function openDrawer(){
+  document.getElementById('drawer').style.left='0';
+  document.getElementById('drawer-overlay').style.display='block';
+}
+function closeDrawer(){
+  document.getElementById('drawer').style.left='-280px';
+  document.getElementById('drawer-overlay').style.display='none';
+}
+function openJamSession(){
+  showToast('🎵 Sessão ao Vivo - Em breve!');
+}
+document.getElementById('drawer').classList.add('open');
   document.getElementById('drawer-overlay').classList.add('open');
   var pc = document.getElementById('drawer-profile-content');
   var orig = document.getElementById('view-profile');
