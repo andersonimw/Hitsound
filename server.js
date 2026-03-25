@@ -1043,16 +1043,23 @@ function rotateKey() {
 
 async function fetchYT(url) {
   for (let i = 0; i < YT_KEYS.length; i++) {
-    const fullUrl = url + '&key=' + getKey();
-    const r = await fetch(fullUrl);
-    const data = await r.json();
-    if (data.error && data.error.code === 403) {
+    try {
+      const fullUrl = url + '&key=' + getKey();
+      const r = await fetch(fullUrl);
+      if (!r.ok) { rotateKey(); continue; }
+      const data = await r.json();
+      if (data.error && data.error.code === 403) {
+        rotateKey();
+        continue;
+      }
+      return data;
+    } catch(e) {
+      console.error('[fetchYT] erro:', e.message);
       rotateKey();
       continue;
     }
-    return data;
   }
-  return { error: { message: 'Todas as cotas esgotadas.' } };
+  return { items: [] };
 }
 
 app.use(express.json());
