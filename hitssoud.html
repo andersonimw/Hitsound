@@ -1086,6 +1086,7 @@ function updateHeroBanner(){
     s.textContent='As melhores músicas do mundo, a um clique de você.';
   }
 }
+function showProfileView(){loadFriends();}
 function applyProfile(){document.getElementById('profile-name-display').textContent=userProfile.name||'HitsSoud';document.getElementById('profile-bio-display').textContent=userProfile.bio||'Seu app de música pessoal';var av=document.getElementById('profile-avatar-display');var avBtn=document.getElementById('avatar-btn');if(userProfile.photo){av.innerHTML='<img src="'+userProfile.photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>';avBtn.innerHTML='<img src="'+userProfile.photo+'"/>';}else{var init=(userProfile.name||'HS').substring(0,2).toUpperCase();av.innerHTML=init;avBtn.innerHTML=init;}}
 function loadProfileEdit(){document.getElementById('profile-name-input').value=userProfile.name||'';document.getElementById('profile-bio-input').value=userProfile.bio||'';var av=document.getElementById('profile-edit-avatar');if(userProfile.photo)av.innerHTML='<img src="'+userProfile.photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>';else av.innerHTML=(userProfile.name||'HS').substring(0,2).toUpperCase();}
 document.getElementById('profile-photo-input').addEventListener('change',function(){var file=this.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){userProfile.photo=e.target.result;document.getElementById('profile-edit-avatar').innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>';};reader.readAsDataURL(file);});
@@ -1532,6 +1533,9 @@ async function loadFriends(){
   try{
     var r=await fetch('/api/user/friends?userId='+userId);
     var d=await r.json();
+    var elReq=document.getElementById('friends-requests');
+    var elFri=document.getElementById('friends-list');
+    if(!elReq||!elFri) return;
     // Pedidos pendentes
     var rh='';
     if(d.requests&&d.requests.length){
@@ -2062,7 +2066,7 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
   playQuizTrack();
 });
 
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(registerUser,3000);setTimeout(loadFriends,4000);}
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(registerUser,3000);}
 if(!checkFirstAccess()){}else{initApp();}
 
 // Ranking de ouvintes
