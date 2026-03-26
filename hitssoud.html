@@ -849,6 +849,14 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
           <button class="btn-primary" style="width:100%;justify-content:center;margin-top:10px;" id="btn-new-alarm-profile"><i class="fa fa-plus"></i> Novo Alarme</button>
         </div>
         <div class="profile-card">
+          <div class="profile-card-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <span><i class="fa fa-users" style="color:var(--orange);"></i> Amigos</span>
+            <button onclick="openAddFriend()" style="background:var(--orange);border:none;border-radius:20px;padding:5px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;"><i class="fa fa-plus"></i> Adicionar</button>
+          </div>
+          <div id="friends-requests" style="margin-bottom:8px;"></div>
+          <div id="friends-list"><p style="color:var(--text-muted);font-size:13px;padding:10px 0;">Nenhum amigo ainda.</p></div>
+        </div>
+        <div class="profile-card">
           <div class="profile-card-title"><i class="fa fa-gear"></i> Configurações</div>
           <button class="profile-link" id="btn-sugestoes"><i class="fa fa-comment"></i> Sugestões e Feedback<i class="fa fa-chevron-right chevron"></i></button>
           <button class="profile-link" id="btn-clear-data"><i class="fa fa-rotate-left"></i> Limpar todos os dados<i class="fa fa-chevron-right chevron"></i></button>
@@ -2011,5 +2019,6 @@ async function deleteComment(id, ytId) {
   } catch(e) {}
 }
 </script>
+<script src="/socket.io/socket.io.js"></script>
 </body>
 </html>
