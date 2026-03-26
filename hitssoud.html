@@ -20,7 +20,8 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;900&display=swap"/>
-<script src="/socket.io/socket.io.js"></script>
+<script>var io=function(){return{on:function(){},emit:function(){},disconnect:function(){}};};</script>
+<script src="/socket.io/socket.io.js" onerror="console.log('socket.io nao carregou')"></script>
 <style>
 :root{--orange:#FF6B00;--orange-light:#FF8C33;--orange-glow:rgba(255,107,0,0.25);--wine:#7B1C3A;--wine-light:#9E2347;--black:#0A0A0A;--bg:#111111;--surface:#1A1A1A;--surface2:#222222;--surface3:#2A2A2A;--text:#F0F0F0;--text-muted:#888888;--player-h:90px;--topbar-h:58px;--nav-h:62px;}
 [data-theme="light"]{--black:#F5F5F5;--bg:#FFFFFF;--surface:#F0F0F0;--surface2:#E8E8E8;--surface3:#DEDEDE;--text:#111111;--text-muted:#666666;}
