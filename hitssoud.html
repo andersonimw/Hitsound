@@ -20,6 +20,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;900&display=swap"/>
+<script src="/socket.io/socket.io.js"></script>
 <style>
 :root{--orange:#FF6B00;--orange-light:#FF8C33;--orange-glow:rgba(255,107,0,0.25);--wine:#7B1C3A;--wine-light:#9E2347;--black:#0A0A0A;--bg:#111111;--surface:#1A1A1A;--surface2:#222222;--surface3:#2A2A2A;--text:#F0F0F0;--text-muted:#888888;--player-h:90px;--topbar-h:58px;--nav-h:62px;}
 [data-theme="light"]{--black:#F5F5F5;--bg:#FFFFFF;--surface:#F0F0F0;--surface2:#E8E8E8;--surface3:#DEDEDE;--text:#111111;--text-muted:#666666;}
@@ -1513,7 +1514,70 @@ function closeDrawer(){
   document.getElementById('drawer-overlay').style.display='none';
 }
 function openJamSession(){
-  showToast('🎵 Sessão ao Vivo - Em breve!');
+  document.getElementById('jam-modal').style.display='flex';
+}
+function closeJamModal(){
+  document.getElementById('jam-modal').style.display='none';
+}
+var jamSocket=null;
+var jamRoomId=null;
+function jamInitSocket(){
+  if(jamSocket) return;
+  jamSocket=io();
+  jamSocket.on('jam:created',function(d){
+    jamRoomId=d.roomId;
+    document.getElementById('jam-room-code').textContent=d.roomId;
+    document.getElementById('jam-screen-home').style.display='none';
+    document.getElementById('jam-screen-room').style.display='block';
+    showToast('Sala criada! Código: '+d.roomId);
+  });
+  jamSocket.on('jam:joined',function(d){
+    jamRoomId=d.roomId;
+    document.getElementById('jam-room-code').textContent=d.roomId;
+    document.getElementById('jam-screen-home').style.display='none';
+    document.getElementById('jam-screen-room').style.display='block';
+    showToast('Entrou na sessão: '+d.roomId);
+  });
+  jamSocket.on('jam:users',function(d){
+    var h='';
+    d.users.forEach(function(u){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface3);"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--wine-light));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;">'+u.name.charAt(0).toUpperCase()+'</div><span style="font-size:13px;font-weight:600;">'+u.name+'</span></div>';
+    });
+    document.getElementById('jam-users-list').innerHTML=h;
+  });
+  jamSocket.on('jam:sync',function(d){
+    if(!d.track) return;
+    document.getElementById('jam-now-playing').innerHTML='<div style="font-weight:800;font-size:13px;color:var(--text);">'+esc(d.track.name)+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+esc(d.track.artist)+'</div>';
+    playTrackObj(d.track);
+  });
+  jamSocket.on('jam:error',function(d){
+    document.getElementById('jam-error').style.display='block';
+    document.getElementById('jam-error').textContent=d.msg;
+  });
+}
+function jamCreate(){
+  jamInitSocket();
+  var userName=localStorage.getItem('hs_name')||'Ouvinte';
+  jamSocket.emit('jam:create',{userName:userName});
+}
+function jamJoin(){
+  var code=document.getElementById('jam-code-input').value.trim().toUpperCase();
+  if(!code||code.length!==6){showToast('Digite o código de 6 letras!');return;}
+  jamInitSocket();
+  var userName=localStorage.getItem('hs_name')||'Ouvinte';
+  jamSocket.emit('jam:join',{roomId:code,userName:userName});
+}
+function jamCopyLink(){
+  var link=window.location.origin+'?jam='+jamRoomId;
+  navigator.clipboard.writeText(link).then(function(){showToast('Link copiado!');});
+}
+function jamLeave(){
+  if(jamSocket){jamSocket.disconnect();jamSocket=null;}
+  jamRoomId=null;
+  document.getElementById('jam-screen-home').style.display='block';
+  document.getElementById('jam-screen-room').style.display='none';
+  document.getElementById('jam-modal').style.display='none';
+  showToast('Saiu da sessão.');
 }
 
 document.addEventListener('click',function(e){
@@ -2011,5 +2075,38 @@ async function deleteComment(id, ytId) {
   } catch(e) {}
 }
 </script>
+<!-- MODAL SESSÃO AO VIVO -->
+<div id="jam-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:950;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px;padding:24px;width:320px;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="closeJamModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fa fa-times"></i></button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;margin-bottom:4px;">🎵 SESSÃO AO VIVO</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">Ouça músicas junto com amigos em tempo real</div>
+
+    <!-- TELA INICIAL -->
+    <div id="jam-screen-home">
+      <button onclick="jamCreate()" style="width:100%;background:linear-gradient(135deg,var(--orange),var(--wine-light));border:none;border-radius:12px;padding:14px;color:#fff;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:12px;"><i class="fa fa-plus"></i> Criar Nova Sessão</button>
+      <div style="text-align:center;color:var(--text-muted);font-size:12px;margin-bottom:12px;">— ou entre em uma sessão —</div>
+      <input id="jam-code-input" type="text" maxlength="6" placeholder="Digite o código (ex: AB12CD)" style="width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:11px 14px;color:var(--text);font-size:15px;outline:none;margin-bottom:10px;text-transform:uppercase;letter-spacing:3px;text-align:center;font-weight:800;"/>
+      <button onclick="jamJoin()" style="width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:12px;color:var(--text);font-weight:700;font-size:14px;cursor:pointer;"><i class="fa fa-arrow-right"></i> Entrar na Sessão</button>
+    </div>
+
+    <!-- TELA DA SALA -->
+    <div id="jam-screen-room" style="display:none;">
+      <div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">CÓDIGO DA SALA</div>
+        <div id="jam-room-code" style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:6px;color:var(--orange);">------</div>
+        <button onclick="jamCopyLink()" style="margin-top:6px;background:none;border:1px solid var(--surface3);border-radius:8px;padding:6px 14px;color:var(--text-muted);font-size:11px;cursor:pointer;"><i class="fa fa-copy"></i> Copiar link</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">👥 Na sala:</div>
+      <div id="jam-users-list" style="margin-bottom:14px;"></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">🎵 Tocando agora:</div>
+      <div id="jam-now-playing" style="background:var(--surface2);border-radius:10px;padding:10px;font-size:13px;color:var(--text-muted);">Nenhuma música</div>
+      <button onclick="jamLeave()" style="width:100%;margin-top:14px;background:none;border:1.5px solid #ff4444;border-radius:12px;padding:11px;color:#ff4444;font-weight:700;font-size:13px;cursor:pointer;"><i class="fa fa-sign-out"></i> Sair da Sessão</button>
+    </div>
+
+    <!-- ERRO -->
+    <div id="jam-error" style="display:none;color:#ff4444;font-size:13px;text-align:center;margin-top:10px;"></div>
+  </div>
+</div>
 </body>
 </html>

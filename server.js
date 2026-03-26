@@ -7,6 +7,8 @@ process.on('unhandledRejection', function(reason) {
   console.error('[CRASH EVITADO] unhandledRejection:', reason);
 });
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 
 // Conectar ao MongoDB
@@ -25,6 +27,71 @@ const Play = mongoose.model('Play', playSchema);
 const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+
+// Salas de sessão ao vivo
+const jamRooms = {};
+
+io.on('connection', function(socket) {
+  // Criar sala
+  socket.on('jam:create', function(data) {
+    const roomId = Math.random().toString(36).substr(2,6).toUpperCase();
+    jamRooms[roomId] = {
+      host: socket.id,
+      hostName: data.userName || 'Anônimo',
+      users: [{ id: socket.id, name: data.userName || 'Anônimo' }],
+      currentTrack: null,
+      queue: []
+    };
+    socket.join(roomId);
+    socket.emit('jam:created', { roomId });
+    console.log('[JAM] Sala criada:', roomId);
+  });
+
+  // Entrar na sala
+  socket.on('jam:join', function(data) {
+    const room = jamRooms[data.roomId];
+    if (!room) { socket.emit('jam:error', { msg: 'Sala não encontrada.' }); return; }
+    if (room.users.length >= 5) { socket.emit('jam:error', { msg: 'Sala cheia (máx. 5).' }); return; }
+    room.users.push({ id: socket.id, name: data.userName || 'Anônimo' });
+    socket.join(data.roomId);
+    socket.emit('jam:joined', { roomId: data.roomId, room });
+    io.to(data.roomId).emit('jam:users', { users: room.users });
+    if (room.currentTrack) socket.emit('jam:sync', { track: room.currentTrack });
+    console.log('[JAM] Usuario entrou:', data.roomId);
+  });
+
+  // Tocar música
+  socket.on('jam:play', function(data) {
+    const room = jamRooms[data.roomId];
+    if (!room) return;
+    room.currentTrack = data.track;
+    io.to(data.roomId).emit('jam:sync', { track: data.track });
+  });
+
+  // Adicionar à fila
+  socket.on('jam:queue', function(data) {
+    const room = jamRooms[data.roomId];
+    if (!room) return;
+    room.queue.push(data.track);
+    io.to(data.roomId).emit('jam:queue-update', { queue: room.queue });
+  });
+
+  // Desconectar
+  socket.on('disconnect', function() {
+    for (var roomId in jamRooms) {
+      var room = jamRooms[roomId];
+      room.users = room.users.filter(function(u) { return u.id !== socket.id; });
+      if (room.users.length === 0) {
+        delete jamRooms[roomId];
+        console.log('[JAM] Sala encerrada:', roomId);
+      } else {
+        io.to(roomId).emit('jam:users', { users: room.users });
+      }
+    }
+  });
+});
 const PORT = process.env.PORT || 3000;
 const LASTFM_KEY = process.env.LASTFM_API_KEY || "";
 
@@ -1282,6 +1349,6 @@ app.get('/api/ranking', async function(req, res) {
   }
 });
 
-app.listen(PORT, function() {
+server.listen(PORT, function() {
   console.log('HitsSoud rodando na porta ' + PORT);
 });
