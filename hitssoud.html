@@ -1513,6 +1513,107 @@ function closeDrawer(){
   document.getElementById('drawer').style.left='-280px';
   document.getElementById('drawer-overlay').style.display='none';
 }
+// Sistema de amigos
+function getUserId(){
+  var id=localStorage.getItem('hs_userid');
+  if(!id){id='u_'+Math.random().toString(36).substr(2,12);localStorage.setItem('hs_userid',id);}
+  return id;
+}
+async function registerUser(){
+  var userId=getUserId();
+  var name=(userProfile.name||'usuario').toLowerCase().replace(/[^a-z0-9_]/g,'_').replace(/^_+|_+$/g,'');
+  if(name.length<3) name='user_'+userId.substr(0,6);
+  try{
+    await fetch('/api/user/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,userName:name,displayName:userProfile.name,photo:userProfile.photo||null})});
+  }catch(e){}
+}
+async function loadFriends(){
+  var userId=getUserId();
+  try{
+    var r=await fetch('/api/user/friends?userId='+userId);
+    var d=await r.json();
+    // Pedidos pendentes
+    var rh='';
+    if(d.requests&&d.requests.length){
+      d.requests.forEach(function(u){
+        rh+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface3);">';
+        rh+='<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--wine-light));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;">'+((u.displayName||u.userName).charAt(0).toUpperCase())+'</div>';
+        rh+='<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+esc(u.displayName||u.userName)+'</div><div style="font-size:11px;color:var(--text-muted);">@'+esc(u.userName)+'</div></div>';
+        rh+='<button onclick="acceptFriend(''+u.userId+'')" style="background:var(--orange);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">Aceitar</button>';
+        rh+='<button onclick="declineFriend(''+u.userId+'')" style="background:none;border:1px solid var(--surface3);border-radius:8px;padding:5px 10px;color:var(--text-muted);font-size:11px;cursor:pointer;">Recusar</button>';
+        rh+='</div>';
+      });
+      document.getElementById('friends-requests').innerHTML='<div style="font-size:11px;color:var(--orange);font-weight:800;margin-bottom:6px;">PEDIDOS PENDENTES</div>'+rh;
+    } else {
+      document.getElementById('friends-requests').innerHTML='';
+    }
+    // Lista de amigos
+    var fh='';
+    if(d.friends&&d.friends.length){
+      d.friends.forEach(function(u){
+        fh+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface3);">';
+        fh+='<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--wine-light));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;">'+((u.displayName||u.userName).charAt(0).toUpperCase())+'</div>';
+        fh+='<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+esc(u.displayName||u.userName)+'</div><div style="font-size:11px;color:var(--text-muted);">@'+esc(u.userName)+'</div></div>';
+        fh+='<button onclick="inviteToJam(''+u.userId+'',''+esc(u.displayName||u.userName)+'')" style="background:var(--surface2);border:1px solid var(--surface3);border-radius:8px;padding:5px 10px;color:var(--text);font-size:11px;cursor:pointer;"><i class="fa fa-music"></i> Convidar</button>';
+        fh+='</div>';
+      });
+      document.getElementById('friends-list').innerHTML=fh;
+    } else {
+      document.getElementById('friends-list').innerHTML='<p style="color:var(--text-muted);font-size:13px;padding:10px 0;">Nenhum amigo ainda.</p>';
+    }
+  }catch(e){}
+}
+function openAddFriend(){
+  document.getElementById('add-friend-modal').style.display='flex';
+  document.getElementById('friend-search-input').value='';
+  document.getElementById('friend-search-results').innerHTML='';
+}
+function closeAddFriend(){
+  document.getElementById('add-friend-modal').style.display='none';
+}
+var friendSearchTimer=null;
+function searchFriends(){
+  clearTimeout(friendSearchTimer);
+  friendSearchTimer=setTimeout(async function(){
+    var q=document.getElementById('friend-search-input').value.trim();
+    if(q.length<3){document.getElementById('friend-search-results').innerHTML='';return;}
+    var r=await fetch('/api/user/search?q='+encodeURIComponent(q));
+    var d=await r.json();
+    var h='';
+    if(!d.users||!d.users.length){h='<p style="color:var(--text-muted);font-size:13px;padding:10px 0;">Nenhum usuário encontrado.</p>';}
+    else{
+      d.users.forEach(function(u){
+        h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface3);">';
+        h+='<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--wine-light));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;">'+((u.displayName||u.userName).charAt(0).toUpperCase())+'</div>';
+        h+='<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+esc(u.displayName||u.userName)+'</div><div style="font-size:11px;color:var(--text-muted);">@'+esc(u.userName)+'</div></div>';
+        h+='<button onclick="sendFriendRequest(''+esc(u.userName)+'')" style="background:var(--orange);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">Adicionar</button>';
+        h+='</div>';
+      });
+    }
+    document.getElementById('friend-search-results').innerHTML=h;
+  },400);
+}
+async function sendFriendRequest(toUserName){
+  var fromId=getUserId();
+  var r=await fetch('/api/user/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fromId,toUserName})});
+  var d=await r.json();
+  if(d.ok){showToast('Pedido enviado para @'+toUserName+'!');}
+  else{showToast(d.error||'Erro ao enviar pedido.');}
+}
+async function acceptFriend(fromId){
+  var userId=getUserId();
+  var r=await fetch('/api/user/friend-accept',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,fromId})});
+  var d=await r.json();
+  if(d.ok){showToast('Amigo adicionado!');loadFriends();}
+}
+async function declineFriend(fromId){
+  var userId=getUserId();
+  await fetch('/api/user/friend-decline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,fromId})});
+  showToast('Pedido recusado.');loadFriends();
+}
+function inviteToJam(friendId,friendName){
+  showToast('Convidando '+friendName+' para a sessão...');
+}
 function openJamSession(){
   document.getElementById('jam-modal').style.display='flex';
 }
@@ -1961,7 +2062,7 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
   playQuizTrack();
 });
 
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);}
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(registerUser,3000);setTimeout(loadFriends,4000);}
 if(!checkFirstAccess()){}else{initApp();}
 
 // Ranking de ouvintes
@@ -2075,6 +2176,16 @@ async function deleteComment(id, ytId) {
   } catch(e) {}
 }
 </script>
+<!-- MODAL ADICIONAR AMIGO -->
+<div id="add-friend-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:950;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px;padding:24px;width:320px;position:relative;">
+    <button onclick="closeAddFriend()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fa fa-times"></i></button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:16px;">👥 ADICIONAR AMIGO</div>
+    <input id="friend-search-input" type="text" placeholder="Buscar por @usuário..." style="width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;margin-bottom:10px;" oninput="searchFriends()"/>
+    <div id="friend-search-results"></div>
+  </div>
+</div>
+
 <!-- MODAL SESSÃO AO VIVO -->
 <div id="jam-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:950;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:20px;padding:24px;width:320px;max-height:90vh;overflow-y:auto;position:relative;">
