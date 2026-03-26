@@ -24,6 +24,18 @@ const playSchema = new mongoose.Schema({
   month: String
 });
 const Play = mongoose.model('Play', playSchema);
+
+// Schema de usuário
+const userSchema = new mongoose.Schema({
+  userId: { type: String, unique: true },
+  userName: { type: String, unique: true, lowercase: true, trim: true },
+  displayName: String,
+  photo: String,
+  friends: [String],
+  friendRequests: [String],
+  createdAt: { type: Date, default: Date.now }
+});
+const User = mongoose.model('User', userSchema);
 const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
@@ -1347,6 +1359,79 @@ app.get('/api/ranking', async function(req, res) {
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// Registrar ou atualizar usuário
+app.post('/api/user/register', async function(req, res) {
+  try {
+    const { userId, userName, displayName, photo } = req.body;
+    if (!userId || !userName) return res.status(400).json({ error: 'userId e userName obrigatórios' });
+    const clean = userName.toLowerCase().replace(/[^a-z0-9_]/g,'');
+    if (clean.length < 3) return res.status(400).json({ error: 'Nome deve ter pelo menos 3 caracteres' });
+    const existing = await User.findOne({ userName: clean, userId: { $ne: userId } });
+    if (existing) return res.status(400).json({ error: 'Nome de usuário já em uso' });
+    const user = await User.findOneAndUpdate(
+      { userId },
+      { userName: clean, displayName: displayName || clean, photo: photo || null },
+      { upsert: true, new: true }
+    );
+    res.json({ ok: true, user });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Buscar usuário por nome
+app.get('/api/user/search', async function(req, res) {
+  try {
+    const q = (req.query.q || '').toLowerCase().trim();
+    if (!q || q.length < 3) return res.json({ users: [] });
+    const users = await User.find({ userName: new RegExp(q) }).limit(10).select('userId userName displayName photo');
+    res.json({ users });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Enviar pedido de amizade
+app.post('/api/user/friend-request', async function(req, res) {
+  try {
+    const { fromId, toUserName } = req.body;
+    const target = await User.findOne({ userName: toUserName.toLowerCase() });
+    if (!target) return res.status(404).json({ error: 'Usuário não encontrado' });
+    if (target.userId === fromId) return res.status(400).json({ error: 'Você não pode se adicionar' });
+    if (target.friends.includes(fromId)) return res.status(400).json({ error: 'Já são amigos' });
+    if (target.friendRequests.includes(fromId)) return res.status(400).json({ error: 'Pedido já enviado' });
+    await User.findOneAndUpdate({ userName: toUserName.toLowerCase() }, { $push: { friendRequests: fromId } });
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Aceitar pedido de amizade
+app.post('/api/user/friend-accept', async function(req, res) {
+  try {
+    const { userId, fromId } = req.body;
+    await User.findOneAndUpdate({ userId }, { $pull: { friendRequests: fromId }, $push: { friends: fromId } });
+    await User.findOneAndUpdate({ userId: fromId }, { $push: { friends: userId } });
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Recusar pedido
+app.post('/api/user/friend-decline', async function(req, res) {
+  try {
+    const { userId, fromId } = req.body;
+    await User.findOneAndUpdate({ userId }, { $pull: { friendRequests: fromId } });
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Buscar amigos e pedidos pendentes
+app.get('/api/user/friends', async function(req, res) {
+  try {
+    const { userId } = req.query;
+    const user = await User.findOne({ userId });
+    if (!user) return res.json({ friends: [], requests: [] });
+    const friends = await User.find({ userId: { $in: user.friends } }).select('userId userName displayName photo');
+    const requests = await User.find({ userId: { $in: user.friendRequests } }).select('userId userName displayName photo');
+    res.json({ friends, requests });
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 server.listen(PORT, function() {
