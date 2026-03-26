@@ -2136,6 +2136,7 @@ async function loadFriends(){
   }catch(e){}
 }
 function openAddFriend(){
+  alert('openAddFriend chamado!');
   document.getElementById('add-friend-modal').style.display='flex';
   document.getElementById('friend-search-input').value='';
   document.getElementById('friend-search-results').innerHTML='';
@@ -2198,7 +2199,7 @@ setTimeout(registerUser, 4000);
 </script>
 <script src="/socket.io/socket.io.js"></script>
 <!-- MODAL ADICIONAR AMIGO -->
-<div id="add-friend-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:950;align-items:center;justify-content:center;">
+<div id="add-friend-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:20px;padding:24px;width:320px;position:relative;">
     <button onclick="closeAddFriend()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fa fa-times"></i></button>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:16px;">👥 ADICIONAR AMIGO</div>
