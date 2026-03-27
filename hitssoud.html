@@ -2197,7 +2197,13 @@ function inviteToJam(friendId,friendName){
 setTimeout(registerUser, 4000);
 document.addEventListener('click', function(e){
   var btn = e.target.closest('#btn-add-friend');
-  if(btn) openAddFriend();
+  if(btn){
+    console.log('btn-add-friend clicado!');
+    openAddFriend();
+  }
+});
+document.addEventListener('DOMContentLoaded', function(){
+  console.log('DOM carregado, btn-add-friend:', document.getElementById('btn-add-friend'));
 });
 </script>
 <script src="/socket.io/socket.io.js"></script>
