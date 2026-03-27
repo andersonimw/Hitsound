@@ -2259,6 +2259,43 @@ async function saveUsername(){alert('saveUsername chamado!');
 document.addEventListener('click', function(e){
   if(e.target.closest('#btn-add-friend')) openAddFriend();
   if(e.target.closest('#btn-save-username')) saveUsername();
+  if(e.target.closest('#btn-do-search')){
+    var q=document.getElementById('friend-search-input').value.trim();
+    doSearchFriends(q);
+  }
+});
+async function doSearchFriends(q){
+  var res=document.getElementById('friend-search-results');
+  if(q.length<3){res.innerHTML='<p style="color:var(--text-muted);font-size:13px;">Digite pelo menos 3 letras.</p>';return;}
+  res.innerHTML='<p style="color:var(--text-muted);font-size:13px;">Buscando...</p>';
+  try{
+    var r=await fetch('/api/user/search?q='+encodeURIComponent(q));
+    var d=await r.json();
+    if(!d.users||!d.users.length){res.innerHTML='<p style="color:var(--text-muted);font-size:13px;padding:10px 0;">Nenhum usuário encontrado.</p>';return;}
+    var h='';
+    d.users.forEach(function(u){
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface3);">';
+      h+='<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--wine-light));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;">'+(u.displayName||u.userName).charAt(0).toUpperCase()+'</div>';
+      h+='<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+(u.displayName||u.userName)+'</div>';
+      h+='<div style="font-size:11px;color:var(--text-muted);">@'+u.userName+'</div></div>';
+      h+='<button data-uname="'+u.userName+'" class="btn-send-request" style="background:var(--orange);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">Adicionar</button>';
+      h+='</div>';
+    });
+    res.innerHTML=h;
+  }catch(e){res.innerHTML='<p style="color:red;font-size:12px;">Erro de conexão.</p>';}
+}
+document.addEventListener('click',function(e){
+  var btn=e.target.closest('.btn-send-request');
+  if(btn){
+    var uname=btn.dataset.uname;
+    var uid=localStorage.getItem('hs_userid');
+    fetch('/api/user/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fromId:uid,toUserName:uname})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.ok){btn.textContent='Enviado!';btn.disabled=true;btn.style.background='#444';}
+      else{btn.textContent=d.error||'Erro';}
+    });
+  }
 });
 </script>
 <script src="/socket.io/socket.io.js"></script>
@@ -2267,7 +2304,7 @@ document.addEventListener('click', function(e){
   <div style="background:var(--surface);border-radius:20px;padding:24px;width:320px;position:relative;">
     <button onclick="closeAddFriend()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fa fa-times"></i></button>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:16px;">👥 ADICIONAR AMIGO</div>
-    <input id="friend-search-input" type="text" placeholder="Buscar por @usuário..." style="width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;margin-bottom:10px;" oninput="(async function(){var q=this.value.trim();if(q.length<3){document.getElementById('friend-search-results').innerHTML='';return;}try{var r=await fetch('/api/user/search?q='+encodeURIComponent(q));var d=await r.json();var h='';if(!d.users||!d.users.length){h='<p style=\"color:var(--text-muted);font-size:13px;padding:10px 0;\">Nenhum usuário encontrado.</p>';}else{d.users.forEach(function(u){h+='<div style=\"display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface3);\"><div style=\"width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--wine-light));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;\">'+(u.displayName||u.userName).charAt(0).toUpperCase()+'</div><div style=\"flex:1;\"><div style=\"font-size:13px;font-weight:700;\">'+(u.displayName||u.userName)+'</div><div style=\"font-size:11px;color:var(--text-muted);\">@'+u.userName+'</div></div><button onclick=\"(async function(){var uid=localStorage.getItem(\\\"hs_userid\\\");var r=await fetch(\\\"/api/user/friend-request\\\",{method:\\\"POST\\\",headers:{\\\"Content-Type\\\":\\\"application/json\\\"},body:JSON.stringify({fromId:uid,toUserName:\\\"'+u.userName+\\\"\\\"})}); var d=await r.json();alert(d.ok?\\\"Pedido enviado!\\\": d.error||\\\"Erro\\\");})()\\" style=\"background:var(--orange);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;\">Adicionar</button></div>';});}document.getElementById('friend-search-results').innerHTML=h;}catch(e){document.getElementById('friend-search-results').innerHTML='<p style=\"color:red;font-size:12px;\">Erro: '+e.message+'</p>';}}).call(this)"/>
+    <input id="friend-search-input" type="text" placeholder="Buscar por @usuário..." style="width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;margin-bottom:10px;"/><button id="btn-do-search" style="width:100%;margin-top:8px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:10px;color:var(--text);font-weight:700;font-size:13px;cursor:pointer;"><i class="fa fa-search"></i> Buscar</button>
     <div id="friend-search-results"></div>
   </div>
 </div>
