@@ -825,7 +825,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Escolha seu nome de usuário único para aparecer nas buscas de amigos.</p>
             <div style="display:flex;gap:8px;">
               <input id="username-input" type="text" placeholder="ex: anderson123" maxlength="20" style="flex:1;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;"/>
-              <button onclick="saveUsername()" style="background:var(--orange);border:none;border-radius:10px;padding:10px 16px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">Salvar</button>
+              <button id="btn-save-username" style="background:var(--orange);border:none;border-radius:10px;padding:10px 16px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">Salvar</button>
             </div>
             <div id="username-error" style="display:none;color:#ff4444;font-size:12px;margin-top:6px;"></div>
           </div>
@@ -2256,14 +2256,8 @@ async function saveUsername(){
   }catch(e){errEl.style.display='block';errEl.textContent='Erro de conexão.';}
 }
 document.addEventListener('click', function(e){
-  var btn = e.target.closest('#btn-add-friend');
-  if(btn){
-    console.log('btn-add-friend clicado!');
-    openAddFriend();
-  }
-});
-document.addEventListener('DOMContentLoaded', function(){
-  console.log('DOM carregado, btn-add-friend:', document.getElementById('btn-add-friend'));
+  if(e.target.closest('#btn-add-friend')) openAddFriend();
+  if(e.target.closest('#btn-save-username')) saveUsername();
 });
 </script>
 <script src="/socket.io/socket.io.js"></script>
