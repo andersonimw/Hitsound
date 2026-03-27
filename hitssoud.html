@@ -810,6 +810,26 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
           <h2 id="profile-name-display">HitsSoud</h2>
           <p id="profile-bio-display">Seu app de música pessoal</p>
         </div>
+        <div class="profile-card" id="username-card">
+          <div class="profile-card-title"><i class="fa fa-at" style="color:var(--orange);"></i> Seu @username</div>
+          <div id="username-display" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div id="username-show" style="font-size:18px;font-weight:800;color:var(--orange);">@usuario</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Seu nome único no HitsSoud</div>
+              </div>
+              <button onclick="showUsernameEdit()" style="background:none;border:1px solid var(--surface3);border-radius:8px;padding:5px 12px;color:var(--text-muted);font-size:12px;cursor:pointer;"><i class="fa fa-pen"></i> Editar</button>
+            </div>
+          </div>
+          <div id="username-edit">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Escolha seu nome de usuário único para aparecer nas buscas de amigos.</p>
+            <div style="display:flex;gap:8px;">
+              <input id="username-input" type="text" placeholder="ex: anderson123" maxlength="20" style="flex:1;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;"/>
+              <button onclick="saveUsername()" style="background:var(--orange);border:none;border-radius:10px;padding:10px 16px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">Salvar</button>
+            </div>
+            <div id="username-error" style="display:none;color:#ff4444;font-size:12px;margin-top:6px;"></div>
+          </div>
+        </div>
         <div class="profile-card">
           <div class="profile-card-title"><i class="fa fa-chart-bar"></i> Estatísticas</div>
           <div class="stats-row">
@@ -2194,7 +2214,47 @@ async function declineFriend(fromId){
 function inviteToJam(friendId,friendName){
   showToast('Convidando '+friendName+' para a sessão...');
 }
-setTimeout(registerUser, 4000);
+setTimeout(loadUsername, 2000);
+
+async function loadUsername(){
+  var userId=getUserId();
+  var saved=localStorage.getItem('hs_username');
+  if(saved){
+    showUsernameDisplay(saved);
+    // Garante que está no servidor
+    try{
+      await fetch('/api/user/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:userId,userName:saved,displayName:userProfile.name,photo:userProfile.photo||null})});
+    }catch(e){}
+  }
+}
+function showUsernameDisplay(name){
+  document.getElementById('username-show').textContent='@'+name;
+  document.getElementById('username-display').style.display='block';
+  document.getElementById('username-edit').style.display='none';
+}
+function showUsernameEdit(){
+  document.getElementById('username-display').style.display='none';
+  document.getElementById('username-edit').style.display='block';
+}
+async function saveUsername(){
+  var input=document.getElementById('username-input').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  var errEl=document.getElementById('username-error');
+  if(input.length<3){errEl.style.display='block';errEl.textContent='Mínimo 3 caracteres.';return;}
+  errEl.style.display='none';
+  var userId=getUserId();
+  try{
+    var r=await fetch('/api/user/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:userId,userName:input,displayName:userProfile.name,photo:userProfile.photo||null})});
+    var d=await r.json();
+    if(d.ok){
+      localStorage.setItem('hs_username',input);
+      showUsernameDisplay(input);
+      showToast('✅ @'+input+' salvo com sucesso!');
+    } else {
+      errEl.style.display='block';
+      errEl.textContent=d.error||'Erro ao salvar.';
+    }
+  }catch(e){errEl.style.display='block';errEl.textContent='Erro de conexão.';}
+}
 document.addEventListener('click', function(e){
   var btn = e.target.closest('#btn-add-friend');
   if(btn){
