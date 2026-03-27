@@ -851,7 +851,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
         <div class="profile-card">
           <div class="profile-card-title" style="display:flex;justify-content:space-between;align-items:center;">
             <span><i class="fa fa-users" style="color:var(--orange);"></i> Amigos</span>
-            <button id="btn-add-friend" style="background:var(--orange);border:none;border-radius:20px;padding:5px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;"><i class="fa fa-plus"></i> Adicionar</button>
+            <button id="btn-add-friend" onclick="document.getElementById('add-friend-modal').style.display='flex'" style="background:var(--orange);border:none;border-radius:20px;padding:5px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;z-index:10;position:relative;"><i class="fa fa-plus"></i> Adicionar</button>
           </div>
           <div id="friends-requests" style="margin-bottom:8px;"></div>
           <div id="friends-list"><p style="color:var(--text-muted);font-size:13px;padding:10px 0;">Nenhum amigo ainda.</p></div>
