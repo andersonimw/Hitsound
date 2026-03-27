@@ -2236,7 +2236,7 @@ function showUsernameEdit(){
   document.getElementById('username-display').style.display='none';
   document.getElementById('username-edit').style.display='block';
 }
-async function saveUsername(){
+async function saveUsername(){alert('saveUsername chamado!');
   var input=document.getElementById('username-input').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
   var errEl=document.getElementById('username-error');
   if(input.length<3){errEl.style.display='block';errEl.textContent='Mínimo 3 caracteres.';return;}
