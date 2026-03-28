@@ -1182,7 +1182,9 @@ async function openArtistPage(artistName){closeNowPlaying();showView('artist');d
 document.getElementById('btn-artist-back').addEventListener('click',function(){showView('home');});
 
 // ── PERFIL STATS ──────────────────────────────────────────────────
-function updateProfileView(){var sp=document.getElementById('stat-playlists');if(sp)sp.textContent=playlists.length;var sl=document.getElementById('stat-liked');if(sl)sl.textContent=Object.values(liked).filter(Boolean).length;var st=document.getElementById('stat-tracks');if(st)st.textContent=tracksPlayed;renderWrapped();renderTopTracks();renderTopArtists();renderWeeklyRanking();renderWeeklyChart();renderAlarmListProfile();renderLikedTracks();loadUsername();loadFriends();}
+function updateProfileView(){
+  if(_cachedUsername) showUsernameDisplay(_cachedUsername);
+  var sp=document.getElementById('stat-playlists');if(sp)sp.textContent=playlists.length;var sl=document.getElementById('stat-liked');if(sl)sl.textContent=Object.values(liked).filter(Boolean).length;var st=document.getElementById('stat-tracks');if(st)st.textContent=tracksPlayed;renderWrapped();renderTopTracks();renderTopArtists();renderWeeklyRanking();renderWeeklyChart();renderAlarmListProfile();renderLikedTracks();loadUsername();loadFriends();}
 function renderTopTracks(){var sorted=playHistory.slice().sort(function(a,b){return(b.count||1)-(a.count||1);}).slice(0,5);var h='';if(!sorted.length){h='<p style="color:var(--text-muted);font-size:13px">Nenhuma música tocada ainda.</p>';}else{sorted.forEach(function(tr,i){h+='<div class="top-item" onclick=\'playTrackObj('+JSON.stringify({name:tr.name,artist:tr.artist,ytId:tr.ytId,thumb:tr.thumb})+')\' ><div class="top-rank '+(i===0?'gold':i===1?'silver':i===2?'bronze':'normal')+'">'+(i+1)+'</div><div class="top-thumb">'+mkImg(tr.thumb)+'</div><div class="top-info"><div class="top-name">'+esc(tr.name)+'</div><div class="top-sub">'+esc(tr.artist)+'</div></div><div class="top-plays">'+tr.count+'x</div></div>';});}document.getElementById('profile-top-tracks').innerHTML=h;}
 function renderTopArtists(){var sorted=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,5);var h='';if(!sorted.length){h='<p style="color:var(--text-muted);font-size:13px">Nenhum artista ainda.</p>';}else{sorted.forEach(function(entry,i){var name=entry[0],count=entry[1];h+='<div class="top-item" onclick="openArtistPage(\''+esc(name)+'\')"><div class="top-rank '+(i===0?'gold':i===1?'silver':i===2?'bronze':'normal')+'">'+(i+1)+'</div><div class="top-thumb" style="background:linear-gradient(135deg,var(--wine),var(--orange));display:flex;align-items:center;justify-content:center;font-size:18px;">🎤</div><div class="top-info"><div class="top-name">'+esc(name)+'</div><div class="top-sub">'+count+' reproduções</div></div><div class="top-plays">'+count+'x</div></div>';});}document.getElementById('profile-top-artists').innerHTML=h;}
 function renderWeeklyChart(){var days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];var max=Math.max.apply(null,days.map(function(d){return weeklyPlays[d]||0;}))||1;var h='';days.forEach(function(d){var val=weeklyPlays[d]||0;var pct=Math.max(4,Math.round((val/max)*100));h+='<div class="chart-bar-wrap"><div class="chart-bar" style="height:'+pct+'%"></div><div class="chart-bar-label">'+d+'</div></div>';});document.getElementById('weekly-chart').innerHTML=h;}
@@ -2291,6 +2293,7 @@ function inviteToJam(friendId,friendName){
   showToast('Convidando '+friendName+' para a sessão...');
 }
 
+var _cachedUsername=localStorage.getItem('hs_username')||null;
 async function loadUsername(){
   var userId=getUserId();
   try{
@@ -2310,6 +2313,8 @@ async function loadUsername(){
   }
 }
 function showUsernameDisplay(name){
+  _cachedUsername=name;
+  localStorage.setItem('hs_username',name);
   var show=document.getElementById('username-show');
   var disp=document.getElementById('username-display');
   var edit=document.getElementById('username-edit');
