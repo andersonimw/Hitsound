@@ -2295,7 +2295,18 @@ var _cachedUsername=localStorage.getItem('hs_username')||null;
 async function loadUsername(){
   var userId=getUserId();
   var saved=localStorage.getItem('hs_username');
-  if(saved){_cachedUsername=saved;showUsernameDisplay(saved);return;}
+  if(saved){
+    _cachedUsername=saved;
+    var show=document.getElementById('username-show');
+    var disp=document.getElementById('username-display');
+    var edit=document.getElementById('username-edit');
+    if(show&&disp&&edit){
+      show.textContent='@'+saved;
+      disp.style.display='block';
+      edit.style.display='none';
+    }
+    return;
+  }
   try{
     var r=await fetch('/api/user/get?userId='+userId);
     var d=await r.json();
