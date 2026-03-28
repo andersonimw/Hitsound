@@ -1601,21 +1601,21 @@ function jamJoin(){
 function renderJamQueue(queue){
   var el=document.getElementById('jam-queue-list');
   if(!el) return;
-  if(!queue||!queue.length){
-    el.innerHTML='<p style="color:var(--text-muted);font-size:12px;padding:4px 0;">Nenhuma música na fila.</p>';
-    return;
-  }
+  if(!queue||!queue.length){el.innerHTML='<p style="color:var(--text-muted);font-size:12px;">Nenhuma música na fila.</p>';return;}
   var h='';
   queue.forEach(function(tr){
+    var td=encodeURIComponent(JSON.stringify(tr));
     h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface3);">';
     h+='<div style="width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;">'+mkImg(tr.thumb)+'</div>';
-    h+='<div style="flex:1;overflow:hidden;">';
-    h+='<div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(tr.name)+'</div>';
+    h+='<div style="flex:1;overflow:hidden;"><div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(tr.name)+'</div>';
     h+='<div style="font-size:11px;color:var(--text-muted);">'+esc(tr.artist)+'</div></div>';
-    h+='<button onclick="playTrackObj('+JSON.stringify(tr)+')" style="background:var(--orange);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:12px;cursor:pointer;"><i class="fa fa-play"></i></button>';
+    h+='<button onclick="jamPlay(decodeURIComponent(\''+td+'\'))" style="background:var(--orange);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:12px;cursor:pointer;"><i class="fa fa-play"></i></button>';
     h+='</div>';
   });
   el.innerHTML=h;
+}
+function jamPlay(encoded){
+  try{playTrackObj(JSON.parse(encoded));}catch(e){}
 }
 async function jamSearchMusic(){
   var q=document.getElementById('jam-search-input').value.trim();
@@ -1627,25 +1627,28 @@ async function jamSearchMusic(){
     if(!results||!results.length){res.innerHTML='<p style="color:var(--text-muted);font-size:12px;">Nenhum resultado.</p>';return;}
     var h='';
     results.slice(0,5).forEach(function(tr){
+      var td=encodeURIComponent(JSON.stringify(tr));
       h+='<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--surface3);">';
       h+='<div style="width:32px;height:32px;border-radius:4px;overflow:hidden;flex-shrink:0;">'+mkImg(tr.thumb)+'</div>';
-      h+='<div style="flex:1;overflow:hidden;">';
-      h+='<div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(tr.name)+'</div>';
+      h+='<div style="flex:1;overflow:hidden;"><div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(tr.name)+'</div>';
       h+='<div style="font-size:10px;color:var(--text-muted);">'+esc(tr.artist)+'</div></div>';
-      h+='<button onclick="jamAddToQueue(this)" data-track=''+JSON.stringify(tr).replace(/'/g,"&apos;")+'' style="background:var(--surface2);border:1px solid var(--surface3);border-radius:6px;padding:4px 8px;color:var(--text);font-size:11px;cursor:pointer;"><i class="fa fa-plus"></i></button>';
+      h+='<button onclick="jamAddToQueue(decodeURIComponent(\''+td+'\'))" style="background:var(--surface2);border:1px solid var(--surface3);border-radius:6px;padding:4px 8px;color:var(--text);font-size:11px;cursor:pointer;"><i class="fa fa-plus"></i></button>';
       h+='</div>';
     });
     res.innerHTML=h;
   }catch(e){res.innerHTML='<p style="color:red;font-size:12px;">Erro na busca.</p>';}
 }
-function jamAddToQueue(btn){
-  if(!jamSocket||!jamRoomId){showToast('Entre em uma sessao primeiro!');return;}
-  var tr=JSON.parse(btn.getAttribute('data-track').replace(/&apos;/g,"'"));
-  jamSocket.emit('jam:queue',{roomId:jamRoomId,track:tr});
-  showToast('Adicionado: '+tr.name);
-  document.getElementById('jam-search-results').innerHTML='';
-  document.getElementById('jam-search-input').value='';
+function jamAddToQueue(encoded){
+  if(!jamSocket||!jamRoomId){showToast('Entre em uma sessão primeiro!');return;}
+  try{
+    var tr=JSON.parse(encoded);
+    jamSocket.emit('jam:queue',{roomId:jamRoomId,track:tr});
+    showToast('Adicionado: '+tr.name);
+    document.getElementById('jam-search-results').innerHTML='';
+    document.getElementById('jam-search-input').value='';
+  }catch(e){showToast('Erro ao adicionar.');}
 }
+
 function jamCopyLink(){
   var link=window.location.origin+'?jam='+jamRoomId;
   navigator.clipboard.writeText(link).then(function(){showToast('Link copiado!');});
@@ -2403,7 +2406,7 @@ document.addEventListener('click',function(e){
         </div>
         <div id="jam-search-results" style="margin-top:8px;max-height:150px;overflow-y:auto;"></div>
       </div>
-      <button onclick="jamLeave()" style="width:100%;margin-top:4px;background:none;border:1.5px solid #ff4444;border-radius:12px;padding:11px;color:#ff4444;font-weight:700;font-size:13px;cursor:pointer;"><i class="fa fa-sign-out"></i> Sair da Sessão</button>
+      <button onclick="jamLeave()" style="width:100%;margin-top:14px;background:none;border:1.5px solid #ff4444;border-radius:12px;padding:11px;color:#ff4444;font-weight:700;font-size:13px;cursor:pointer;"><i class="fa fa-sign-out"></i> Sair da Sessão</button>
     </div>
   </div>
 </div>
