@@ -1989,7 +1989,7 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
   playQuizTrack();
 });
 
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);}
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(loadUsername,2000);}
 if(!checkFirstAccess()){}else{initApp();}
 
 // Ranking de ouvintes
@@ -2215,17 +2215,23 @@ async function declineFriend(fromId){
 function inviteToJam(friendId,friendName){
   showToast('Convidando '+friendName+' para a sessão...');
 }
-setTimeout(loadUsername, 2000);
 
 async function loadUsername(){
   var userId=getUserId();
-  var saved=localStorage.getItem('hs_username');
-  if(saved){
-    showUsernameDisplay(saved);
-    // Garante que está no servidor
-    try{
-      await fetch('/api/user/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:userId,userName:saved,displayName:userProfile.name,photo:userProfile.photo||null})});
-    }catch(e){}
+  try{
+    var r=await fetch('/api/user/get?userId='+userId);
+    var d=await r.json();
+    if(d.user&&d.user.userName){
+      localStorage.setItem('hs_username',d.user.userName);
+      showUsernameDisplay(d.user.userName);
+    } else {
+      // Verifica localStorage como fallback
+      var saved=localStorage.getItem('hs_username');
+      if(saved) showUsernameDisplay(saved);
+    }
+  }catch(e){
+    var saved=localStorage.getItem('hs_username');
+    if(saved) showUsernameDisplay(saved);
   }
 }
 function showUsernameDisplay(name){

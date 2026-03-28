@@ -1379,6 +1379,16 @@ app.post('/api/user/register', async function(req, res) {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// Buscar usuário pelo userId
+app.get('/api/user/get', async function(req, res) {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.json({ user: null });
+    const user = await User.findOne({ userId }).select('userId userName displayName photo');
+    res.json({ user: user || null });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // Buscar usuário por nome
 app.get('/api/user/search', async function(req, res) {
   try {
