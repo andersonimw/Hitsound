@@ -2402,7 +2402,7 @@ document.addEventListener('click',function(e){
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">➕ Adicionar música:</div>
         <div style="display:flex;gap:8px;">
           <input id="jam-search-input" type="text" placeholder="Buscar música..." style="flex:1;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;"/>
-          <button id="btn-jam-search" style="background:var(--orange);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;"><i class="fa fa-search"></i></button>
+          <button onclick="jamSearchMusic()" style="background:var(--orange);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;"><i class="fa fa-search"></i></button>
         </div>
         <div id="jam-search-results" style="margin-top:8px;max-height:150px;overflow-y:auto;"></div>
       </div>
