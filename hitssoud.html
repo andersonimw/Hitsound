@@ -825,7 +825,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Escolha seu nome de usuário único para aparecer nas buscas de amigos.</p>
             <div style="display:flex;gap:8px;">
               <input id="username-input" type="text" placeholder="ex: anderson123" maxlength="20" style="flex:1;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;"/>
-              <button style="background:var(--orange);border:none;border-radius:10px;padding:10px 16px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;position:relative;z-index:10;" onclick="(async function(){var inp=document.getElementById('username-input').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');var err=document.getElementById('username-error');if(inp.length<3){err.style.display='block';err.textContent='Mínimo 3 caracteres.';return;}err.style.display='none';var uid=localStorage.getItem('hs_userid');if(!uid){uid='u_'+Math.random().toString(36).substr(2,12);localStorage.setItem('hs_userid',uid);}try{var attempt=0;var d=null;while(attempt<3){try{var r=await fetch('/api/user/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid,userName:inp,displayName:inp})});d=await r.json();break;}catch(fe){attempt++;if(attempt<3){showToast('Tentando novamente...');await new Promise(function(res){setTimeout(res,3000);});}}}if(!d){err.style.display='block';err.textContent='Servidor indisponível. Tente em 30s.';return;}if(d.ok){localStorage.setItem('hs_username',inp);userProfile.username=inp;saveProfile();_cachedUsername=inp;var s=document.getElementById('username-show');var di=document.getElementById('username-display');var ed=document.getElementById('username-edit');if(s)s.textContent='@'+inp;if(di)di.style.display='block';if(ed)ed.style.display='none';showToast('✅ @'+inp+' salvo!');}else{err.style.display='block';err.textContent=d.error||'Erro.';}}catch(e){err.style.display='block';err.textContent='Erro de conexão.';}})()">Salvar</button>
+              <button style="background:var(--orange);border:none;border-radius:10px;padding:10px 16px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;position:relative;z-index:10;" onclick="(async function(){var inp=document.getElementById('username-input').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');var err=document.getElementById('username-error');if(inp.length<3){err.style.display='block';err.textContent='Mínimo 3 caracteres.';return;}err.style.display='none';var uid=localStorage.getItem('hs_userid');if(!uid){uid='u_'+Math.random().toString(36).substr(2,12);localStorage.setItem('hs_userid',uid);}try{var r=await fetch('/api/user/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid,userName:inp,displayName:inp})});var d=await r.json();if(d.ok){localStorage.setItem('hs_username',inp);document.getElementById('username-show').textContent='@'+inp;document.getElementById('username-display').style.display='block';document.getElementById('username-edit').style.display='none';alert('Salvo: @'+inp);}else{err.style.display='block';err.textContent=d.error||'Erro.';}}catch(e){err.style.display='block';err.textContent='Erro de conexão.';}})()">Salvar</button>
             </div>
             <div id="username-error" style="display:none;color:#ff4444;font-size:12px;margin-top:6px;"></div>
           </div>
@@ -1554,8 +1554,6 @@ function jamInitSocket(){
     jamSocket=io();
     jamSocket.on('jam:created',function(d){
       jamRoomId=d.roomId;
-      localStorage.setItem('jamRoomId',d.roomId);
-      localStorage.setItem('jamUserName',userProfile.name||'Ouvinte');
       document.getElementById('jam-room-code').textContent=d.roomId;
       document.getElementById('jam-screen-home').style.display='none';
       document.getElementById('jam-screen-room').style.display='block';
@@ -1563,8 +1561,6 @@ function jamInitSocket(){
     });
     jamSocket.on('jam:joined',function(d){
       jamRoomId=d.roomId;
-      localStorage.setItem('jamRoomId',d.roomId);
-      localStorage.setItem('jamUserName',userProfile.name||'Ouvinte');
       document.getElementById('jam-room-code').textContent=d.roomId;
       document.getElementById('jam-screen-home').style.display='none';
       document.getElementById('jam-screen-room').style.display='block';
@@ -1660,8 +1656,6 @@ function jamCopyLink(){
 function jamLeave(){
   if(jamSocket){jamSocket.disconnect();jamSocket=null;}
   jamRoomId=null;
-  localStorage.removeItem('jamRoomId');
-  localStorage.removeItem('jamUserName');
   document.getElementById('jam-screen-home').style.display='block';
   document.getElementById('jam-screen-room').style.display='none';
   document.getElementById('jam-modal').style.display='none';
@@ -1686,21 +1680,6 @@ document.addEventListener('click',function(e){
 var toastTimer;
 function showToast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2400);}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
-(function jamAutoReconnect(){
-  var savedRoom=localStorage.getItem('jamRoomId');
-  var savedUser=localStorage.getItem('jamUserName');
-  if(!savedRoom||!savedUser) return;
-  setTimeout(function(){
-    try{
-      jamInitSocket();
-      jamSocket.emit('jam:join',{roomId:savedRoom,userName:savedUser});
-      showToast('🔄 Reconectando à sessão '+savedRoom+'...');
-    }catch(e){
-      localStorage.removeItem('jamRoomId');
-      localStorage.removeItem('jamUserName');
-    }
-  },2000);
-})();
 var radioAudio=null,currentRadio=null;
 var RADIO_QUERIES={
   br:{country:'BR',tags:'',limit:100}
@@ -2291,22 +2270,8 @@ function inviteToJam(friendId,friendName){
   showToast('Convidando '+friendName+' para a sessão...');
 }
 
-var _cachedUsername=localStorage.getItem('hs_username')||null;
 async function loadUsername(){
   var userId=getUserId();
-  var saved=userProfile.username||localStorage.getItem('hs_username');
-  if(saved){
-    _cachedUsername=saved;
-    var show=document.getElementById('username-show');
-    var disp=document.getElementById('username-display');
-    var edit=document.getElementById('username-edit');
-    if(show&&disp&&edit){
-      show.textContent='@'+saved;
-      disp.style.display='block';
-      edit.style.display='none';
-    }
-    return;
-  }
   try{
     var r=await fetch('/api/user/get?userId='+userId);
     var d=await r.json();
@@ -2324,8 +2289,6 @@ async function loadUsername(){
   }
 }
 function showUsernameDisplay(name){
-  _cachedUsername=name;
-  localStorage.setItem('hs_username',name);
   var show=document.getElementById('username-show');
   var disp=document.getElementById('username-display');
   var edit=document.getElementById('username-edit');
