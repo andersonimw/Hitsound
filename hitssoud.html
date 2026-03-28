@@ -2294,6 +2294,8 @@ function inviteToJam(friendId,friendName){
 var _cachedUsername=localStorage.getItem('hs_username')||null;
 async function loadUsername(){
   var userId=getUserId();
+  var _ls=localStorage.getItem('hs_username');
+  showToast('USERNAME: '+ (_ls||'vazio'));
   if(_cachedUsername) showUsernameDisplay(_cachedUsername);
   try{
     var r=await fetch('/api/user/get?userId='+userId);
