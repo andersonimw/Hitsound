@@ -2271,6 +2271,7 @@ function inviteToJam(friendId,friendName){
 }
 
 async function loadUsername(){
+  console.log('loadUsername chamado. localStorage:',localStorage.getItem('hs_username'),'userProfile:',userProfile.username);
   var saved=localStorage.getItem('hs_username')||userProfile.username||null;
   if(saved){
     var show=document.getElementById('username-show');
