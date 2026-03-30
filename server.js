@@ -1247,7 +1247,7 @@ app.get('/api/search', async function(req, res) {
     // Busca 2: artistas relacionados por genero detectado
     var items2 = [];
     var artistasBR = {
-      gospel:     ['Gabriela Rocha','Aline Barros','Morada','Thalles Roberto','Nivea Soares','Anderson Freire','Marcos Freire','Davi Sacer','Fernandinho','Ministério Avivah','Sarah Beatriz','Isadora Pompeo'],
+      gospel:     ['Gabriela Rocha','Aline Barros','Morada','Thalles Roberto','Nivea Soares','Anderson Freire','Davi Sacer','Fernandinho','Ministério Avivah','Sarah Beatriz','Isadora Pompeo','Julliany Souza','Preto no Branco','Ton Carfi','Eyshila','Bruna Karla','Kemuel','Ana Paula Valadão','Eli Soares','Paulo Cesar Baruk'],
       sertanejo:  ['Jorge e Mateus','Marilia Mendonca','Gusttavo Lima','Henrique e Juliano','Luan Santana','Ana Castela','Zé Neto e Cristiano','Israel e Rodolffo'],
       funk:       ['MC Livinho','Ludmilla','Anitta','MC Kekel','Dennis DJ','MC Hariel','MC Don Juan','Kevinho'],
       pagode:     ['Grupo Menos É Mais','Turma do Pagode','Sorriso Maroto','Dilsinho','Thiaguinho','Exaltasamba','Belo'],
@@ -1284,22 +1284,9 @@ app.get('/api/search', async function(req, res) {
     };
     var lfTag = tagLastFm[generoDetectado] || 'pop brasileiro';
     var listaArtistas = artistasBR[generoDetectado] || artistasBR.pop; // fallback
-    try {
-      var lfTopUrl = 'https://ws.audioscrobbler.com/2.0/?method=tag.gettopartists&tag=' + encodeURIComponent(lfTag) + '&limit=20&api_key=' + LASTFM_KEY + '&format=json';
-      var lfTopResp = await fetch(lfTopUrl);
-      var lfTopData = await lfTopResp.json();
-      var topArtistas = (lfTopData.topartists && lfTopData.topartists.artist) ? lfTopData.topartists.artist : [];
-      if (topArtistas.length > 0) {
-        listaArtistas = topArtistas.map(function(a){ return a.name; });
-        console.log('[SEARCH] Last.fm top artistas para tag', lfTag, ':', listaArtistas.slice(0,5));
-      } else {
-        console.log('[SEARCH] Last.fm sem resultados para tag', lfTag, '— usando lista fixa');
-      }
-    } catch(lfErr) {
-      console.log('[SEARCH] Last.fm erro:', lfErr.message, '— usando lista fixa');
-    }
+    // Usando lista fixa BR — Last.fm trazia artistas internacionais para tags gospel/sertanejo
     listaArtistas = listaArtistas.filter(function(a){ return !a.toLowerCase().includes(qLow) && !qLow.includes(a.toLowerCase()); });
-    listaArtistas = listaArtistas.sort(function(){ return Math.random()-0.5; }).slice(0,12);
+    listaArtistas = listaArtistas.sort(function(){ return Math.random()-0.5; }).slice(0,8);
     console.log('[SEARCH] Artistas selecionados:', listaArtistas);
     var simBuscas = listaArtistas.map(function(nome){
       var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=4&q=' + encodeURIComponent(nome + ' musica');
