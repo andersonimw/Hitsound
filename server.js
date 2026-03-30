@@ -1239,20 +1239,23 @@ app.get('/api/search', async function(req, res) {
       return blocklist.some(function(w) { return t.includes(w); });
     }
 
-    // Busca 1: termo exato com videoDuration=medium (musicas individuais tendem a ser 3-8min)
-    var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=25&q=' + encodeURIComponent(q + ' musica');
-    // Busca 2: termo relacionado para trazer variedade
-    var url2 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=25&q=' + encodeURIComponent(q + ' ao vivo');
+    // Busca 1: musicas do artista buscado
+    var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=15&q=' + encodeURIComponent(q + ' musica');
+    // Busca 2: artistas relacionados / mesmo genero
+    var url2 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=15&q=' + encodeURIComponent('musicas parecidas com ' + q);
+    // Busca 3: genero do artista para trazer variedade real
+    var url3 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=15&q=' + encodeURIComponent(q + ' estilo artistas semelhantes');
 
-    var [data1, data2] = await Promise.all([fetchYT(url1), fetchYT(url2)]);
+    var [data1, data2, data3] = await Promise.all([fetchYT(url1), fetchYT(url2), fetchYT(url3)]);
 
     var items1 = (data1.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
     var items2 = (data2.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
+    var items3 = (data3.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
 
     // Mesclar sem duplicatas por videoId
     var seen = new Set();
     var merged = [];
-    items1.concat(items2).forEach(function(item) {
+    items1.concat(items2).concat(items3).forEach(function(item) {
       var id = item.id && item.id.videoId ? item.id.videoId : item.id;
       if (!seen.has(id)) { seen.add(id); merged.push(item); }
     });
