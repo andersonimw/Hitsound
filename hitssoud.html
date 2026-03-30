@@ -1551,7 +1551,7 @@ function openJamSession(){
 }
 function closeJamModal(){
   document.getElementById('jam-modal').style.display='none';
-  localStorage.removeItem('hs_jam_room');
+  // NAO remove hs_jam_room aqui — fechar o modal nao encerra a sessao
 }
 var jamSocket=null;
 var jamRoomId=null;
@@ -1667,6 +1667,7 @@ function jamLeave(){
   jamRoomId=null;
   localStorage.removeItem('jamRoomId');
   localStorage.removeItem('jamUserName');
+  localStorage.removeItem('hs_jam_room');
   document.getElementById('jam-screen-home').style.display='block';
   document.getElementById('jam-screen-room').style.display='none';
   document.getElementById('jam-modal').style.display='none';
