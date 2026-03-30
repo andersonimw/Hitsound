@@ -98,6 +98,7 @@ io.on('connection', function(socket) {
     io.to(data.roomId).emit('jam:users', { users: room.users });
     if (room.currentTrack) socket.emit('jam:sync', { track: room.currentTrack });
     if (room.queue && room.queue.length) socket.emit('jam:queue-update', { queue: room.queue });
+    if (room.queue && room.queue.length) socket.emit('jam:queue-update', { queue: room.queue });
     console.log('[JAM] Usuario entrou:', data.roomId);
   });
 
