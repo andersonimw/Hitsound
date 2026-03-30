@@ -1230,9 +1230,34 @@ app.get('/api/search', async function(req, res) {
   try {
     const q = req.query.q;
     if (!q) return res.json({ items: [] });
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=50&q=${encodeURIComponent(q)}`;
-    const data = await fetchYT(url);
-    res.json(data);
+
+    // Palavras que indicam playlist ou compilacao — filtrar fora
+    const blocklist = ['top 50','top50','dvd','radio 24','rádio 24','24 horas','24h','completo','playlist','coletanea','coletânea','mais tocadas','mais ouvidas','louvores que tocam','louvores que','album completo','álbum completo','as 10','as 20','as 30','compilation','mix completo','ao vivo completo'];
+
+    function isBlocked(title) {
+      var t = title.toLowerCase();
+      return blocklist.some(function(w) { return t.includes(w); });
+    }
+
+    // Busca 1: termo exato com videoDuration=medium (musicas individuais tendem a ser 3-8min)
+    var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=25&q=' + encodeURIComponent(q + ' musica');
+    // Busca 2: termo relacionado para trazer variedade
+    var url2 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=25&q=' + encodeURIComponent(q + ' ao vivo');
+
+    var [data1, data2] = await Promise.all([fetchYT(url1), fetchYT(url2)]);
+
+    var items1 = (data1.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
+    var items2 = (data2.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
+
+    // Mesclar sem duplicatas por videoId
+    var seen = new Set();
+    var merged = [];
+    items1.concat(items2).forEach(function(item) {
+      var id = item.id && item.id.videoId ? item.id.videoId : item.id;
+      if (!seen.has(id)) { seen.add(id); merged.push(item); }
+    });
+
+    res.json({ items: merged });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
