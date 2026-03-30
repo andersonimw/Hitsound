@@ -1546,7 +1546,7 @@ function openJamSession(){
   if(savedRoom){
     jamInitSocket();
     var uname=localStorage.getItem('hs_username')||userProfile.name||'Anonimo';
-    jamSocket.emit('jam:join',{roomId:savedRoom,userName:uname});
+    jamSocket.emit('jam:reconnect',{roomId:savedRoom,userName:uname});
   }
 }
 function closeJamModal(){
@@ -1698,7 +1698,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catc
   setTimeout(function(){
     try{
       jamInitSocket();
-      jamSocket.emit('jam:join',{roomId:savedRoom,userName:savedUser});
+      jamSocket.emit('jam:reconnect',{roomId:savedRoom,userName:savedUser});
       showToast('🔄 Reconectando à sessão '+savedRoom+'...');
     }catch(e){
       localStorage.removeItem('jamRoomId');

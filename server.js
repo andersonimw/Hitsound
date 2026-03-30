@@ -127,11 +127,51 @@ io.on('connection', function(socket) {
       room.users = room.users.filter(function(u) { return u.id !== socket.id; });
       if (room.users.length === 0) {
         delete jamRooms[roomId];
-        console.log('[JAM] Sala vazia em memoria:', roomId);
+        // NAO apaga do MongoDB — sala persiste para reconexao
+        console.log('[JAM] Sala vazia em memoria (persiste no MongoDB):', roomId);
       } else {
         io.to(roomId).emit('jam:users', { users: room.users });
       }
     }
+  });
+
+  // Reconexao explicita — usuario volta para sala salva no localStorage
+  socket.on('jam:reconnect', async function(data) {
+    if (!data.roomId) return;
+    var room = jamRooms[data.roomId];
+    if (!room) {
+      try {
+        var dbRoom = await JamRoom.findOne({ roomId: data.roomId });
+        if (dbRoom) {
+          jamRooms[data.roomId] = {
+            host: socket.id,
+            hostName: dbRoom.hostName,
+            users: [],
+            currentTrack: dbRoom.currentTrack || null,
+            queue: dbRoom.queue || []
+          };
+          room = jamRooms[data.roomId];
+        }
+      } catch(e) {}
+    }
+    if (!room) {
+      socket.emit('jam:error', { msg: 'Sala nao encontrada. Sessao encerrada.' });
+      return;
+    }
+    var userName = data.userName || 'Anonimo';
+    var jaEsta = room.users.find(function(u) { return u.name === userName; });
+    if (!jaEsta) {
+      if (room.users.length >= 5) { socket.emit('jam:error', { msg: 'Sala cheia (max. 5).' }); return; }
+      room.users.push({ id: socket.id, name: userName });
+    } else {
+      jaEsta.id = socket.id;
+    }
+    socket.join(data.roomId);
+    socket.emit('jam:joined', { roomId: data.roomId, room });
+    io.to(data.roomId).emit('jam:users', { users: room.users });
+    if (room.currentTrack) socket.emit('jam:sync', { track: room.currentTrack });
+    if (room.queue && room.queue.length) socket.emit('jam:queue-update', { queue: room.queue });
+    console.log('[JAM] Reconexao:', data.roomId, userName);
   });
 
 // Limpar salas antigas do MongoDB (mais de 24h sem atividade)
