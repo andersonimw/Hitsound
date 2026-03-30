@@ -1244,28 +1244,45 @@ app.get('/api/search', async function(req, res) {
     var data1 = await fetchYT(url1);
     var items1 = (data1.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
 
-    // Busca 2: artistas similares via Last.fm
-    var items2 = [], items3 = [];
-    try {
-      var lfUrl = 'https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=' + encodeURIComponent(q) + '&limit=5&api_key=' + LASTFM_KEY + '&format=json';
-      var lfResp = await fetch(lfUrl);
-      var lfData = await lfResp.json();
-      var similares = (lfData.similarartists && lfData.similarartists.artist) ? lfData.similarartists.artist : [];
-      // Pega ate 4 artistas similares e busca musicas de cada um no YouTube
-      var simNomes = similares.slice(0,4).map(function(a){ return a.name; });
-      console.log('[SEARCH] Artistas similares:', simNomes);
-      var simBuscas = simNomes.map(function(nome){
-        var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=5&q=' + encodeURIComponent(nome + ' musica');
-        return fetchYT(u);
-      });
-      var simResultados = await Promise.all(simBuscas);
-      simResultados.forEach(function(d){
-        var its = (d.items || []).filter(function(i){ return !isBlocked(i.snippet.title); });
-        items2 = items2.concat(its);
-      });
-    } catch(lfErr) {
-      console.log('[SEARCH] Last.fm erro:', lfErr.message);
-    }
+    // Busca 2: artistas relacionados por genero detectado
+    var items2 = [];
+    var artistasBR = {
+      gospel:     ['Gabriela Rocha','Aline Barros','Morada','Thalles Roberto','Nivea Soares','Anderson Freire','Marcos Freire','Davi Sacer','Fernandinho','Ministério Avivah','Sarah Beatriz','Isadora Pompeo'],
+      sertanejo:  ['Jorge e Mateus','Marilia Mendonca','Gusttavo Lima','Henrique e Juliano','Luan Santana','Ana Castela','Zé Neto e Cristiano','Israel e Rodolffo'],
+      funk:       ['MC Livinho','Ludmilla','Anitta','MC Kekel','Dennis DJ','MC Hariel','MC Don Juan','Kevinho'],
+      pagode:     ['Grupo Menos É Mais','Turma do Pagode','Sorriso Maroto','Dilsinho','Thiaguinho','Exaltasamba','Belo'],
+      rap:        ['Emicida','Racionais MCs','Criolo','BK','Djonga','Filipe Ret','Orochi','Xamã'],
+      rock:       ['Legião Urbana','Skank','Os Paralamas do Sucesso','Nando Reis','Capital Inicial','Fresno','NX Zero'],
+      pop:        ['Anitta','Dua Lipa','The Weeknd','Luisa Sonza','Matuê','IZA','Pabllo Vittar'],
+      forro:      ['Wesley Safadão','Xand Avião','Tarcísio do Acordeon','Solange Almeida','Falamansa'],
+      axe:        ['Ivete Sangalo','Claudia Leitte','Léo Santana','Timbalada','Olodum'],
+      internacional: ['The Weeknd','Taylor Swift','Bruno Mars','Ed Sheeran','Ariana Grande','Billie Eilish']
+    };
+    // Detecta genero pelo nome do artista buscado
+    var generoDetectado = 'pop';
+    var qLow = q.toLowerCase();
+    if(['fernandinho','gabriela rocha','aline barros','morada','thalles','nivea soares','anderson freire','davi sacer','avivah','sarah beatriz','isadora pompeo','pregador luo','eyshila'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'gospel';
+    else if(['jorge','mateus','marilia','gusttavo','henrique','juliano','luan santana','ana castela','ze neto','israel','rodolffo','maiara','maraisa'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'sertanejo';
+    else if(['mc ','ludmilla','anitta','dennis','kevinho'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'funk';
+    else if(['emicida','racionais','criolo','djonga','filipe ret','orochi','xama'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'rap';
+    else if(['legiao','skank','paralamas','nando reis','capital inicial','fresno'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'rock';
+    else if(['wesley safadao','xand','tarcisio','solange almeida','falamansa'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'forro';
+    else if(['ivete','claudia leitte','leo santana','timbalada','olodum'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'axe';
+
+    var listaArtistas = artistasBR[generoDetectado] || artistasBR.pop;
+    // Remove o proprio artista buscado da lista e pega 3 aleatorios
+    listaArtistas = listaArtistas.filter(function(a){ return !a.toLowerCase().includes(qLow) && !qLow.includes(a.toLowerCase()); });
+    listaArtistas = listaArtistas.sort(function(){ return Math.random()-0.5; }).slice(0,3);
+    console.log('[SEARCH] Genero detectado:', generoDetectado, '| Artistas relacionados:', listaArtistas);
+    var simBuscas = listaArtistas.map(function(nome){
+      var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=5&q=' + encodeURIComponent(nome + ' musica');
+      return fetchYT(u);
+    });
+    var simResultados = await Promise.all(simBuscas);
+    simResultados.forEach(function(d){
+      var its = (d.items || []).filter(function(i){ return !isBlocked(i.snippet.title); });
+      items2 = items2.concat(its);
+    });
 
     // Mesclar sem duplicatas por videoId
     var seen = new Set();
