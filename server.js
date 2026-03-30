@@ -1239,23 +1239,38 @@ app.get('/api/search', async function(req, res) {
       return blocklist.some(function(w) { return t.includes(w); });
     }
 
-    // Busca 1: musicas do artista buscado
+    // Busca 1: musicas do artista buscado no YouTube
     var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=15&q=' + encodeURIComponent(q + ' musica');
-    // Busca 2: artistas relacionados / mesmo genero
-    var url2 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=15&q=' + encodeURIComponent('musicas parecidas com ' + q);
-    // Busca 3: genero do artista para trazer variedade real
-    var url3 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=15&q=' + encodeURIComponent(q + ' estilo artistas semelhantes');
-
-    var [data1, data2, data3] = await Promise.all([fetchYT(url1), fetchYT(url2), fetchYT(url3)]);
-
+    var data1 = await fetchYT(url1);
     var items1 = (data1.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
-    var items2 = (data2.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
-    var items3 = (data3.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
+
+    // Busca 2: artistas similares via Last.fm
+    var items2 = [], items3 = [];
+    try {
+      var lfUrl = 'https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=' + encodeURIComponent(q) + '&limit=5&api_key=' + LASTFM_KEY + '&format=json';
+      var lfResp = await fetch(lfUrl);
+      var lfData = await lfResp.json();
+      var similares = (lfData.similarartists && lfData.similarartists.artist) ? lfData.similarartists.artist : [];
+      // Pega ate 4 artistas similares e busca musicas de cada um no YouTube
+      var simNomes = similares.slice(0,4).map(function(a){ return a.name; });
+      console.log('[SEARCH] Artistas similares:', simNomes);
+      var simBuscas = simNomes.map(function(nome){
+        var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=5&q=' + encodeURIComponent(nome + ' musica');
+        return fetchYT(u);
+      });
+      var simResultados = await Promise.all(simBuscas);
+      simResultados.forEach(function(d){
+        var its = (d.items || []).filter(function(i){ return !isBlocked(i.snippet.title); });
+        items2 = items2.concat(its);
+      });
+    } catch(lfErr) {
+      console.log('[SEARCH] Last.fm erro:', lfErr.message);
+    }
 
     // Mesclar sem duplicatas por videoId
     var seen = new Set();
     var merged = [];
-    items1.concat(items2).concat(items3).forEach(function(item) {
+    items1.concat(items2).forEach(function(item) {
       var id = item.id && item.id.videoId ? item.id.videoId : item.id;
       if (!seen.has(id)) { seen.add(id); merged.push(item); }
     });
