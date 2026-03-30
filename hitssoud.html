@@ -1732,31 +1732,68 @@ document.addEventListener('click',function(e){
     renderRadioList(tab.dataset.radio);
   }
 });
+var _cadMode='login';
+function showTab(mode){
+  _cadMode=mode;
+  var isLogin=mode==='login';
+  document.getElementById('tab-login').style.background=isLogin?'linear-gradient(135deg,#FF6B00,#9E2347)':'#2A2A2A';
+  document.getElementById('tab-login').style.color=isLogin?'#fff':'#888';
+  document.getElementById('tab-register').style.background=isLogin?'#2A2A2A':'linear-gradient(135deg,#FF6B00,#9E2347)';
+  document.getElementById('tab-register').style.color=isLogin?'#888':'#fff';
+  document.getElementById('cad-register-extra').style.display=isLogin?'none':'block';
+  document.getElementById('cad-subtitle').textContent=isLogin?'Entre na sua conta':'Crie sua conta gratuita';
+  document.getElementById('btn-cadastrar').innerHTML=isLogin?'Entrar <i class="fa fa-arrow-right"></i>':'Criar Conta <i class="fa fa-arrow-right"></i>';
+  document.getElementById('cad-erro').style.display='none';
+}
 function showCadastro(){document.getElementById('cadastro-screen').style.display='flex';}
 function showTermos(){document.getElementById('termos-screen').style.display='flex';}
 function checkFirstAccess(){
-  var cadastro=localStorage.getItem('hs_cadastro');
+  var userId=localStorage.getItem('hs_userid');
+  var userName=localStorage.getItem('hs_username');
   var termos=localStorage.getItem('hs_termos');
-  if(!cadastro){showCadastro();return false;}
+  if(!userId||!userName){showCadastro();return false;}
   if(!termos){showTermos();return false;}
   return true;
 }
-document.getElementById('btn-cadastrar').addEventListener('click',function(){
-  var nome=document.getElementById('cad-nome').value.trim();
-  var sobrenome=document.getElementById('cad-sobrenome').value.trim();
-  var nascimento=document.getElementById('cad-nascimento').value.trim();
-  var email=document.getElementById('cad-email').value.trim();
-  var telefone=document.getElementById('cad-telefone').value.trim();
-  if(!nome||!sobrenome||!nascimento||!email||!telefone){
-    document.getElementById('cad-erro').style.display='block';
-    return;
-  }
-  localStorage.setItem('hs_cadastro',JSON.stringify({nome:nome,sobrenome:sobrenome,nascimento:nascimento,email:email,telefone:telefone}));
-  document.getElementById('cadastro-screen').style.display='none';
-  showTermos();
+document.getElementById('btn-cadastrar').addEventListener('click',async function(){
+  var username=document.getElementById('cad-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  var senha=document.getElementById('cad-senha').value.trim();
+  var errEl=document.getElementById('cad-erro');
+  errEl.style.display='none';
+  if(username.length<3){errEl.style.display='block';errEl.textContent='Username: minimo 3 caracteres.';return;}
+  if(senha.length<4){errEl.style.display='block';errEl.textContent='Senha: minimo 4 caracteres.';return;}
+  document.getElementById('btn-cadastrar').textContent='Aguarde...';
+  try{
+    if(_cadMode==='login'){
+      var r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userName:username,password:senha})});
+      var d=await r.json();
+      if(d.ok){
+        localStorage.setItem('hs_userid',d.userId);
+        localStorage.setItem('hs_username',d.userName);
+        userProfile.name=d.displayName||d.userName;
+        document.getElementById('cadastro-screen').style.display='none';
+        showTermos();
+      }else{errEl.style.display='block';errEl.textContent=d.error||'Erro ao entrar.';}
+    }else{
+      var displayName=document.getElementById('cad-displayname').value.trim()||username;
+      var r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userName:username,password:senha,displayName:displayName})});
+      var d=await r.json();
+      if(d.ok){
+        localStorage.setItem('hs_userid',d.userId);
+        localStorage.setItem('hs_username',d.userName);
+        userProfile.name=d.displayName||d.userName;
+        document.getElementById('cadastro-screen').style.display='none';
+        showTermos();
+      }else{errEl.style.display='block';errEl.textContent=d.error||'Erro ao criar conta.';}
+    }
+  }catch(e){errEl.style.display='block';errEl.textContent='Erro de conexao. Tente novamente.';}
+  document.getElementById('btn-cadastrar').innerHTML=_cadMode==='login'?'Entrar <i class="fa fa-arrow-right"></i>':'Criar Conta <i class="fa fa-arrow-right"></i>';
 });
 document.getElementById('btn-aceitar-termos').addEventListener('click',function(){
   localStorage.setItem('hs_termos','aceito');
+  document.getElementById('termos-screen').style.display='none';
+  initApp();
+});
   document.getElementById('termos-screen').style.display='none';
   initApp();
 });

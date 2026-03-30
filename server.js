@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema({
   userName: { type: String, unique: true, lowercase: true, trim: true },
   displayName: String,
   photo: String,
+  password: String,
   friends: [String],
   friendRequests: [String],
   createdAt: { type: Date, default: Date.now }
@@ -1431,6 +1432,35 @@ app.post('/api/user/friend-decline', async function(req, res) {
     await User.findOneAndUpdate({ userId }, { $pull: { friendRequests: fromId } });
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Registro com senha
+app.post('/api/auth/register', async function(req, res) {
+  try {
+    var userName = (req.body.userName||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+    var password = req.body.password||'';
+    var displayName = req.body.displayName||userName;
+    if(!userName||userName.length<3) return res.status(400).json({error:'Username muito curto.'});
+    if(!password||password.length<4) return res.status(400).json({error:'Senha muito curta (min 4 caracteres).'});
+    var existing = await User.findOne({userName:userName});
+    if(existing) return res.status(400).json({error:'Este username ja existe. Escolha outro.'});
+    var userId = 'u_'+Math.random().toString(36).substr(2,12);
+    var user = await User.create({userId,userName,displayName,password});
+    res.json({ok:true,userId:user.userId,userName:user.userName,displayName:user.displayName});
+  } catch(e) { res.status(500).json({error:'Erro interno.'}); }
+});
+
+// Login com senha
+app.post('/api/auth/login', async function(req, res) {
+  try {
+    var userName = (req.body.userName||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+    var password = req.body.password||'';
+    var user = await User.findOne({userName:userName});
+    if(!user) return res.status(400).json({error:'Usuario nao encontrado.'});
+    if(!user.password) return res.status(400).json({error:'Cadastre uma senha pelo app.'});
+    if(user.password !== password) return res.status(400).json({error:'Senha incorreta.'});
+    res.json({ok:true,userId:user.userId,userName:user.userName,displayName:user.displayName});
+  } catch(e) { res.status(500).json({error:'Erro interno.'}); }
 });
 
 // Buscar amigos e pedidos pendentes
