@@ -43,30 +43,56 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 // Salas de sessão ao vivo
+// Schema para salas de sessao ao vivo
+const jamRoomSchema = new mongoose.Schema({
+  roomId: { type: String, unique: true },
+  hostName: String,
+  currentTrack: mongoose.Schema.Types.Mixed,
+  queue: { type: Array, default: [] },
+  updatedAt: { type: Date, default: Date.now }
+});
+const JamRoom = mongoose.model('JamRoom', jamRoomSchema);
+
 const jamRooms = {};
 
 io.on('connection', function(socket) {
   // Criar sala
-  socket.on('jam:create', function(data) {
+  socket.on('jam:create', async function(data) {
     const roomId = Math.random().toString(36).substr(2,6).toUpperCase();
     jamRooms[roomId] = {
       host: socket.id,
-      hostName: data.userName || 'Anônimo',
-      users: [{ id: socket.id, name: data.userName || 'Anônimo' }],
+      hostName: data.userName || 'Anonimo',
+      users: [{ id: socket.id, name: data.userName || 'Anonimo' }],
       currentTrack: null,
       queue: []
     };
     socket.join(roomId);
     socket.emit('jam:created', { roomId });
+    try { await JamRoom.create({ roomId, hostName: data.userName||'Anonimo', queue: [], currentTrack: null }); } catch(e) {}
     console.log('[JAM] Sala criada:', roomId);
   });
 
   // Entrar na sala
-  socket.on('jam:join', function(data) {
-    const room = jamRooms[data.roomId];
-    if (!room) { socket.emit('jam:error', { msg: 'Sala não encontrada.' }); return; }
-    if (room.users.length >= 5) { socket.emit('jam:error', { msg: 'Sala cheia (máx. 5).' }); return; }
-    room.users.push({ id: socket.id, name: data.userName || 'Anônimo' });
+  socket.on('jam:join', async function(data) {
+    var room = jamRooms[data.roomId];
+    if (!room) {
+      try {
+        var dbRoom = await JamRoom.findOne({ roomId: data.roomId });
+        if (dbRoom) {
+          jamRooms[data.roomId] = {
+            host: socket.id,
+            hostName: dbRoom.hostName,
+            users: [],
+            currentTrack: dbRoom.currentTrack||null,
+            queue: dbRoom.queue||[]
+          };
+          room = jamRooms[data.roomId];
+        }
+      } catch(e) {}
+    }
+    if (!room) { socket.emit('jam:error', { msg: 'Sala nao encontrada.' }); return; }
+    if (room.users.length >= 5) { socket.emit('jam:error', { msg: 'Sala cheia (max. 5).' }); return; }
+    room.users.push({ id: socket.id, name: data.userName || 'Anonimo' });
     socket.join(data.roomId);
     socket.emit('jam:joined', { roomId: data.roomId, room });
     io.to(data.roomId).emit('jam:users', { users: room.users });
@@ -76,34 +102,44 @@ io.on('connection', function(socket) {
   });
 
   // Tocar música
-  socket.on('jam:play', function(data) {
+  socket.on('jam:play', async function(data) {
     const room = jamRooms[data.roomId];
     if (!room) return;
     room.currentTrack = data.track;
     io.to(data.roomId).emit('jam:sync', { track: data.track });
+    try { await JamRoom.findOneAndUpdate({ roomId: data.roomId }, { currentTrack: data.track, updatedAt: new Date() }); } catch(e) {}
   });
 
   // Adicionar à fila
-  socket.on('jam:queue', function(data) {
+  socket.on('jam:queue', async function(data) {
     const room = jamRooms[data.roomId];
     if (!room) return;
     room.queue.push(data.track);
     io.to(data.roomId).emit('jam:queue-update', { queue: room.queue });
+    try { await JamRoom.findOneAndUpdate({ roomId: data.roomId }, { queue: room.queue, updatedAt: new Date() }); } catch(e) {}
   });
 
   // Desconectar
-  socket.on('disconnect', function() {
+  socket.on('disconnect', async function() {
     for (var roomId in jamRooms) {
       var room = jamRooms[roomId];
       room.users = room.users.filter(function(u) { return u.id !== socket.id; });
       if (room.users.length === 0) {
         delete jamRooms[roomId];
-        console.log('[JAM] Sala encerrada:', roomId);
+        console.log('[JAM] Sala vazia em memoria:', roomId);
       } else {
         io.to(roomId).emit('jam:users', { users: room.users });
       }
     }
   });
+
+// Limpar salas antigas do MongoDB (mais de 24h sem atividade)
+setInterval(async function() {
+  try {
+    var ontem = new Date(Date.now() - 24*60*60*1000);
+    await JamRoom.deleteMany({ updatedAt: { $lt: ontem } });
+  } catch(e) {}
+}, 60*60*1000);
 });
 const PORT = process.env.PORT || 3000;
 const LASTFM_KEY = process.env.LASTFM_API_KEY || "";
