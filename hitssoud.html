@@ -991,22 +991,19 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   <div style="width:100%;max-width:400px;">
     <div style="text-align:center;margin-bottom:28px;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:4px;background:linear-gradient(135deg,#FF6B00,#9E2347);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">HitsSoud</div>
-      <div style="font-size:13px;color:#888;margin-top:6px;" id="cad-subtitle">Entre na sua conta</div>
+      <div style="font-size:13px;color:#888;margin-top:6px;">Crie sua conta gratuita</div>
     </div>
     <div style="background:#1A1A1A;border-radius:20px;padding:24px;border:1px solid #2A2A2A;">
-      <div style="display:flex;gap:8px;margin-bottom:20px;">
-        <button id="tab-login" onclick="showTab('login')" style="flex:1;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#FF6B00,#9E2347);color:#fff;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;cursor:pointer;">Entrar</button>
-        <button id="tab-register" onclick="showTab('register')" style="flex:1;padding:10px;border:none;border-radius:10px;background:#2A2A2A;color:#888;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;cursor:pointer;">Criar Conta</button>
-      </div>
-      <div id="cad-erro" style="color:#ff4444;font-size:12px;text-align:center;margin-top:0px;margin-bottom:10px;display:none;"></div>
-      <input type="text" id="cad-username" placeholder="@username *" maxlength="20" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
-      <input type="password" id="cad-senha" placeholder="Senha *" maxlength="30" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
-      <div id="cad-register-extra" style="display:none;">
-        <input type="text" id="cad-displayname" placeholder="Nome de exibição (opcional)" maxlength="30" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
-      </div>
-      <button id="btn-cadastrar" style="width:100%;padding:14px;background:linear-gradient(135deg,#FF6B00,#9E2347);border:none;border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;">Entrar <i class="fa fa-arrow-right"></i></button>
+      <div style="font-size:11px;font-weight:900;color:#FF6B00;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;"><i class="fa fa-user"></i> Seus dados</div>
+      <input type="text" id="cad-nome" placeholder="Nome *" maxlength="30" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
+      <input type="text" id="cad-sobrenome" placeholder="Sobrenome *" maxlength="30" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
+      <input type="date" id="cad-nascimento" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
+      <input type="email" id="cad-email" placeholder="E-mail *" maxlength="60" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
+      <input type="tel" id="cad-telefone" placeholder="Telefone *" maxlength="20" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:16px;display:block;"/>
+      <button id="btn-cadastrar" style="width:100%;padding:14px;background:linear-gradient(135deg,#FF6B00,#9E2347);border:none;border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;">Criar Conta <i class="fa fa-arrow-right"></i></button>
+      <div id="cad-erro" style="color:#ff4444;font-size:12px;text-align:center;margin-top:10px;display:none;">Preencha todos os campos!</div>
     </div>
-    <p style="text-align:center;font-size:11px;color:#444;margin-top:16px;">HitsSoud · Sua conta funciona em qualquer dispositivo</p>
+    <p style="text-align:center;font-size:11px;color:#444;margin-top:16px;">Seus dados ficam salvos apenas no seu dispositivo.</p>
   </div>
 </div>
 
@@ -1735,67 +1732,25 @@ document.addEventListener('click',function(e){
     renderRadioList(tab.dataset.radio);
   }
 });
-var _cadMode='login';
-function showTab(mode){
-  _cadMode=mode;
-  var isLogin=mode==='login';
-  document.getElementById('tab-login').style.background=isLogin?'linear-gradient(135deg,#FF6B00,#9E2347)':'#2A2A2A';
-  document.getElementById('tab-login').style.color=isLogin?'#fff':'#888';
-  document.getElementById('tab-register').style.background=isLogin?'#2A2A2A':'linear-gradient(135deg,#FF6B00,#9E2347)';
-  document.getElementById('tab-register').style.color=isLogin?'#888':'#fff';
-  document.getElementById('cad-register-extra').style.display=isLogin?'none':'block';
-  document.getElementById('cad-subtitle').textContent=isLogin?'Entre na sua conta':'Crie sua conta gratuita';
-  document.getElementById('btn-cadastrar').innerHTML=isLogin?'Entrar <i class="fa fa-arrow-right"></i>':'Criar Conta <i class="fa fa-arrow-right"></i>';
-  document.getElementById('cad-erro').style.display='none';
-}
 function showCadastro(){document.getElementById('cadastro-screen').style.display='flex';}
 function showTermos(){document.getElementById('termos-screen').style.display='flex';}
 function checkFirstAccess(){
-  var userId=localStorage.getItem('hs_userid');
-  var userName=localStorage.getItem('hs_username');
+  var cadastro=localStorage.getItem('hs_cadastro');
   var termos=localStorage.getItem('hs_termos');
+  if(!cadastro){showCadastro();return false;}
+  if(!termos){showTermos();return false;}
   return true;
 }
-document.getElementById('btn-cadastrar').addEventListener('click',async function(){
-  var username=document.getElementById('cad-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
-  var senha=document.getElementById('cad-senha').value.trim();
-  var errEl=document.getElementById('cad-erro');
-  errEl.style.display='none';
-  if(username.length<3){errEl.style.display='block';errEl.textContent='Username: minimo 3 caracteres.';return;}
-  if(senha.length<4){errEl.style.display='block';errEl.textContent='Senha: minimo 4 caracteres.';return;}
-  document.getElementById('btn-cadastrar').textContent='Aguarde...';
-  try{
-    if(_cadMode==='login'){
-      var r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userName:username,password:senha})});
-      var d=await r.json();
-      if(d.ok){
-        localStorage.setItem('hs_userid',d.userId);
-        localStorage.setItem('hs_username',d.userName);
-        userProfile.name=d.displayName||d.userName;
-        document.getElementById('cadastro-screen').style.display='none';
-        showTermos();
-      }else{errEl.style.display='block';errEl.textContent=d.error||'Erro ao entrar.';}
-    }else{
-      var displayName=document.getElementById('cad-displayname').value.trim()||username;
-      var r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userName:username,password:senha,displayName:displayName})});
-      var d=await r.json();
-      if(d.ok){
-        localStorage.setItem('hs_userid',d.userId);
-        localStorage.setItem('hs_username',d.userName);
-        userProfile.name=d.displayName||d.userName;
-        document.getElementById('cadastro-screen').style.display='none';
-        showTermos();
-      }else{errEl.style.display='block';errEl.textContent=d.error||'Erro ao criar conta.';}
-    }
-  }catch(e){errEl.style.display='block';errEl.textContent='Erro de conexao. Tente novamente.';}
-  document.getElementById('btn-cadastrar').innerHTML=_cadMode==='login'?'Entrar <i class="fa fa-arrow-right"></i>':'Criar Conta <i class="fa fa-arrow-right"></i>';
-});
-document.getElementById('btn-aceitar-termos').addEventListener('click',function(){
-  localStorage.setItem('hs_termos','aceito');
-  document.getElementById('termos-screen').style.display='none';
-  initApp();
-});
-
+document.getElementById('btn-cadastrar').addEventListener('click',function(){
+  var nome=document.getElementById('cad-nome').value.trim();
+  var sobrenome=document.getElementById('cad-sobrenome').value.trim();
+  var nascimento=document.getElementById('cad-nascimento').value.trim();
+  var email=document.getElementById('cad-email').value.trim();
+  var telefone=document.getElementById('cad-telefone').value.trim();
+  if(!nome||!sobrenome||!nascimento||!email||!telefone){
+    document.getElementById('cad-erro').style.display='block';
+    return;
+  }
   localStorage.setItem('hs_cadastro',JSON.stringify({nome:nome,sobrenome:sobrenome,nascimento:nascimento,email:email,telefone:telefone}));
   document.getElementById('cadastro-screen').style.display='none';
   showTermos();
