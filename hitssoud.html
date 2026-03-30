@@ -1542,9 +1542,16 @@ function closeDrawer(){
 }
 function openJamSession(){
   document.getElementById('jam-modal').style.display='flex';
+  var savedRoom=localStorage.getItem('hs_jam_room');
+  if(savedRoom){
+    jamInitSocket();
+    var uname=localStorage.getItem('hs_username')||userProfile.name||'Anonimo';
+    jamSocket.emit('jam:join',{roomId:savedRoom,userName:uname});
+  }
 }
 function closeJamModal(){
   document.getElementById('jam-modal').style.display='none';
+  localStorage.removeItem('hs_jam_room');
 }
 var jamSocket=null;
 var jamRoomId=null;
@@ -1554,6 +1561,7 @@ function jamInitSocket(){
     jamSocket=io();
     jamSocket.on('jam:created',function(d){
       jamRoomId=d.roomId;
+      localStorage.setItem('hs_jam_room',d.roomId);
       document.getElementById('jam-room-code').textContent=d.roomId;
       document.getElementById('jam-screen-home').style.display='none';
       document.getElementById('jam-screen-room').style.display='block';
@@ -1561,6 +1569,7 @@ function jamInitSocket(){
     });
     jamSocket.on('jam:joined',function(d){
       jamRoomId=d.roomId;
+      localStorage.setItem('hs_jam_room',d.roomId);
       document.getElementById('jam-room-code').textContent=d.roomId;
       document.getElementById('jam-screen-home').style.display='none';
       document.getElementById('jam-screen-room').style.display='block';
