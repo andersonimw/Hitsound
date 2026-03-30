@@ -1240,7 +1240,7 @@ app.get('/api/search', async function(req, res) {
     }
 
     // Busca 1: musicas do artista buscado no YouTube
-    var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=15&q=' + encodeURIComponent(q + ' musica');
+    var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&relevanceLanguage=pt&regionCode=BR&maxResults=15&q=' + encodeURIComponent(q + ' musica');
     var data1 = await fetchYT(url1);
     var items1 = (data1.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
 
@@ -1289,7 +1289,7 @@ app.get('/api/search', async function(req, res) {
     listaArtistas = listaArtistas.sort(function(){ return Math.random()-0.5; }).slice(0,8);
     console.log('[SEARCH] Artistas selecionados:', listaArtistas);
     var simBuscas = listaArtistas.map(function(nome){
-      var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=4&q=' + encodeURIComponent(nome + ' musica');
+      var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&relevanceLanguage=pt&regionCode=BR&maxResults=4&q=' + encodeURIComponent(nome + ' musica');
       return fetchYT(u);
     });
     var simResultados = await Promise.all(simBuscas);
