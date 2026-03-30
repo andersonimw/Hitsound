@@ -1269,13 +1269,40 @@ app.get('/api/search', async function(req, res) {
     else if(['wesley safadao','xand','tarcisio','solange almeida','falamansa'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'forro';
     else if(['ivete','claudia leitte','leo santana','timbalada','olodum'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'axe';
 
-    var listaArtistas = artistasBR[generoDetectado] || artistasBR.pop;
-    // Remove o proprio artista buscado da lista e pega 3 aleatorios
+    // Busca top artistas do genero no Last.fm
+    var tagLastFm = {
+      gospel: 'gospel',
+      sertanejo: 'sertanejo',
+      funk: 'funk brasileiro',
+      pagode: 'pagode',
+      rap: 'rap brasileiro',
+      rock: 'rock brasileiro',
+      pop: 'pop brasileiro',
+      forro: 'forro',
+      axe: 'axe',
+      internacional: 'pop'
+    };
+    var lfTag = tagLastFm[generoDetectado] || 'pop brasileiro';
+    var listaArtistas = artistasBR[generoDetectado] || artistasBR.pop; // fallback
+    try {
+      var lfTopUrl = 'https://ws.audioscrobbler.com/2.0/?method=tag.gettopartists&tag=' + encodeURIComponent(lfTag) + '&limit=20&api_key=' + LASTFM_KEY + '&format=json';
+      var lfTopResp = await fetch(lfTopUrl);
+      var lfTopData = await lfTopResp.json();
+      var topArtistas = (lfTopData.topartists && lfTopData.topartists.artist) ? lfTopData.topartists.artist : [];
+      if (topArtistas.length > 0) {
+        listaArtistas = topArtistas.map(function(a){ return a.name; });
+        console.log('[SEARCH] Last.fm top artistas para tag', lfTag, ':', listaArtistas.slice(0,5));
+      } else {
+        console.log('[SEARCH] Last.fm sem resultados para tag', lfTag, '— usando lista fixa');
+      }
+    } catch(lfErr) {
+      console.log('[SEARCH] Last.fm erro:', lfErr.message, '— usando lista fixa');
+    }
     listaArtistas = listaArtistas.filter(function(a){ return !a.toLowerCase().includes(qLow) && !qLow.includes(a.toLowerCase()); });
-    listaArtistas = listaArtistas.sort(function(){ return Math.random()-0.5; }).slice(0,3);
-    console.log('[SEARCH] Genero detectado:', generoDetectado, '| Artistas relacionados:', listaArtistas);
+    listaArtistas = listaArtistas.sort(function(){ return Math.random()-0.5; }).slice(0,12);
+    console.log('[SEARCH] Artistas selecionados:', listaArtistas);
     var simBuscas = listaArtistas.map(function(nome){
-      var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=5&q=' + encodeURIComponent(nome + ' musica');
+      var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&videoDuration=medium&maxResults=4&q=' + encodeURIComponent(nome + ' musica');
       return fetchYT(u);
     });
     var simResultados = await Promise.all(simBuscas);
