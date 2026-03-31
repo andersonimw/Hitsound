@@ -1857,7 +1857,9 @@ async function loadArtistVideos(genre){
   // Mostra cache instantaneamente
   var cacheKey='hs_cache_avids_'+genre;
   var cached=localStorage.getItem(cacheKey);
-  if(cached){el.innerHTML=cached;}
+  var cachedTime=parseInt(localStorage.getItem(cacheKey+'_time')||'0');
+  var expirado=(Date.now()-cachedTime)>6*60*60*1000;
+  if(cached&&!expirado){el.innerHTML=cached;}
   else{el.innerHTML='<div class="loading"><div class="spinner"></div></div>';}
   try{
     var r=await fetch('/api/lastfm-novidades?genre='+genre);
@@ -1873,6 +1875,7 @@ async function loadArtistVideos(genre){
     });
     el.innerHTML=h;
     localStorage.setItem(cacheKey,h);
+    localStorage.setItem(cacheKey+'_time',Date.now());
   }catch(e){if(!cached)sec.style.display='none';}
 }
 document.getElementById('btn-avids-refresh')&&document.getElementById('btn-avids-refresh').addEventListener('click',function(){
@@ -1894,7 +1897,9 @@ async function loadReels(){
   if(!el||!sec)return;
   sec.style.display='block';
   var cachedReels=localStorage.getItem('hs_cache_reels');
-  if(cachedReels){el.innerHTML=cachedReels;}
+  var cachedReelsTime=parseInt(localStorage.getItem('hs_cache_reels_time')||'0');
+  var reelsExpirado=(Date.now()-cachedReelsTime)>6*60*60*1000;
+  if(cachedReels&&!reelsExpirado){el.innerHTML=cachedReels;}
   else{el.innerHTML='<div class="loading"><div class="spinner"></div></div>';}
   var all=[];
   for(var i=0;i<top.length;i++){
@@ -1919,6 +1924,7 @@ async function loadReels(){
   });
   el.innerHTML=h;
   localStorage.setItem('hs_cache_reels',h);
+  localStorage.setItem('hs_cache_reels_time',Date.now());
 }
 document.getElementById('btn-reels-refresh')&&document.getElementById('btn-reels-refresh').addEventListener('click',loadReels);
 async function loadPodcasts(cat){
