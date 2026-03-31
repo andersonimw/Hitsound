@@ -1890,7 +1890,13 @@ document.getElementById('avids-tabs')&&document.getElementById('avids-tabs').add
   loadArtistVideos(tab.dataset.genre);
 });
 async function loadReels(){
-  var top=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,2).map(function(e){return e[0];});
+  // Canais falsos para ignorar
+  var canaisFalsos=/hybe|topic|records|music|official|vevo|label|entertainment|universal|sony|warner|distribu/i;
+  var top=Object.entries(artistPlayCount)
+    .sort(function(a,b){return b[1]-a[1];})
+    .map(function(e){return e[0];})
+    .filter(function(nome){return !canaisFalsos.test(nome);})
+    .slice(0,5);
   if(!top.length)return;
   var el=document.getElementById('reels-list');
   var sec=document.getElementById('reels-section');
@@ -1910,7 +1916,7 @@ async function loadReels(){
         var vids=d.items.filter(function(it){return it.id&&it.id.videoId;}).map(function(it){
           return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id.videoId,thumb:it.snippet.thumbnails.medium.url};
         });
-        all=all.concat(vids.slice(0,3));
+        all=all.concat(vids.slice(0,4));
       }
     }catch(e){}
   }
