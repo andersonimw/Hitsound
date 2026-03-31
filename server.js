@@ -1312,6 +1312,21 @@ app.get('/api/search', async function(req, res) {
   }
 });
 
+app.get('/api/artist-photo', async function(req, res) {
+  try {
+    var artist = req.query.artist;
+    if (!artist) return res.json({ photo: null });
+    var url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=1&q=' + encodeURIComponent(artist);
+    var data = await fetchYT(url);
+    var items = data.items || [];
+    if (!items.length) return res.json({ photo: null });
+    var thumb = items[0].snippet.thumbnails.medium.url;
+    res.json({ photo: thumb });
+  } catch(e) {
+    res.json({ photo: null });
+  }
+});
+
 app.get('/api/trending', async function(req, res) {
   try {
     const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=BR&maxResults=50`;
