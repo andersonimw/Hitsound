@@ -1854,11 +1854,15 @@ async function loadArtistVideos(genre){
   var sec=document.getElementById('avids-section');
   if(!el||!sec)return;
   sec.style.display='block';
-  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  // Mostra cache instantaneamente
+  var cacheKey='hs_cache_avids_'+genre;
+  var cached=localStorage.getItem(cacheKey);
+  if(cached){el.innerHTML=cached;}
+  else{el.innerHTML='<div class="loading"><div class="spinner"></div></div>';}
   try{
     var r=await fetch('/api/lastfm-novidades?genre='+genre);
     var d=await r.json();
-    if(!d.items||!d.items.length){el.innerHTML='<p style="color:var(--text-muted);padding:10px;">Nenhuma música encontrada.</p>';return;}
+    if(!d.items||!d.items.length){if(!cached)el.innerHTML='<p style="color:var(--text-muted);padding:10px;">Nenhuma música encontrada.</p>';return;}
     var h='';
     d.items.forEach(function(v){
       var obj=JSON.stringify(v).replace(/"/g,"'");
@@ -1868,7 +1872,8 @@ async function loadArtistVideos(genre){
       h+='<div style="font-size:9px;color:var(--text-muted);margin-top:1px;">'+esc(v.artist)+'</div></div></div>';
     });
     el.innerHTML=h;
-  }catch(e){sec.style.display='none';}
+    localStorage.setItem(cacheKey,h);
+  }catch(e){if(!cached)sec.style.display='none';}
 }
 document.getElementById('btn-avids-refresh')&&document.getElementById('btn-avids-refresh').addEventListener('click',function(){
   var active=document.querySelector('.avids-tab.active');
