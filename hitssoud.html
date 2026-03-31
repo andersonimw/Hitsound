@@ -338,10 +338,10 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #yt-container{position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;}
 /* BOTTOM NAV - posicionado ABAIXO do player */
-#bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--bg);border-top:1px solid #2a2a2a;z-index:99;align-items:center;justify-content:space-around;padding:0 4px;}
-.bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;cursor:pointer;color:var(--text-muted);border:none;background:none;font-family:'Nunito',sans-serif;flex:1;}
-.bn-item i{font-size:20px;}
-.bn-item span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+#bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--bg);border-top:1px solid #2a2a2a;z-index:99;align-items:center;justify-content:space-around;padding:0 2px;}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px;cursor:pointer;color:var(--text-muted);border:none;background:none;font-family:'Nunito',sans-serif;flex:1;min-width:0;}
+.bn-item i{font-size:17px;}
+.bn-item span{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .bn-item.active{color:var(--orange);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:768px){
