@@ -2358,7 +2358,19 @@ async function declineFriend(fromId){
   }catch(e){}
 }
 function inviteToJam(friendId,friendName){
-  showToast('Convidando '+friendName+' para a sessão...');
+  if(jamRoomId){
+    var link=window.location.origin+'?jam='+jamRoomId;
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(link).then(function(){
+        showToast('🔗 Link da sessão copiado! Mande para '+friendName);
+      });
+    } else {
+      showToast('Código da sala: '+jamRoomId+' — mande para '+friendName);
+    }
+  } else {
+    showView('jam');
+    showToast('🎵 Crie uma sessão e convide '+friendName+'!');
+  }
 }
 
 async function loadUsername(){
