@@ -598,15 +598,15 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 <header id="topbar">
   <button id="btn-hamburger" onclick="openDrawer()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 8px;flex-shrink:0;"><i class="fa fa-bars"></i></button>
   <div class="logo">Hits<span>Soud</span></div>
-  <button id="btn-home-top"><i class="fa fa-house"></i></button>
-  <div id="search-bar">
+  <button id="btn-home-top" style="display:none;"><i class="fa fa-house"></i></button>
+  <div id="search-bar" style="flex:1;min-width:0;">
     <i class="fa fa-search"></i>
     <input type="text" id="search-input" placeholder="Buscar músicas..." autocomplete="off"/>
   </div>
   <!-- MICROFONE SEPARADO -->
   <button id="btn-voice" title="Busca por voz"><i class="fa fa-microphone"></i></button>
-  <div class="topbar-right">
-    <button id="lang-btn"><i class="fa fa-globe"></i><span id="lang-label">PT</span><i class="fa fa-chevron-down" style="font-size:10px"></i></button>
+  <div class="topbar-right" style="gap:4px;">
+    <button id="lang-btn" style="display:none;"><i class="fa fa-globe"></i><span id="lang-label">PT</span><i class="fa fa-chevron-down" style="font-size:10px"></i></button>
     <div id="lang-dropdown" class="hidden">
       <div class="lang-option active" data-lang="pt">🇧🇷 Português</div>
       <div class="lang-option" data-lang="en">🇺🇸 English</div>
