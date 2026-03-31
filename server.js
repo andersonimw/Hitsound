@@ -1240,7 +1240,8 @@ app.get('/api/search', async function(req, res) {
     }
 
     // Busca 1: musicas do artista buscado no YouTube
-    var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&relevanceLanguage=pt&regionCode=BR&maxResults=15&q=' + encodeURIComponent(q);
+    var isInternacional = (generoDetectado === 'internacional');
+    var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=15' + (isInternacional ? '' : '&relevanceLanguage=pt&regionCode=BR') + '&q=' + encodeURIComponent(q);
     var data1 = await fetchYT(url1);
     var items1 = (data1.items || []).filter(function(i) { return !isBlocked(i.snippet.title); });
 
@@ -1268,6 +1269,7 @@ app.get('/api/search', async function(req, res) {
     else if(['legiao','skank','paralamas','nando reis','capital inicial','fresno'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'rock';
     else if(['wesley safadao','xand','tarcisio','solange almeida','falamansa'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'forro';
     else if(['ivete','claudia leitte','leo santana','timbalada','olodum'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'axe';
+    else if(['weeknd','taylor swift','bruno mars','ed sheeran','ariana','billie eilish','beyonce','drake','rihanna','adele','justin bieber','lady gaga','post malone','kendrick','travis scott','bad bunny','j balvin','ozuna','maluma','shakira','karol g'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'internacional';
 
     // Busca top artistas do genero no Last.fm
     var tagLastFm = {
@@ -1289,7 +1291,7 @@ app.get('/api/search', async function(req, res) {
     listaArtistas = listaArtistas.sort(function(){ return Math.random()-0.5; }).slice(0,8);
     console.log('[SEARCH] Artistas selecionados:', listaArtistas);
     var simBuscas = listaArtistas.map(function(nome){
-      var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&relevanceLanguage=pt&regionCode=BR&maxResults=4&q=' + encodeURIComponent(nome + ' musica');
+      var u = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=4' + (isInternacional ? '' : '&relevanceLanguage=pt&regionCode=BR') + '&q=' + encodeURIComponent(nome + ' musica');
       return fetchYT(u);
     });
     var simResultados = await Promise.all(simBuscas);
