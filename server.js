@@ -1494,22 +1494,8 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       if (seenArtists[artistName] >= 1) continue;
       seen[key] = true;
       seenArtists[artistName] = (seenArtists[artistName] || 0) + 1;
-      var q = artistName + ' ' + t.name;
       try {
-        var cached = await YtCache.findOne({ query: q });
-        if (cached) {
-          results.push({ name: t.name, artist: artistName, ytId: cached.ytId, thumb: cached.thumb });
-        } else {
-          var ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(q)}`;
-          var ytData = await fetchYT(ytUrl);
-          if (ytData.items && ytData.items.length > 0) {
-            var it = ytData.items[0];
-            var ytId = it.id.videoId;
-            var thumb = it.snippet.thumbnails.medium.url;
-            results.push({ name: t.name, artist: artistName, ytId: ytId, thumb: thumb });
-            YtCache.create({ query: q, ytId: ytId, thumb: thumb, title: t.name }).catch(function(){});
-          }
-        }
+        results.push({ name: t.name, artist: artistName, ytId: null, thumb: '' });
       } catch(e) {}
     }
     res.json({ items: results });
