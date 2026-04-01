@@ -1373,7 +1373,7 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     const genreTagsMap = {
       'brasil':        ['geo:brazil', 'musica brasileira'],
       'internacional': ['chart:global', 'pop', 'hip-hop'],
-      'gospel':        ['gospel brasileiro', 'musica gospel brasileira', 'gospel brasil', 'louvor', 'christian music'],
+      'gospel':        ['gospel', 'christian music', 'gospel brasileiro', 'ccm', 'worship'],
       'sertanejo':     ['sertanejo', 'sertanejo universitario', 'sertanejo romantico'],
       'funk':          ['funk brasileiro', 'funk carioca', 'funk ostentacao', 'baile funk'],
       'rap':           ['rap brasileiro', 'hip-hop', 'trap brasileiro', 'rap nacional'],
@@ -1390,7 +1390,7 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       } else if (tag === 'chart:global') {
         url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=20&page=${page}&api_key=${LASTFM_KEY}&format=json`;
       } else {
-        url = `https://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=${encodeURIComponent(tag)}&limit=15&page=${page}&api_key=${LASTFM_KEY}&format=json`;
+        url = `https://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=${encodeURIComponent(tag)}&limit=50&page=${page}&api_key=${LASTFM_KEY}&format=json`;
       }
       const r = await fetch(url);
       const d = await r.json();
