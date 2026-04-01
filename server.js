@@ -1495,7 +1495,17 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       seen[key] = true;
       seenArtists[artistName] = (seenArtists[artistName] || 0) + 1;
       try {
-        results.push({ name: t.name, artist: artistName, ytId: null, thumb: '' });
+        var itunesQ = encodeURIComponent(artistName + ' ' + t.name);
+        var itunesUrl = 'https://itunes.apple.com/search?term=' + itunesQ + '&media=music&limit=1&country=BR';
+        var itunesThumb = '';
+        try {
+          var ir = await fetch(itunesUrl, { signal: AbortSignal.timeout(3000) });
+          var id = await ir.json();
+          if (id.results && id.results.length > 0) {
+            itunesThumb = id.results[0].artworkUrl100 || '';
+          }
+        } catch(ie) {}
+        results.push({ name: t.name, artist: artistName, ytId: null, thumb: itunesThumb });
       } catch(e) {}
     }
     res.json({ items: results });
