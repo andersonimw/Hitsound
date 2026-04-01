@@ -1483,10 +1483,10 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     }
     // Embaralha para misturar as fontes
     allTracks = allTracks.sort(function(){ return Math.random() - 0.5; });
-    var results = [];
     var seen = {};
     var seenArtists = {};
-    for (var i = 0; i < allTracks.length && results.length < 50; i++) {
+    var filtered = [];
+    for (var i = 0; i < allTracks.length && filtered.length < 50; i++) {
       var t = allTracks[i];
       var artistName = t.artist && t.artist.name ? t.artist.name : (typeof t.artist === 'string' ? t.artist : '');
       var key = artistName + t.name;
@@ -1494,20 +1494,25 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       if (seenArtists[artistName] >= 1) continue;
       seen[key] = true;
       seenArtists[artistName] = (seenArtists[artistName] || 0) + 1;
-      try {
-        var itunesQ = encodeURIComponent(artistName + ' ' + t.name);
-        var itunesUrl = 'https://itunes.apple.com/search?term=' + itunesQ + '&media=music&limit=1&country=BR';
-        var itunesThumb = '';
-        try {
-          var ir = await fetch(itunesUrl, { signal: AbortSignal.timeout(3000) });
-          var id = await ir.json();
-          if (id.results && id.results.length > 0) {
-            itunesThumb = id.results[0].artworkUrl100 || '';
-          }
-        } catch(ie) {}
-        results.push({ name: t.name, artist: artistName, ytId: null, thumb: itunesThumb });
-      } catch(e) {}
+      filtered.push({ name: t.name, artist: artistName });
     }
+
+    async function getThumb(name, artist) {
+      var q = artist + ' ' + name;
+      try {
+        var cached = await YtCache.findOne({ query: 'itunes:' + q });
+        if (cached) return cached.thumb;
+        var itunesQ = encodeURIComponent(q);
+        var ir = await fetch('https://itunes.apple.com/search?term=' + itunesQ + '&media=music&limit=1&country=BR', { signal: AbortSignal.timeout(3000) });
+        var id = await ir.json();
+        var thumb = (id.results && id.results.length > 0) ? (id.results[0].artworkUrl100 || '') : '';
+        if (thumb) YtCache.create({ query: 'itunes:' + q, ytId: '', thumb: thumb, title: name }).catch(function(){});
+        return thumb;
+      } catch(e) { return ''; }
+    }
+
+    var thumbs = await Promise.all(filtered.map(function(t){ return getThumb(t.name, t.artist); }));
+    var results = filtered.map(function(t, i){ return { name: t.name, artist: t.artist, ytId: null, thumb: thumbs[i] }; });
     res.json({ items: results });
   } catch(e) {
     res.status(500).json({ error: e.message });
