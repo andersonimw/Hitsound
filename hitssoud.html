@@ -376,6 +376,24 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 .quiz-option:hover{border-color:var(--primary);}
 .quiz-option.correct{background:#1db954;border-color:#1db954;color:#fff;}
 .quiz-option.wrong{background:#e53935;border-color:#e53935;color:#fff;}
+
+#ia-humor-btn{position:fixed;right:16px;bottom:calc(var(--player-h) + var(--nav-h) + 16px);z-index:300;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--wine));border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .2s;}
+#ia-humor-btn:active{transform:scale(.92);}
+#ia-humor-modal{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.85);display:none;align-items:flex-end;justify-content:center;}
+#ia-humor-modal.open{display:flex;}
+#ia-humor-box{background:var(--surface);border-radius:22px 22px 0 0;width:100%;max-width:520px;padding:20px 16px 32px;display:flex;flex-direction:column;gap:12px;max-height:85vh;overflow:hidden;}
+#ia-humor-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;min-height:80px;max-height:50vh;}
+.ia-msg-bot{background:var(--surface2);border-radius:14px 14px 14px 4px;padding:10px 14px;font-size:13px;color:var(--text);max-width:85%;align-self:flex-start;}
+.ia-msg-user{background:linear-gradient(135deg,var(--orange),var(--wine));border-radius:14px 14px 4px 14px;padding:10px 14px;font-size:13px;color:#fff;max-width:85%;align-self:flex-end;}
+.ia-track-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:12px;cursor:pointer;}
+.ia-track-item:active{opacity:.7;}
+.ia-track-item img{width:40px;height:40px;border-radius:8px;object-fit:cover;}
+.ia-track-info{flex:1;overflow:hidden;}
+.ia-track-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ia-track-artist{font-size:11px;color:var(--text-muted);}
+#ia-humor-input-row{display:flex;gap:8px;}
+#ia-humor-input{flex:1;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;}
+#ia-humor-send{background:var(--orange);border:none;border-radius:12px;padding:10px 16px;color:#fff;font-weight:800;font-size:14px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -2480,6 +2498,115 @@ document.addEventListener('click',function(e){
     });
   }
 });
+
+// ── IA HUMOR ─────────────────────────────────────────────────────
+document.getElementById('ia-humor-btn').addEventListener('click', function(){ openIaHumor(); });
+document.getElementById('ia-humor-send').addEventListener('click', function(){ sendIaHumor(); });
+document.getElementById('ia-humor-input').addEventListener('keydown', function(e){ if(e.key==='Enter') sendIaHumor(); });
+document.getElementById('ia-humor-modal').addEventListener('click', function(e){ if(e.target===this) closeIaHumor(); });
+
+function openIaHumor(){
+  document.getElementById('ia-humor-modal').classList.add('open');
+  document.getElementById('ia-humor-input').focus();
+}
+function closeIaHumor(){
+  document.getElementById('ia-humor-modal').classList.remove('open');
+}
+async function sendIaHumor(){
+  var input = document.getElementById('ia-humor-input');
+  var msgs = document.getElementById('ia-humor-messages');
+  var text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+
+  // Mensagem do usuário
+  msgs.innerHTML += '<div class="ia-msg-user">'+esc(text)+'</div>';
+  msgs.innerHTML += '<div class="ia-msg-bot" id="ia-thinking">🎵 Pensando nas músicas certas para você...</div>';
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: 'Você é um DJ especialista em música brasileira. O usuário vai te contar seu humor ou momento atual. Você deve responder com uma mensagem curta e animada (máximo 2 frases) e sugerir exatamente 5 músicas perfeitas para aquele momento. Responda APENAS em JSON válido, sem markdown, no formato: {"mensagem":"texto animado aqui","musicas":[{"nome":"nome da musica","artista":"nome do artista"},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."}]}. Prefira músicas brasileiras (sertanejo, funk, gospel, pagode, pop BR, forró) mas pode incluir internacionais se fizer sentido para o momento.',
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    var data = await response.json();
+    var raw = data.content.map(function(i){ return i.text||''; }).join('');
+    var clean = raw.replace(/```json|```/g,'').trim();
+    var parsed = JSON.parse(clean);
+
+    // Remove o "pensando"
+    var thinking = document.getElementById('ia-thinking');
+    if(thinking) thinking.remove();
+
+    // Mensagem da IA
+    msgs.innerHTML += '<div class="ia-msg-bot">'+esc(parsed.mensagem)+'</div>';
+
+    // Busca e exibe as músicas
+    var tracksHtml = '<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">';
+    var tracksData = [];
+    for(var i=0; i<parsed.musicas.length; i++){
+      var m = parsed.musicas[i];
+      tracksHtml += '<div class="ia-track-item" data-ia-idx="'+i+'"><div style="width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,var(--orange),var(--wine));display:flex;align-items:center;justify-content:center;font-size:18px;">🎵</div><div class="ia-track-info"><div class="ia-track-name">'+esc(m.nome)+'</div><div class="ia-track-artist">'+esc(m.artista)+'</div></div><div style="color:var(--orange);font-size:18px;">▶</div></div>';
+      tracksData.push(m);
+    }
+    tracksHtml += '</div>';
+    msgs.innerHTML += tracksHtml;
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Guarda dados para click
+    window._iaTracksData = tracksData;
+
+    // Busca thumbs no YouTube em background
+    for(var j=0; j<tracksData.length; j++){
+      (async function(idx, musica){
+        try {
+          var r = await fetch('/api/search?q='+encodeURIComponent(musica.artista+' '+musica.nome));
+          var d = await r.json();
+          if(d.items && d.items.length){
+            var it = d.items[0];
+            window._iaTracksData[idx].ytId = it.id.videoId;
+            window._iaTracksData[idx].thumb = it.snippet.thumbnails.medium.url;
+            window._iaTracksData[idx].ytName = it.snippet.title;
+            window._iaTracksData[idx].ytArtist = it.snippet.channelTitle;
+            // Atualiza thumb na UI
+            var el = document.querySelector('[data-ia-idx="'+idx+'"] img');
+            if(!el){
+              var thumbEl = document.querySelector('[data-ia-idx="'+idx+'"] div');
+              if(thumbEl) thumbEl.innerHTML = '<img src="'+it.snippet.thumbnails.medium.url+'" style="width:40px;height:40px;border-radius:8px;object-fit:cover;"/>';
+            }
+          }
+        } catch(e){}
+      })(j, tracksData[j]);
+    }
+
+  } catch(e){
+    var thinking2 = document.getElementById('ia-thinking');
+    if(thinking2) thinking2.remove();
+    msgs.innerHTML += '<div class="ia-msg-bot">😅 Erro ao buscar sugestões. Tente novamente!</div>';
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+// Click nas músicas sugeridas pela IA
+document.addEventListener('click', function(e){
+  var item = e.target.closest('[data-ia-idx]');
+  if(item){
+    var idx = parseInt(item.dataset.iaIdx);
+    var m = window._iaTracksData && window._iaTracksData[idx];
+    if(m && m.ytId){
+      playTrackObj({name: m.ytName||m.nome, artist: m.ytArtist||m.artista, ytId: m.ytId, thumb: m.thumb||''});
+      closeIaHumor();
+    } else {
+      showToast('⏳ Carregando música...');
+    }
+  }
+});
 </script>
 <script src="/socket.io/socket.io.js"></script>
 <!-- MODAL ADICIONAR AMIGO -->
@@ -2525,6 +2652,26 @@ document.addEventListener('click',function(e){
         <div id="jam-search-results" style="margin-top:8px;max-height:150px;overflow-y:auto;"></div>
       </div>
       <button onclick="jamLeave()" style="width:100%;margin-top:14px;background:none;border:1.5px solid #ff4444;border-radius:12px;padding:11px;color:#ff4444;font-weight:700;font-size:13px;cursor:pointer;"><i class="fa fa-sign-out"></i> Sair da Sessão</button>
+    </div>
+  </div>
+</div>
+
+<!-- Botão flutuante IA Humor -->
+<button id="ia-humor-btn" title="IA: músicas para seu momento">🎭</button>
+
+<!-- Modal IA Humor -->
+<div id="ia-humor-modal">
+  <div id="ia-humor-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div style="font-size:15px;font-weight:800;">🎭 IA do Momento</div>
+      <button onclick="closeIaHumor()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div id="ia-humor-messages">
+      <div class="ia-msg-bot">Olá! 🎵 Como você está se sentindo agora? Me conta seu humor ou momento e eu sugiro músicas perfeitas para você!</div>
+    </div>
+    <div id="ia-humor-input-row">
+      <input id="ia-humor-input" type="text" placeholder="Ex: animado, triste, treino, relaxando..." maxlength="100"/>
+      <button id="ia-humor-send">→</button>
     </div>
   </div>
 </div>
