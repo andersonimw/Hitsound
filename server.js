@@ -1410,7 +1410,7 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     var results = [];
     var seen = {};
     var seenArtists = {};
-    for (var i = 0; i < allTracks.length && results.length < 15; i++) {
+    for (var i = 0; i < allTracks.length && results.length < 50; i++) {
       var t = allTracks[i];
       var artistName = t.artist && t.artist.name ? t.artist.name : (typeof t.artist === 'string' ? t.artist : '');
       var key = artistName + t.name;
