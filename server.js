@@ -190,7 +190,7 @@ const ytCacheSchema = new mongoose.Schema({
   ytId: String,
   thumb: String,
   title: String,
-  cachedAt: { type: Date, default: Date.now, expires: 86400 }
+  cachedAt: { type: Date, default: Date.now, expires: 604800 }
 });
 const YtCache = mongoose.models.YtCache || mongoose.model('YtCache', ytCacheSchema);
 
@@ -1456,12 +1456,12 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     var results = [];
     var seen = {};
     var seenArtists = {};
-    for (var i = 0; i < allTracks.length && results.length < 50; i++) {
+    for (var i = 0; i < allTracks.length && results.length < 20; i++) {
       var t = allTracks[i];
       var artistName = t.artist && t.artist.name ? t.artist.name : (typeof t.artist === 'string' ? t.artist : '');
       var key = artistName + t.name;
       if (seen[key]) continue;
-      if (seenArtists[artistName] >= 2) continue;
+      if (seenArtists[artistName] >= 1) continue;
       seen[key] = true;
       seenArtists[artistName] = (seenArtists[artistName] || 0) + 1;
       var q = artistName + ' ' + t.name;
