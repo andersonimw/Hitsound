@@ -1207,6 +1207,38 @@ function rotateKey() {
   currentKey = (currentKey + 1) % YT_KEYS.length;
 }
 
+const PIPED_INSTANCES = [
+  'https://pipedapi.kavin.rocks',
+  'https://piped-api.garudalinux.org',
+  'https://api.piped.projectsegfau.lt'
+];
+
+async function fetchFromPiped(query) {
+  for (let i = 0; i < PIPED_INSTANCES.length; i++) {
+    try {
+      const url = PIPED_INSTANCES[i] + '/search?q=' + encodeURIComponent(query) + '&filter=videos';
+      const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (!data.items || data.items.length === 0) continue;
+      const v = data.items.find(function(x){ return x.type === 'stream'; });
+      if (!v) continue;
+      const ytId = v.url ? v.url.replace('/watch?v=', '') : null;
+      if (!ytId) continue;
+      return {
+        items: [{
+          id: { videoId: ytId },
+          snippet: {
+            title: v.title || query,
+            thumbnails: { medium: { url: v.thumbnail || '' } }
+          }
+        }]
+      };
+    } catch(e) {}
+  }
+  return { items: [] };
+}
+
 async function fetchYT(url) {
   for (let i = 0; i < YT_KEYS.length; i++) {
     try {
@@ -1224,6 +1256,11 @@ async function fetchYT(url) {
       rotateKey();
       continue;
     }
+  }
+  console.log('[fetchYT] todas as chaves esgotadas, tentando Piped...');
+  const qMatch = url.match(/[?&]q=([^&]+)/);
+  if (qMatch) {
+    return await fetchFromPiped(decodeURIComponent(qMatch[1]));
   }
   return { items: [] };
 }
