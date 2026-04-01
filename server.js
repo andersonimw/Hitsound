@@ -1416,6 +1416,43 @@ app.get('/api/trending', async function(req, res) {
 app.get('/api/lastfm-novidades', async function(req, res) {
   try {
     const genre = req.query.genre || 'brasil';
+    const itunesGenreMap = {
+      'funk':      'funk brasileiro',
+      'pagode':    'pagode',
+      'sertanejo': 'sertanejo',
+      'rap':       'rap brasileiro',
+      'rock':      'rock brasileiro',
+      'pop':       'pop brasileiro',
+      'axe':       'axe bahia',
+    };
+
+    if (itunesGenreMap[genre]) {
+      var term = encodeURIComponent(itunesGenreMap[genre]);
+      var itunesUrl = 'https://itunes.apple.com/search?term=' + term + '&media=music&limit=50&country=BR';
+      try {
+        var ir = await fetch(itunesUrl, { signal: AbortSignal.timeout(8000) });
+        var id = await ir.json();
+        if (id.results && id.results.length > 0) {
+          var seen = {};
+          var seenArtists = {};
+          var results = [];
+          for (var i = 0; i < id.results.length; i++) {
+            var it = id.results[i];
+            var name = it.trackName || '';
+            var artist = it.artistName || '';
+            var thumb = it.artworkUrl100 || '';
+            var key = artist + name;
+            if (seen[key]) continue;
+            if (seenArtists[artist] >= 2) continue;
+            seen[key] = true;
+            seenArtists[artist] = (seenArtists[artist] || 0) + 1;
+            results.push({ name: name, artist: artist, ytId: null, thumb: thumb });
+          }
+          return res.json({ items: results });
+        }
+      } catch(e) {}
+    }
+
     const genreTagsMap = {
       'brasil':        ['geo:brazil', 'musica brasileira'],
       'internacional': ['chart:global', 'pop', 'hip-hop'],
