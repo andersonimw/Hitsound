@@ -1419,7 +1419,7 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     const genreTagsMap = {
       'brasil':        ['geo:brazil', 'musica brasileira'],
       'internacional': ['chart:global', 'pop', 'hip-hop'],
-      'gospel':        ['gospel', 'christian music', 'gospel brasileiro', 'ccm', 'worship'],
+      'gospel':        [],
       'sertanejo':     ['sertanejo', 'sertanejo universitario', 'sertanejo romantico'],
       'funk':          ['funk brasileiro', 'funk carioca', 'funk ostentacao', 'baile funk'],
       'rap':           ['rap brasileiro', 'hip-hop', 'trap brasileiro', 'rap nacional'],
@@ -1444,6 +1444,36 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       if (d.toptracks && d.toptracks.track) return d.toptracks.track;
       return [];
     }
+    // Gospel: busca direta no YouTube com artistas brasileiros
+    if (genre === 'gospel') {
+      const artistasGospel = ['Gabriela Rocha','Aline Barros','Morada','Thalles Roberto','Nivea Soares','Anderson Freire','Davi Sacer','Fernandinho','Ministerio Avivah','Sarah Beatriz','Isadora Pompeo','Julliany Souza','Preto no Branco','Ton Carfi','Eyshila','Bruna Karla','Kemuel','Ana Paula Valadao','Eli Soares','Paulo Cesar Baruk'];
+      const shuffled = artistasGospel.sort(function(){ return Math.random() - 0.5; });
+      const escolhidos = shuffled.slice(0, 20);
+      var gospelResults = [];
+      for (var gi = 0; gi < escolhidos.length; gi++) {
+        var artista = escolhidos[gi];
+        var q = artista + ' gospel';
+        try {
+          var cached = await YtCache.findOne({ query: q });
+          if (cached) {
+            gospelResults.push({ name: cached.title || q, artist: artista, ytId: cached.ytId, thumb: cached.thumb });
+          } else {
+            var ytUrl = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=' + encodeURIComponent(q);
+            var ytData = await fetchYT(ytUrl);
+            if (ytData.items && ytData.items.length > 0) {
+              var it = ytData.items[0];
+              var ytId = it.id.videoId;
+              var thumb = it.snippet.thumbnails.medium.url;
+              var title = it.snippet.title;
+              gospelResults.push({ name: title, artist: artista, ytId: ytId, thumb: thumb });
+              YtCache.create({ query: q, ytId: ytId, thumb: thumb, title: title }).catch(function(){});
+            }
+          }
+        } catch(e) {}
+      }
+      return res.json({ items: gospelResults });
+    }
+
     var allTracks = [];
     for (var ti = 0; ti < tags.length; ti++) {
       try {
@@ -1456,7 +1486,7 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     var results = [];
     var seen = {};
     var seenArtists = {};
-    for (var i = 0; i < allTracks.length && results.length < 20; i++) {
+    for (var i = 0; i < allTracks.length && results.length < 50; i++) {
       var t = allTracks[i];
       var artistName = t.artist && t.artist.name ? t.artist.name : (typeof t.artist === 'string' ? t.artist : '');
       var key = artistName + t.name;
