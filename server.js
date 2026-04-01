@@ -1497,22 +1497,30 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       filtered.push({ name: t.name, artist: artistName });
     }
 
-    async function getThumb(name, artist) {
-      var q = artist + ' ' + name;
+    var cacheKeys = filtered.map(function(t){ return 'itunes:' + t.artist + ' ' + t.name; });
+    var cachedDocs = await YtCache.find({ query: { $in: cacheKeys } }).lean();
+    var cacheMap = {};
+    cachedDocs.forEach(function(d){ cacheMap[d.query] = d.thumb; });
+
+    var needFetch = filtered.filter(function(t){ return !cacheMap['itunes:' + t.artist + ' ' + t.name]; });
+
+    async function fetchItunes(t) {
+      var q = t.artist + ' ' + t.name;
       try {
-        var cached = await YtCache.findOne({ query: 'itunes:' + q });
-        if (cached) return cached.thumb;
-        var itunesQ = encodeURIComponent(q);
-        var ir = await fetch('https://itunes.apple.com/search?term=' + itunesQ + '&media=music&limit=1&country=BR', { signal: AbortSignal.timeout(3000) });
+        var ir = await fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&limit=1&country=BR', { signal: AbortSignal.timeout(3000) });
         var id = await ir.json();
         var thumb = (id.results && id.results.length > 0) ? (id.results[0].artworkUrl100 || '') : '';
-        if (thumb) YtCache.create({ query: 'itunes:' + q, ytId: '', thumb: thumb, title: name }).catch(function(){});
-        return thumb;
-      } catch(e) { return ''; }
+        if (thumb) YtCache.create({ query: 'itunes:' + q, ytId: '', thumb: thumb, title: t.name }).catch(function(){});
+        return { key: 'itunes:' + q, thumb: thumb };
+      } catch(e) { return { key: 'itunes:' + q, thumb: '' }; }
     }
 
-    var thumbs = await Promise.all(filtered.map(function(t){ return getThumb(t.name, t.artist); }));
-    var results = filtered.map(function(t, i){ return { name: t.name, artist: t.artist, ytId: null, thumb: thumbs[i] }; });
+    var fetched = await Promise.all(needFetch.map(fetchItunes));
+    fetched.forEach(function(f){ cacheMap[f.key] = f.thumb; });
+
+    var results = filtered.map(function(t){
+      return { name: t.name, artist: t.artist, ytId: null, thumb: cacheMap['itunes:' + t.artist + ' ' + t.name] || '' };
+    });
     res.json({ items: results });
   } catch(e) {
     res.status(500).json({ error: e.message });
