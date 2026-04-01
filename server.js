@@ -1329,6 +1329,34 @@ app.get('/api/artist-photo', async function(req, res) {
   }
 });
 
+app.post('/api/ia-humor', async function(req, res) {
+  try {
+    const { humor } = req.body;
+    if (!humor) return res.status(400).json({ error: 'humor obrigatorio' });
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        system: 'Você é um DJ especialista em música brasileira. O usuário vai te contar seu humor ou momento atual. Você deve responder com uma mensagem curta e animada (máximo 2 frases) e sugerir exatamente 5 músicas perfeitas para aquele momento. Responda APENAS em JSON válido, sem markdown, no formato: {"mensagem":"texto animado aqui","musicas":[{"nome":"nome da musica","artista":"nome do artista"},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."}]}. Prefira músicas brasileiras (sertanejo, funk, gospel, pagode, pop BR, forró) mas pode incluir internacionais se fizer sentido para o momento.',
+        messages: [{ role: 'user', content: humor }]
+      })
+    });
+    const data = await response.json();
+    const raw = data.content.map(function(i){ return i.text||''; }).join('');
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    res.json(parsed);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/trending', async function(req, res) {
   try {
     const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=BR&maxResults=50`;

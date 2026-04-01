@@ -2525,20 +2525,12 @@ async function sendIaHumor(){
   msgs.scrollTop = msgs.scrollHeight;
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch('/api/ia-humor', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: 'Você é um DJ especialista em música brasileira. O usuário vai te contar seu humor ou momento atual. Você deve responder com uma mensagem curta e animada (máximo 2 frases) e sugerir exatamente 5 músicas perfeitas para aquele momento. Responda APENAS em JSON válido, sem markdown, no formato: {"mensagem":"texto animado aqui","musicas":[{"nome":"nome da musica","artista":"nome do artista"},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."},{"nome":"...","artista":"..."}]}. Prefira músicas brasileiras (sertanejo, funk, gospel, pagode, pop BR, forró) mas pode incluir internacionais se fizer sentido para o momento.',
-        messages: [{ role: 'user', content: text }]
-      })
+      body: JSON.stringify({ humor: text })
     });
-    var data = await response.json();
-    var raw = data.content.map(function(i){ return i.text||''; }).join('');
-    var clean = raw.replace(/```json|```/g,'').trim();
-    var parsed = JSON.parse(clean);
+    var parsed = await response.json();
 
     // Remove o "pensando"
     var thinking = document.getElementById('ia-thinking');
