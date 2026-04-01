@@ -2144,7 +2144,7 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
   playQuizTrack();
 });
 
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);}
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);var iab=document.getElementById('ia-humor-btn');if(iab)iab.addEventListener('click',openIaHumor);var ias=document.getElementById('ia-humor-send');if(ias)ias.addEventListener('click',sendIaHumor);var iai=document.getElementById('ia-humor-input');if(iai)iai.addEventListener('keydown',function(e){if(e.key==='Enter')sendIaHumor();});var iam=document.getElementById('ia-humor-modal');if(iam)iam.addEventListener('click',function(e){if(e.target===this)closeIaHumor();});}
 function jamAutoReconnect(){
   var savedRoom=localStorage.getItem('hs_jam_room');
   if(!savedRoom) return;
