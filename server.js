@@ -185,6 +185,15 @@ setInterval(async function() {
 const PORT = process.env.PORT || 3000;
 const LASTFM_KEY = process.env.LASTFM_API_KEY || "";
 
+const ytCacheSchema = new mongoose.Schema({
+  query: { type: String, index: true, unique: true },
+  ytId: String,
+  thumb: String,
+  title: String,
+  cachedAt: { type: Date, default: Date.now, expires: 86400 }
+});
+const YtCache = mongoose.models.YtCache || mongoose.model('YtCache', ytCacheSchema);
+
 const YT_KEYS = [
   process.env.YOUTUBE_API_KEY,
   process.env.YOUTUBE_API_KEY2,
@@ -1418,13 +1427,21 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       if (seenArtists[artistName] >= 2) continue;
       seen[key] = true;
       seenArtists[artistName] = (seenArtists[artistName] || 0) + 1;
-      var q = encodeURIComponent(artistName + ' ' + t.name);
+      var q = artistName + ' ' + t.name;
       try {
-        var ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${q}`;
-        var ytData = await fetchYT(ytUrl);
-        if (ytData.items && ytData.items.length > 0) {
-          var it = ytData.items[0];
-          results.push({ name: t.name, artist: artistName, ytId: it.id.videoId, thumb: it.snippet.thumbnails.medium.url });
+        var cached = await YtCache.findOne({ query: q });
+        if (cached) {
+          results.push({ name: t.name, artist: artistName, ytId: cached.ytId, thumb: cached.thumb });
+        } else {
+          var ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(q)}`;
+          var ytData = await fetchYT(ytUrl);
+          if (ytData.items && ytData.items.length > 0) {
+            var it = ytData.items[0];
+            var ytId = it.id.videoId;
+            var thumb = it.snippet.thumbnails.medium.url;
+            results.push({ name: t.name, artist: artistName, ytId: ytId, thumb: thumb });
+            YtCache.create({ query: q, ytId: ytId, thumb: thumb, title: t.name }).catch(function(){});
+          }
         }
       } catch(e) {}
     }
