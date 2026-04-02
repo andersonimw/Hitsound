@@ -1292,6 +1292,19 @@ app.get('/api/search', async function(req, res) {
       return blocklist.some(function(w) { return t.includes(w); });
     }
 
+    // Detecta genero pela query antes de tudo
+    var generoDetectado = 'pop';
+    var qLow = q.toLowerCase();
+    if(['gospel','fernandinho','gabriela rocha','aline barros','morada','thalles','nivea soares','anderson freire','davi sacer','avivah','sarah beatriz','isadora pompeo','pregador luo','eyshila','bruna karla','kemuel','julliany','ton carfi','eli soares'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'gospel';
+    else if(['sertanejo','jorge e mateus','marilia','gusttavo','henrique e juliano','luan santana','ana castela','ze neto','maiara','maraisa'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'sertanejo';
+    else if(['funk','mc ','ludmilla','anitta','dennis','kevinho'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'funk';
+    else if(['pagode','thiaguinho','ferrugem','dilsinho','sorriso maroto'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'pagode';
+    else if(['rap','emicida','racionais','criolo','djonga','filipe ret'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'rap';
+    else if(['rock','legiao','skank','paralamas','capital inicial','fresno'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'rock';
+    else if(['forro','Wesley safadao','xand','tarcisio','falamansa'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'forro';
+    else if(['axe','ivete','claudia leitte','leo santana','timbalada','olodum'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'axe';
+    else if(['pop internacional','taylor swift','bruno mars','ed sheeran','ariana','billie eilish','beyonce','drake','bad bunny'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'internacional';
+
     // Busca 1: musicas do artista buscado no YouTube
     var isInternacional = (generoDetectado === 'internacional');
     var url1 = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=15' + (isInternacional ? '' : '&relevanceLanguage=pt&regionCode=BR') + '&q=' + encodeURIComponent(q);
@@ -1312,17 +1325,6 @@ app.get('/api/search', async function(req, res) {
       axe:        ['Ivete Sangalo','Claudia Leitte','Léo Santana','Timbalada','Olodum'],
       internacional: ['The Weeknd','Taylor Swift','Bruno Mars','Ed Sheeran','Ariana Grande','Billie Eilish']
     };
-    // Detecta genero pelo nome do artista buscado
-    var generoDetectado = 'pop';
-    var qLow = q.toLowerCase();
-    if(['fernandinho','gabriela rocha','aline barros','morada','thalles','nivea soares','anderson freire','davi sacer','avivah','sarah beatriz','isadora pompeo','pregador luo','eyshila'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'gospel';
-    else if(['jorge','mateus','marilia','gusttavo','henrique','juliano','luan santana','ana castela','ze neto','israel','rodolffo','maiara','maraisa'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'sertanejo';
-    else if(['mc ','ludmilla','anitta','dennis','kevinho'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'funk';
-    else if(['emicida','racionais','criolo','djonga','filipe ret','orochi','xama'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'rap';
-    else if(['legiao','skank','paralamas','nando reis','capital inicial','fresno'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'rock';
-    else if(['wesley safadao','xand','tarcisio','solange almeida','falamansa'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'forro';
-    else if(['ivete','claudia leitte','leo santana','timbalada','olodum'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'axe';
-    else if(['weeknd','taylor swift','bruno mars','ed sheeran','ariana','billie eilish','beyonce','drake','rihanna','adele','justin bieber','lady gaga','post malone','kendrick','travis scott','bad bunny','j balvin','ozuna','maluma','shakira','karol g'].some(function(g){ return qLow.includes(g); })) generoDetectado = 'internacional';
 
     // Busca top artistas do genero no Last.fm
     var tagLastFm = {
