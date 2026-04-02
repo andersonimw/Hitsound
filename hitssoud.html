@@ -2500,12 +2500,7 @@ document.addEventListener('click',function(e){
 });
 
 // ── IA HUMOR ─────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function(){
-  document.getElementById('ia-humor-btn').addEventListener('click', function(){ openIaHumor(); });
-  document.getElementById('ia-humor-send').addEventListener('click', function(){ sendIaHumor(); });
-  document.getElementById('ia-humor-input').addEventListener('keydown', function(e){ if(e.key==='Enter') sendIaHumor(); });
-  document.getElementById('ia-humor-modal').addEventListener('click', function(e){ if(e.target===this) closeIaHumor(); });
-});
+// listeners da IA registrados no initApp()
 
 function openIaHumor(){
   document.getElementById('ia-humor-modal').classList.add('open');
