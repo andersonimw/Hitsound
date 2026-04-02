@@ -1508,7 +1508,6 @@ app.get('/api/lastfm-novidades', async function(req, res) {
         results.push({ name: name, artist: artist, ytId: null, thumb: thumb });
         if (results.length >= 30) break;
       }
-      if (results.length >= 30) break;
     }
 
     // Salva no cache de genero por 7 dias
