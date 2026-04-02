@@ -1482,7 +1482,7 @@ app.get('/api/lastfm-novidades', async function(req, res) {
 
     // Busca iTunes em paralelo para os termos do genero
     var fetchPromises = terms.map(function(term) {
-      var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(term) + '&media=music&limit=10&country=BR';
+      var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(term) + '&media=music&limit=50&country=BR';
       return fetch(url, { signal: AbortSignal.timeout(6000) })
         .then(function(r){ return r.json(); })
         .catch(function(){ return { results: [] }; });
