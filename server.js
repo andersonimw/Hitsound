@@ -194,6 +194,13 @@ const ytCacheSchema = new mongoose.Schema({
 });
 const YtCache = mongoose.models.YtCache || mongoose.model('YtCache', ytCacheSchema);
 
+const genreCacheSchema = new mongoose.Schema({
+  genre: { type: String, index: true, unique: true },
+  items: [{ name: String, artist: String, ytId: String, thumb: String }],
+  cachedAt: { type: Date, default: Date.now, expires: 604800 }
+});
+const GenreCache = mongoose.models.GenreCache || mongoose.model('GenreCache', genreCacheSchema);
+
 const YT_KEYS = [
   process.env.YOUTUBE_API_KEY,
   process.env.YOUTUBE_API_KEY2,
@@ -1416,72 +1423,8 @@ app.get('/api/trending', async function(req, res) {
 app.get('/api/lastfm-novidades', async function(req, res) {
   try {
     const genre = req.query.genre || 'brasil';
-    const itunesGenreMap = {
-      'funk':      'funk brasileiro',
-      'pagode':    'pagode',
-      'sertanejo': 'sertanejo',
-      'rap':       'rap brasileiro',
-      'rock':      'rock brasileiro',
-      'pop':       'pop brasileiro',
-      'axe':       'axe bahia',
-    };
 
-    if (itunesGenreMap[genre]) {
-      var term = encodeURIComponent(itunesGenreMap[genre]);
-      var itunesUrl = 'https://itunes.apple.com/search?term=' + term + '&media=music&limit=50&country=BR';
-      try {
-        var ir = await fetch(itunesUrl, { signal: AbortSignal.timeout(8000) });
-        var id = await ir.json();
-        if (id.results && id.results.length > 0) {
-          var seen = {};
-          var seenArtists = {};
-          var results = [];
-          for (var i = 0; i < id.results.length; i++) {
-            var it = id.results[i];
-            var name = it.trackName || '';
-            var artist = it.artistName || '';
-            var thumb = it.artworkUrl100 || '';
-            var key = artist + name;
-            if (seen[key]) continue;
-            if (seenArtists[artist] >= 2) continue;
-            seen[key] = true;
-            seenArtists[artist] = (seenArtists[artist] || 0) + 1;
-            results.push({ name: name, artist: artist, ytId: null, thumb: thumb });
-          }
-          return res.json({ items: results });
-        }
-      } catch(e) {}
-    }
-
-    const genreTagsMap = {
-      'brasil':        ['geo:brazil', 'musica brasileira'],
-      'internacional': ['chart:global', 'pop', 'hip-hop'],
-      'gospel':        [],
-      'sertanejo':     ['sertanejo', 'sertanejo universitario', 'sertanejo romantico'],
-      'funk':          ['funk brasileiro', 'funk carioca', 'funk ostentacao', 'baile funk'],
-      'rap':           ['rap brasileiro', 'hip-hop', 'trap brasileiro', 'rap nacional'],
-      'pagode':        ['pagode', 'samba', 'pagode brasileiro', 'samba cancao'],
-      'rock':          ['rock', 'classic rock', 'rock brasileiro', 'rock nacional'],
-      'pop':           ['pop', 'brazilian pop', 'pop brasileiro', 'dance pop'],
-    };
-    const tags = genreTagsMap[genre] || genreTagsMap['brasil'];
-    async function fetchTracks(tag) {
-      var page = Math.floor(Math.random() * 3) + 1;
-      var url = '';
-      if (tag === 'geo:brazil') {
-        url = `https://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=brazil&limit=20&page=${page}&api_key=${LASTFM_KEY}&format=json`;
-      } else if (tag === 'chart:global') {
-        url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=20&page=${page}&api_key=${LASTFM_KEY}&format=json`;
-      } else {
-        url = `https://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=${encodeURIComponent(tag)}&limit=50&page=${page}&api_key=${LASTFM_KEY}&format=json`;
-      }
-      const r = await fetch(url);
-      const d = await r.json();
-      if (d.tracks && d.tracks.track) return d.tracks.track;
-      if (d.toptracks && d.toptracks.track) return d.toptracks.track;
-      return [];
-    }
-    // Gospel: busca direta no YouTube com artistas brasileiros
+    // Gospel: nao mexemos
     if (genre === 'gospel') {
       const artistasGospel = ['Gabriela Rocha','Aline Barros','Morada','Thalles Roberto','Nivea Soares','Anderson Freire','Davi Sacer','Fernandinho','Ministerio Avivah','Sarah Beatriz','Isadora Pompeo','Julliany Souza','Preto no Branco','Ton Carfi','Eyshila','Bruna Karla','Kemuel','Ana Paula Valadao','Eli Soares','Paulo Cesar Baruk'];
       const shuffled = artistasGospel.sort(function(){ return Math.random() - 0.5; });
@@ -1511,53 +1454,69 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       return res.json({ items: gospelResults });
     }
 
-    var allTracks = [];
-    for (var ti = 0; ti < tags.length; ti++) {
-      try {
-        var t = await fetchTracks(tags[ti]);
-        allTracks = allTracks.concat(t);
-      } catch(e) {}
+    // Cache de genero: retorna direto se existir
+    var genreCached = await GenreCache.findOne({ genre: genre });
+    if (genreCached && genreCached.items && genreCached.items.length > 0) {
+      return res.json({ items: genreCached.items });
     }
-    // Embaralha para misturar as fontes
-    allTracks = allTracks.sort(function(){ return Math.random() - 0.5; });
+
+    // Mapa iTunes com termos especificos por genero para artistas certos
+    const itunesTermMap = {
+      'funk':      ['funk carioca','MC Livinho','MC Fioti','Ludmilla funk','Anitta funk','MC Don Juan','Kevinho','MC Kekel','MC G15','MC Rodolfinho'],
+      'pagode':    ['pagode brasileiro','Thiaguinho pagode','Ferrugem','Dilsinho','Sorriso Maroto','Grupo Revelacao','Exaltasamba','Belo pagode','Mumuzinho','Turma do Pagode'],
+      'sertanejo': ['sertanejo universitario','Gusttavo Lima','Marilia Mendonca','Jorge e Mateus','Henrique e Juliano','Zeze Di Camargo','Maiara e Maraisa','Luan Santana','Wesley Safadao','Pedro Sampaio sertanejo'],
+      'rap':       ['rap nacional','Emicida','Racionais','Criolo rap','Projota','Marcelo D2','Rashid rap','BK rap','Djonga','Filipe Ret'],
+      'rock':      ['rock brasileiro','Legiao Urbana','Titãs','Skank','Os Paralamas','Capital Inicial','CPM 22','Detonautas','Fresno','Charlie Brown Jr'],
+      'pop':       ['pop brasileiro','Anitta','Ludmilla','Dua Lipa','The Weeknd','Ivete Sangalo pop','Claudia Leitte','Gloria Groove','IZA','Pabllo Vittar'],
+      'axe':       ['axe bahia','Ivete Sangalo','Claudia Leitte','Bell Marques','Chiclete com Banana','Harmonia do Samba','Psirico','Margareth Menezes','Safadao forro','Tomate axe'],
+      'brasil':    ['musica brasileira','hits brasil','MPB','Caetano Veloso','Gilberto Gil','Djavan','Milton Nascimento','Seu Jorge','Marisa Monte','Elza Soares'],
+      'internacional': ['pop hits','Billboard hot 100','Taylor Swift','Bad Bunny','Drake','The Weeknd','Beyonce','Ed Sheeran','Billie Eilish','Ariana Grande'],
+    };
+
+    const terms = itunesTermMap[genre] || itunesTermMap['brasil'];
     var seen = {};
     var seenArtists = {};
-    var filtered = [];
-    for (var i = 0; i < allTracks.length && filtered.length < 50; i++) {
-      var t = allTracks[i];
-      var artistName = t.artist && t.artist.name ? t.artist.name : (typeof t.artist === 'string' ? t.artist : '');
-      var key = artistName + t.name;
-      if (seen[key]) continue;
-      if (seenArtists[artistName] >= 1) continue;
-      seen[key] = true;
-      seenArtists[artistName] = (seenArtists[artistName] || 0) + 1;
-      filtered.push({ name: t.name, artist: artistName });
-    }
+    var results = [];
 
-    var cacheKeys = filtered.map(function(t){ return 'itunes:' + t.artist + ' ' + t.name; });
-    var cachedDocs = await YtCache.find({ query: { $in: cacheKeys } }).lean();
-    var cacheMap = {};
-    cachedDocs.forEach(function(d){ cacheMap[d.query] = d.thumb; });
-
-    var needFetch = filtered.filter(function(t){ return !cacheMap['itunes:' + t.artist + ' ' + t.name]; });
-
-    async function fetchItunes(t) {
-      var q = t.artist + ' ' + t.name;
-      try {
-        var ir = await fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&limit=1&country=BR', { signal: AbortSignal.timeout(3000) });
-        var id = await ir.json();
-        var thumb = (id.results && id.results.length > 0) ? (id.results[0].artworkUrl100 || '') : '';
-        if (thumb) YtCache.create({ query: 'itunes:' + q, ytId: '', thumb: thumb, title: t.name }).catch(function(){});
-        return { key: 'itunes:' + q, thumb: thumb };
-      } catch(e) { return { key: 'itunes:' + q, thumb: '' }; }
-    }
-
-    var fetched = await Promise.all(needFetch.map(fetchItunes));
-    fetched.forEach(function(f){ cacheMap[f.key] = f.thumb; });
-
-    var results = filtered.map(function(t){
-      return { name: t.name, artist: t.artist, ytId: null, thumb: cacheMap['itunes:' + t.artist + ' ' + t.name] || '' };
+    // Busca iTunes em paralelo para os termos do genero
+    var fetchPromises = terms.map(function(term) {
+      var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(term) + '&media=music&limit=10&country=BR';
+      return fetch(url, { signal: AbortSignal.timeout(6000) })
+        .then(function(r){ return r.json(); })
+        .catch(function(){ return { results: [] }; });
     });
+
+    var allResponses = await Promise.all(fetchPromises);
+
+    for (var ri = 0; ri < allResponses.length; ri++) {
+      var data = allResponses[ri];
+      if (!data.results) continue;
+      for (var i = 0; i < data.results.length; i++) {
+        var it = data.results[i];
+        var name = it.trackName || '';
+        var artist = it.artistName || '';
+        var thumb = it.artworkUrl100 || '';
+        if (!name || !artist) continue;
+        var key = (artist + name).toLowerCase();
+        if (seen[key]) continue;
+        if (seenArtists[artist] >= 3) continue;
+        seen[key] = true;
+        seenArtists[artist] = (seenArtists[artist] || 0) + 1;
+        results.push({ name: name, artist: artist, ytId: null, thumb: thumb });
+        if (results.length >= 50) break;
+      }
+      if (results.length >= 50) break;
+    }
+
+    // Salva no cache de genero por 7 dias
+    if (results.length > 0) {
+      GenreCache.findOneAndUpdate(
+        { genre: genre },
+        { genre: genre, items: results, cachedAt: new Date() },
+        { upsert: true }
+      ).catch(function(){});
+    }
+
     res.json({ items: results });
   } catch(e) {
     res.status(500).json({ error: e.message });
