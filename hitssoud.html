@@ -2150,9 +2150,23 @@ function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();rend
     var tracks=_listMap['search-tracks'];
     if(!tracks||!tracks.length){showToast('⚠️ Nenhuma música!');return;}
     var shuffled=tracks.slice().sort(function(){return Math.random()-0.5;});
-    queue=shuffled;
-    playTrackObj(shuffled[0]);
-    showToast('🔀 Tocando '+shuffled.length+' músicas!');
+    queue=shuffled.slice(1);
+    var first=shuffled[0];
+    if(first.ytId){
+      playTrackObj(first);
+      showToast('🔀 Tocando '+shuffled.length+' músicas!');
+    } else {
+      fetch('/api/search?q='+encodeURIComponent(first.artist+' '+first.name))
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d.items&&d.items.length){
+            first.ytId=d.items[0].id.videoId;
+            first.thumb=d.items[0].snippet.thumbnails.medium.url;
+          }
+          playTrackObj(first);
+          showToast('🔀 Tocando '+shuffled.length+' músicas!');
+        });
+    }
   });
   var iab=document.getElementById('ia-humor-btn');if(iab)iab.addEventListener('click',openIaHumor);var ias=document.getElementById('ia-humor-send');if(ias)ias.addEventListener('click',sendIaHumor);var iai=document.getElementById('ia-humor-input');if(iai)iai.addEventListener('keydown',function(e){if(e.key==='Enter')sendIaHumor();});var iam=document.getElementById('ia-humor-modal');if(iam)iam.addEventListener('click',function(e){if(e.target===this)closeIaHumor();});}
 function jamAutoReconnect(){
