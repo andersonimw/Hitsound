@@ -700,7 +700,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
     </section>
     <section id="view-search" class="view hidden">
       <div id="search-results-area"><h2 class="section-title">EXPLORAR GÊNEROS</h2><div class="genres-grid" id="genres-grid"></div></div>
-      <div id="search-results" class="hidden"><h2 class="section-title" id="search-results-title">Resultados</h2><div class="tracks-list" id="search-tracks"></div></div>
+      <div id="search-results" class="hidden"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h2 class="section-title" id="search-results-title" style="margin:0">Resultados</h2><button id="btn-play-all-results" style="background:linear-gradient(135deg,var(--orange),var(--wine));border:none;border-radius:20px;padding:8px 16px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;display:none;"><i class="fa fa-shuffle"></i> Tocar Tudo</button></div><div class="tracks-list" id="search-tracks"></div></div>
     </section>
     <section id="view-top100" class="view hidden">
       <div class="section-header"><h2 class="section-title">🏆 Top 30</h2></div>
@@ -1493,6 +1493,7 @@ document.getElementById('search-input').addEventListener('input',function(){
   document.getElementById('search-results-area').classList.add('hidden');
   document.getElementById('search-results').classList.remove('hidden');
   document.getElementById('search-results-title').textContent=t('results')+' "'+q+'"';
+  document.getElementById('btn-play-all-results').style.display='block';
   document.getElementById('search-tracks').innerHTML='<div class="loading"><div class="spinner"></div>'+t('loading')+'</div>';
   searchTimer=setTimeout(async function(){
     var results=await searchYouTube(q);
@@ -2144,7 +2145,16 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
   playQuizTrack();
 });
 
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);var iab=document.getElementById('ia-humor-btn');if(iab)iab.addEventListener('click',openIaHumor);var ias=document.getElementById('ia-humor-send');if(ias)ias.addEventListener('click',sendIaHumor);var iai=document.getElementById('ia-humor-input');if(iai)iai.addEventListener('keydown',function(e){if(e.key==='Enter')sendIaHumor();});var iam=document.getElementById('ia-humor-modal');if(iam)iam.addEventListener('click',function(e){if(e.target===this)closeIaHumor();});}
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);var par=document.getElementById('btn-play-all-results');
+  if(par)par.addEventListener('click',function(){
+    var tracks=_listMap['search-tracks'];
+    if(!tracks||!tracks.length){showToast('⚠️ Nenhuma música!');return;}
+    var shuffled=tracks.slice().sort(function(){return Math.random()-0.5;});
+    queue=shuffled;
+    playTrackObj(shuffled[0]);
+    showToast('🔀 Tocando '+shuffled.length+' músicas!');
+  });
+  var iab=document.getElementById('ia-humor-btn');if(iab)iab.addEventListener('click',openIaHumor);var ias=document.getElementById('ia-humor-send');if(ias)ias.addEventListener('click',sendIaHumor);var iai=document.getElementById('ia-humor-input');if(iai)iai.addEventListener('keydown',function(e){if(e.key==='Enter')sendIaHumor();});var iam=document.getElementById('ia-humor-modal');if(iam)iam.addEventListener('click',function(e){if(e.target===this)closeIaHumor();});}
 function jamAutoReconnect(){
   var savedRoom=localStorage.getItem('hs_jam_room');
   if(!savedRoom) return;
