@@ -1455,10 +1455,12 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     }
 
     // Cache de genero: retorna direto se existir
-    var genreCached = await GenreCache.findOne({ genre: genre });
-    if (genreCached && genreCached.items && genreCached.items.length > 0) {
-      return res.json({ items: genreCached.items });
-    }
+    try {
+      var genreCached = await GenreCache.findOne({ genre: genre }).maxTimeMS(3000);
+      if (genreCached && genreCached.items && genreCached.items.length > 0) {
+        return res.json({ items: genreCached.items });
+      }
+    } catch(cacheErr) {}
 
     // Mapa iTunes com termos especificos por genero para artistas certos
     const itunesTermMap = {
