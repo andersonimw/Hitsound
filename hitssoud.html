@@ -2148,6 +2148,7 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
 function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);var par=document.getElementById('btn-play-all-results');
   if(par)par.addEventListener('click',function(){
     var tracks=_listMap['search-tracks'];
+    alert('tracks: '+(tracks?tracks.length:'null'));
     if(!tracks||!tracks.length){showToast('⚠️ Nenhuma música!');return;}
     var shuffled=tracks.slice().sort(function(){return Math.random()-0.5;});
     queue=shuffled.slice(1);
