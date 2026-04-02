@@ -1465,10 +1465,10 @@ app.get('/api/lastfm-novidades', async function(req, res) {
     // Mapa iTunes com termos especificos por genero para artistas certos
     const itunesTermMap = {
       'funk':      ['funk carioca','MC Livinho','MC Fioti','Ludmilla funk','Anitta funk','MC Don Juan','Kevinho','MC Kekel','MC G15','MC Rodolfinho'],
-      'pagode':    ['pagode brasileiro','Thiaguinho pagode','Ferrugem','Dilsinho','Sorriso Maroto','Grupo Revelacao','Exaltasamba','Belo pagode','Mumuzinho','Turma do Pagode'],
+      'pagode':    ['pagode brasileiro','Thiaguinho','Ferrugem','Dilsinho','Sorriso Maroto','Grupo Revelacao','Exaltasamba','Belo','Mumuzinho','Turma do Pagode','Negritude Junior','Raça Negra','Fundo de Quintal','Molejo','Pixote','Jeito Moleque','Revelação','Swing e Simpatia','Rodriguinho','Diogo Nogueira'],
       'sertanejo': ['sertanejo universitario','Gusttavo Lima','Marilia Mendonca','Jorge e Mateus','Henrique e Juliano','Zeze Di Camargo','Maiara e Maraisa','Luan Santana','Wesley Safadao','Pedro Sampaio sertanejo'],
       'rap':       ['rap nacional','Emicida','Racionais','Criolo rap','Projota','Marcelo D2','Rashid rap','BK rap','Djonga','Filipe Ret'],
-      'rock':      ['rock brasileiro','Legiao Urbana','Titãs','Skank','Os Paralamas','Capital Inicial','CPM 22','Detonautas','Fresno','Charlie Brown Jr'],
+      'rock':      ['rock brasileiro','Legiao Urbana','Titãs','Skank','Os Paralamas do Sucesso','Capital Inicial','CPM 22','Detonautas','Fresno','Charlie Brown Jr','Engenheiros do Hawaii','Raimundos','Ultraje a Rigor','NXZero','Jota Quest','Pitty','Restart','Los Hermanos','Sepultura','Angra'],
       'pop':       ['pop brasileiro','Anitta','Ludmilla','Dua Lipa','The Weeknd','Ivete Sangalo pop','Claudia Leitte','Gloria Groove','IZA','Pabllo Vittar'],
       'axe':       ['axe bahia','Ivete Sangalo','Claudia Leitte','Bell Marques','Chiclete com Banana','Harmonia do Samba','Psirico','Margareth Menezes','Safadao forro','Tomate axe'],
       'brasil':    ['musica brasileira','hits brasil','MPB','Caetano Veloso','Gilberto Gil','Djavan','Milton Nascimento','Seu Jorge','Marisa Monte','Elza Soares'],
@@ -1501,13 +1501,14 @@ app.get('/api/lastfm-novidades', async function(req, res) {
         if (!name || !artist) continue;
         var key = (artist + name).toLowerCase();
         if (seen[key]) continue;
-        if (seenArtists[artist] >= 3) continue;
+        var artistLimit = (genre === 'pagode' || genre === 'rock') ? 5 : 3;
+        if (seenArtists[artist] >= artistLimit) continue;
         seen[key] = true;
         seenArtists[artist] = (seenArtists[artist] || 0) + 1;
         results.push({ name: name, artist: artist, ytId: null, thumb: thumb });
-        if (results.length >= 50) break;
+        if (results.length >= 30) break;
       }
-      if (results.length >= 50) break;
+      if (results.length >= 30) break;
     }
 
     // Salva no cache de genero por 7 dias
