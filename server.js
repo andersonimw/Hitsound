@@ -1420,6 +1420,15 @@ app.get('/api/trending', async function(req, res) {
   }
 });
 
+app.get('/api/clear-genre-cache', async function(req, res) {
+  try {
+    await GenreCache.deleteMany({});
+    res.json({ ok: true, msg: 'GenreCache limpo!' });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/lastfm-novidades', async function(req, res) {
   try {
     const genre = req.query.genre || 'brasil';
