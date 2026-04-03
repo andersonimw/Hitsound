@@ -1369,6 +1369,28 @@ app.get('/api/search', async function(req, res) {
   }
 });
 
+app.get('/api/search-itunes', async function(req, res) {
+  try {
+    const q = req.query.q || '';
+    if (!q) return res.json({ items: [] });
+    var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&limit=30&country=BR';
+    var r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    var d = await r.json();
+    var seen = {};
+    var results = (d.results || []).filter(function(it){
+      var key = (it.artistName + it.trackName).toLowerCase();
+      if(seen[key]) return false;
+      seen[key] = true;
+      return it.trackName && it.artistName;
+    }).map(function(it){
+      return { name: it.trackName, artist: it.artistName, thumb: it.artworkUrl100 || '', ytId: null };
+    });
+    res.json({ items: results });
+  } catch(e) {
+    res.status(500).json({ items: [] });
+  }
+});
+
 app.get('/api/artist-photo', async function(req, res) {
   try {
     var artist = req.query.artist;
