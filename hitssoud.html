@@ -1187,8 +1187,18 @@ document.getElementById('npc-addpl').addEventListener('click',function(){if(!cur
 
 // ── HISTÓRICO ─────────────────────────────────────────────────────
 function saveHistory(){try{localStorage.setItem('hs_history',JSON.stringify({history:playHistory,artists:artistPlayCount,weekly:weeklyPlays,weeklyTracks:weeklyTracks,tracksPlayed:tracksPlayed}));}catch(e){}}
-function loadHistory(){try{var s=localStorage.getItem('hs_history');if(s){var d=JSON.parse(s);playHistory=d.history||[];artistPlayCount=d.artists||{};weeklyPlays=d.weekly||{};weeklyTracks=d.weeklyTracks||{};tracksPlayed=d.tracksPlayed||playHistory.length||0;}}catch(e){}}
-function recordPlay(tr){if(!tr)return;var today=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date().getDay()];weeklyPlays[today]=(weeklyPlays[today]||0)+1;artistPlayCount[tr.artist]=(artistPlayCount[tr.artist]||0)+1;weeklyTracks[tr.name]=(weeklyTracks[tr.name]||0)+1;var ex=playHistory.findIndex(function(h){return h.ytId===tr.ytId;});if(ex>=0){playHistory[ex].count=(playHistory[ex].count||1)+1;}else{playHistory.unshift({name:tr.name,artist:tr.artist,ytId:tr.ytId,thumb:tr.thumb,count:1});}if(playHistory.length>100)playHistory=playHistory.slice(0,100);saveHistory();}
+function loadHistory(){try{var s=localStorage.getItem('hs_history');if(s){var d=JSON.parse(s);playHistory=d.history||[];artistPlayCount=d.artists||{};weeklyPlays=d.weekly||{};weeklyTracks=d.weeklyTracks||{};tracksPlayed=d.tracksPlayed||playHistory.length||0;}}catch(e){}setTimeout(renderRecentTracks,500);}
+function renderRecentTracks(){
+  if(!playHistory.length) return;
+  _listMap['recent-tracks'] = playHistory.slice(0,20);
+  var h='';
+  for(var i=0;i<Math.min(playHistory.length,20);i++){
+    var tr=playHistory[i],pl=currentTrack&&currentTrack.ytId===tr.ytId,lk=liked[tr.ytId];
+    h+='<div class="track-item'+(pl?' playing':'')+'" data-li="'+i+'" data-cid="recent-tracks"><div class="track-num">'+(pl?'<i class="fa fa-volume-high" style="color:var(--orange);font-size:11px"></i>':(i+1))+'</div><div class="track-thumb">'+mkImg(tr.thumb)+'</div><div class="track-info"><div class="track-name">'+esc(tr.name)+'</div><div class="track-artist">'+esc(tr.artist)+'</div></div><button class="track-like'+(lk?' liked':'')+'" data-act="like" data-li="'+i+'" data-cid="recent-tracks"><i class="'+(lk?'fa':'far')+' fa-heart"></i></button><button class="track-dots" data-act="dots" data-li="'+i+'" data-cid="recent-tracks"><i class="fa fa-ellipsis-vertical"></i></button></div>';
+  }
+  document.getElementById('recent-tracks').innerHTML=h||'<p style="color:var(--text-muted);padding:20px 0">Nenhuma música tocada ainda.</p>';
+}
+function recordPlay(tr){if(!tr)return;var today=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date().getDay()];weeklyPlays[today]=(weeklyPlays[today]||0)+1;artistPlayCount[tr.artist]=(artistPlayCount[tr.artist]||0)+1;weeklyTracks[tr.name]=(weeklyTracks[tr.name]||0)+1;var ex=playHistory.findIndex(function(h){return h.ytId===tr.ytId;});if(ex>=0){playHistory[ex].count=(playHistory[ex].count||1)+1;}else{playHistory.unshift({name:tr.name,artist:tr.artist,ytId:tr.ytId,thumb:tr.thumb,count:1});}if(playHistory.length>100)playHistory=playHistory.slice(0,100);saveHistory();renderRecentTracks();}
 
 // ── TOP 100 ───────────────────────────────────────────────────────
 async function loadTop100(genre){var list=document.getElementById('top100-list');list.innerHTML='<div class="loading"><div class="spinner"></div>Carregando Top 30...</div>';if(top100Cache[genre]){renderTop100(top100Cache[genre]);return;}try{var r=await fetch('/api/lastfm-novidades?genre='+encodeURIComponent(genre));var d=await r.json();if(d.items&&d.items.length){top100Cache[genre]=d.items;renderTop100(d.items);}else{list.innerHTML='<p style="color:var(--text-muted);padding:20px">Nenhuma música encontrada.</p>';}}catch(e){list.innerHTML='<p style="color:var(--text-muted);padding:20px">Erro ao carregar.</p>';}}
