@@ -2235,12 +2235,9 @@ async function loadRanking() {
 // Registrar play no ranking
 async function registerPlay() {
   try {
-    var cadastro = localStorage.getItem('hs_cadastro');
-    if (!cadastro) return;
-    var dados = JSON.parse(cadastro);
-    var userId = dados.email || dados.telefone;
-    var userName = dados.nome || 'Usuário';
-    if (!userId) return;
+    var userId = localStorage.getItem('hs_userid');
+    if (!userId) { userId = 'u_'+Math.random().toString(36).substr(2,12); localStorage.setItem('hs_userid', userId); }
+    var userName = localStorage.getItem('hs_username') || userProfile.name || 'Ouvinte';
     await fetch('/api/ranking/play', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
