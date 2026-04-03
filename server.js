@@ -1373,7 +1373,7 @@ app.get('/api/search-itunes', async function(req, res) {
   try {
     const q = req.query.q || '';
     if (!q) return res.json({ items: [] });
-    var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&limit=30&country=BR';
+    var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&limit=100&country=BR';
     var r = await fetch(url, { signal: AbortSignal.timeout(6000) });
     var d = await r.json();
     var seen = {};
