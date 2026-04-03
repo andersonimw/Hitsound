@@ -1496,9 +1496,15 @@ document.getElementById('search-input').addEventListener('input',function(){
   document.getElementById('btn-play-all-results').style.display='block';
   document.getElementById('search-tracks').innerHTML='<div class="loading"><div class="spinner"></div>'+t('loading')+'</div>';
   searchTimer=setTimeout(async function(){
-    var results=await searchYouTube(q);
-    if(!results.length){document.getElementById('search-tracks').innerHTML='<p style="color:var(--text-muted);padding:20px 0">Nenhuma música encontrada.</p>';return;}
-    queue=results;renderTracksList(results,'search-tracks');
+    try {
+      var r=await fetch('/api/search-itunes?q='+encodeURIComponent(q));
+      var d=await r.json();
+      var results=d.items||[];
+      if(!results.length){document.getElementById('search-tracks').innerHTML='<p style="color:var(--text-muted);padding:20px 0">Nenhuma música encontrada.</p>';return;}
+      renderTracksList(results,'search-tracks');
+    } catch(e){
+      document.getElementById('search-tracks').innerHTML='<p style="color:var(--text-muted);padding:20px 0">Erro ao buscar.</p>';
+    }
   },600);
 });
 function searchGenre(gname){document.getElementById('search-input').value=gname;document.getElementById('search-input').dispatchEvent(new Event('input'));}
