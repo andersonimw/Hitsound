@@ -1432,6 +1432,7 @@ function nextTrack(){
 }
 function prevTrack(){if(!queue.length)return;if(ytPlayer&&ytPlayer.getCurrentTime()>5){ytPlayer.seekTo(0);return;}var idx=queue.findIndex(function(t){return currentTrack&&t.ytId===currentTrack.ytId;});playTrackObj(queue[(idx-1+queue.length)%queue.length]);}
 function toggleLike(ytId){
+  if(!ytId) return;
   var tr=currentTrack&&currentTrack.ytId===ytId?currentTrack:ctxTrack;
   if(liked[ytId]){
     delete liked[ytId];
@@ -1764,7 +1765,7 @@ document.addEventListener('click',function(e){
   var card=e.target.closest('.card[data-ci]');if(card){var tr=_cardArr[parseInt(card.dataset.ci)];if(tr)playTrackObj(tr);return;}
   var plcard=e.target.closest('.card[data-pli]');if(plcard){openPlaylist(parseInt(plcard.dataset.pli));return;}
   var plmini=e.target.closest('.playlist-mini[data-pli]');if(plmini){openPlaylist(parseInt(plmini.dataset.pli));return;}
-  var like=e.target.closest('[data-act="like"]');if(like){e.stopPropagation();var tl=_listMap[like.dataset.cid];if(tl&&tl[parseInt(like.dataset.li)])toggleLike(tl[parseInt(like.dataset.li)].ytId);return;}
+  var like=e.target.closest('[data-act="like"]');if(like){e.stopPropagation();var tl=_listMap[like.dataset.cid];var tr=tl&&tl[parseInt(like.dataset.li)];if(tr){if(tr.ytId){toggleLike(tr.ytId);}else{showToast('⏳ Carregando...');fetch('/api/search?q='+encodeURIComponent(tr.artist+' '+tr.name)).then(function(r){return r.json();}).then(function(d){if(d.items&&d.items.length){tr.ytId=d.items[0].id.videoId;tr.thumb=d.items[0].snippet.thumbnails.medium.url||tr.thumb;toggleLike(tr.ytId);}else{showToast('❌ Música não encontrada');}}).catch(function(){showToast('❌ Erro ao buscar');});}}return;}
   var tdots=e.target.closest('[data-act="dots"]');if(tdots){e.stopPropagation();var tl=_listMap[tdots.dataset.cid];if(tl&&tl[parseInt(tdots.dataset.li)])openCtxMenu(e,tl[parseInt(tdots.dataset.li)]);return;}
   var row=e.target.closest('.track-item[data-li],.top-item[data-li]');if(row){var tl=_listMap[row.dataset.cid];if(tl&&tl[parseInt(row.dataset.li)]){var tr=tl[parseInt(row.dataset.li)];if(tr.ytId){playTrackObj(tr);}else{var sq=tr.artist+' '+tr.name;fetch('/api/search?q='+encodeURIComponent(sq)).then(function(r){return r.json();}).then(function(d){if(d.items&&d.items.length>0){var it=d.items[0];tr.ytId=it.id&&it.id.videoId?it.id.videoId:it.ytId||null;tr.thumb=(it.snippet&&it.snippet.thumbnails&&it.snippet.thumbnails.medium?it.snippet.thumbnails.medium.url:it.thumb)||tr.thumb;if(tr.ytId){playTrackObj(tr);}else{alert('Música não encontrada.');}}else{alert('Música não encontrada.');}}).catch(function(){alert('Erro ao carregar música.');});}return;}}
   var gen=e.target.closest('.genre-card[data-gi]');if(gen){var g=GENRES[parseInt(gen.dataset.gi)];if(g)searchGenre(g.name+' music');return;}
