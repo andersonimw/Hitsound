@@ -700,7 +700,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
     </section>
     <section id="view-search" class="view hidden">
       <div id="search-results-area"><h2 class="section-title">EXPLORAR GÊNEROS</h2><div class="genres-grid" id="genres-grid"></div></div>
-      <div id="search-results" class="hidden"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h2 class="section-title" id="search-results-title" style="margin:0">Resultados</h2><button id="btn-play-all-results" style="background:linear-gradient(135deg,var(--orange),var(--wine));border:none;border-radius:20px;padding:8px 16px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;display:none;"><i class="fa fa-shuffle"></i> Tocar Tudo</button></div><div class="tracks-list" id="search-tracks"></div></div>
+      <div id="search-results" class="hidden"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h2 class="section-title" id="search-results-title" style="margin:0">Resultados</h2><button id="btn-play-all-results" onclick="playAllResults()" style="background:linear-gradient(135deg,var(--orange),var(--wine));border:none;border-radius:20px;padding:8px 16px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;display:none;"><i class="fa fa-shuffle"></i> Tocar Tudo</button></div><div class="tracks-list" id="search-tracks"></div></div>
     </section>
     <section id="view-top100" class="view hidden">
       <div class="section-header"><h2 class="section-title">🏆 Top 30</h2></div>
@@ -1502,6 +1502,29 @@ document.getElementById('search-input').addEventListener('input',function(){
   },600);
 });
 function searchGenre(gname){document.getElementById('search-input').value=gname;document.getElementById('search-input').dispatchEvent(new Event('input'));}
+function playAllResults(){
+  var tracks=_listMap['search-tracks'];
+  alert('tracks: '+(tracks?tracks.length:'null'));
+  if(!tracks||!tracks.length){showToast('⚠️ Nenhuma música!');return;}
+  var shuffled=tracks.slice().sort(function(){return Math.random()-0.5;});
+  queue=shuffled.slice(1);
+  var first=shuffled[0];
+  if(first.ytId){
+    playTrackObj(first);
+    showToast('🔀 Tocando '+shuffled.length+' músicas!');
+  } else {
+    fetch('/api/search?q='+encodeURIComponent(first.artist+' '+first.name))
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.items&&d.items.length){
+          first.ytId=d.items[0].id.videoId;
+          first.thumb=d.items[0].snippet.thumbnails.medium.url;
+        }
+        playTrackObj(first);
+        showToast('🔀 Tocando '+shuffled.length+' músicas!');
+      });
+  }
+}
 function openModal(cb){modalCallback=cb||null;document.getElementById('modal-overlay').classList.remove('hidden');setTimeout(function(){document.getElementById('playlist-input').focus();},80);}
 function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');document.getElementById('playlist-input').value='';modalCallback=null;}
 document.getElementById('btn-new-playlist').addEventListener('click',function(){openModal(null);});
