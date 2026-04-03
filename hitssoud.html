@@ -1504,7 +1504,6 @@ document.getElementById('search-input').addEventListener('input',function(){
 function searchGenre(gname){document.getElementById('search-input').value=gname;document.getElementById('search-input').dispatchEvent(new Event('input'));}
 function playAllResults(){
   var tracks=_listMap['search-tracks'];
-  alert('tracks: '+(tracks?tracks.length:'null'));
   if(!tracks||!tracks.length){showToast('⚠️ Nenhuma música!');return;}
   var shuffled=tracks.slice().sort(function(){return Math.random()-0.5;});
   queue=shuffled.slice(1);
