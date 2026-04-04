@@ -1404,12 +1404,15 @@ app.get('/api/artist-photo', async function(req, res) {
   try {
     var artist = req.query.artist;
     if (!artist) return res.json({ photo: null });
-    var url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=1&q=' + encodeURIComponent(artist);
-    var data = await fetchYT(url);
-    var items = data.items || [];
-    if (!items.length) return res.json({ photo: null });
-    var thumb = items[0].snippet.thumbnails.medium.url;
-    res.json({ photo: thumb });
+    // Usa iTunes - gratuito, sem cota YouTube
+    var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(artist) + '&media=music&limit=1&country=BR';
+    var r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    var d = await r.json();
+    if (d.results && d.results.length > 0 && d.results[0].artworkUrl100) {
+      var photo = d.results[0].artworkUrl100.replace('100x100', '300x300');
+      return res.json({ photo: photo });
+    }
+    res.json({ photo: null });
   } catch(e) {
     res.json({ photo: null });
   }
