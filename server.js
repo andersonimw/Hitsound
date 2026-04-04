@@ -1445,9 +1445,32 @@ app.post('/api/ia-humor', async function(req, res) {
 
 app.get('/api/trending', async function(req, res) {
   try {
-    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=BR&maxResults=50`;
-    const data = await fetchYT(url);
-    res.json(data);
+    // Usa iTunes para trending BR - sem gastar cota YouTube e sem videos bloqueados
+    var terms = ['hits brasil 2025','funk brasileiro','sertanejo universitario','pagode brasileiro','pop brasil'];
+    var seen = {};
+    var results = [];
+    var fetches = terms.map(function(term) {
+      return fetch('https://itunes.apple.com/search?term='+encodeURIComponent(term)+'&media=music&limit=20&country=BR', { signal: AbortSignal.timeout(6000) })
+        .then(function(r){ return r.json(); })
+        .catch(function(){ return { results: [] }; });
+    });
+    var all = await Promise.all(fetches);
+    all.forEach(function(d) {
+      (d.results || []).forEach(function(it) {
+        var key = (it.artistName + it.trackName).toLowerCase();
+        if(seen[key] || !it.trackName || !it.artistName) return;
+        seen[key] = true;
+        results.push({
+          snippet: { title: it.trackName, channelTitle: it.artistName, thumbnails: { medium: { url: it.artworkUrl100 || '' } } },
+          id: null,
+          ytId: null,
+          name: it.trackName,
+          artist: it.artistName,
+          thumb: it.artworkUrl100 || ''
+        });
+      });
+    });
+    res.json({ items: results.slice(0, 30) });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

@@ -1370,7 +1370,7 @@ async function loadTrending(){
     if(cached){var ct=JSON.parse(cached);queue=ct;renderTrendingCards(ct.slice(0,6));renderTracksList(ct,'recent-tracks');}
     var r=await fetch('/api/trending');var d=await r.json();
     if(d.error||!d.items){if(!cached)renderTrendingLocal();return;}
-    var tracks=d.items.map(function(it){return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id,thumb:it.snippet.thumbnails.medium.url};});
+    var tracks=d.items.map(function(it){return{name:it.name||it.snippet&&it.snippet.title,artist:it.artist||it.snippet&&it.snippet.channelTitle,ytId:it.ytId||null,thumb:it.thumb||(it.snippet&&it.snippet.thumbnails&&it.snippet.thumbnails.medium&&it.snippet.thumbnails.medium.url)||''};});
     localStorage.setItem('hs_cache_trending',JSON.stringify(tracks));
     queue=tracks;renderTrendingCards(tracks.slice(0,6));renderTracksList(tracks,'recent-tracks');
   }catch(e){if(!localStorage.getItem('hs_cache_trending'))renderTrendingLocal();}
