@@ -1886,7 +1886,8 @@ document.getElementById('btn-aceitar-termos').addEventListener('click',function(
   initApp();
 });
 async function generateMix(){
-  var topArtists=Object.entries(artistPlayCount).sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(e){return e[0];});
+  var FAKE_CH=['hybe labels','topic','- topic','various artists','playlist','mix','compilation','music charts','charts','records','vevo','label','entertainment','universal','sony','warner'];
+  var topArtists=Object.entries(artistPlayCount).filter(function(e){var n=e[0].toLowerCase();return!FAKE_CH.some(function(f){return n.includes(f);});}).sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(e){return e[0];});
   if(!topArtists.length){
     if(playHistory.length){
       topArtists=playHistory.slice(0,3).map(function(h){return h.artist;});
