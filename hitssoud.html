@@ -1366,7 +1366,7 @@ function fmt(s){return Math.floor(s/60)+':'+(s%60+'').padStart(2,'0');}
 async function searchYouTube(query){try{var r=await fetch('/api/search?q='+encodeURIComponent(query));var d=await r.json();if(d.error){showToast('❌ '+(d.error.message||d.error));return[];}return(d.items||[]).filter(function(it){return it.id&&it.id.videoId;}).map(function(it){return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id.videoId,thumb:it.snippet.thumbnails.medium.url};});}catch(e){showToast('❌ Erro de conexão');return[];}}
 async function loadTrending(){
   try{
-    var cached=localStorage.getItem('hs_cache_trending');
+    localStorage.removeItem('hs_cache_trending');var cached=null;
     if(cached){var ct=JSON.parse(cached);queue=ct;renderTrendingCards(ct.slice(0,6));renderTracksList(ct,'recent-tracks');}
     var r=await fetch('/api/trending');var d=await r.json();
     if(d.error||!d.items){if(!cached)renderTrendingLocal();return;}
