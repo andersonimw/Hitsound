@@ -1310,11 +1310,27 @@ document.querySelectorAll('.np-tab').forEach(function(tab){tab.addEventListener(
 // ── VIDEO ─────────────────────────────────────────────────────────
 var videoLoaded=false;
 
-function openReelModal(v){
+async function openReelModal(v){
   document.getElementById('reel-modal-title').textContent=v.name;
   document.getElementById('reel-modal-artist').textContent=v.artist;
-  document.getElementById('reel-iframe').src='https://www.youtube.com/embed/'+v.ytId+'?autoplay=1&playsinline=1&rel=0&modestbranding=1';
+  document.getElementById('reel-iframe').src='';
   document.getElementById('reel-modal').classList.add('open');
+  var ytId=v.ytId;
+  if(!ytId){
+    document.getElementById('reel-modal-title').textContent='🔍 Buscando '+v.name+'...';
+    try{
+      var r=await fetch('/api/search?q='+encodeURIComponent(v.artist+' '+v.name));
+      var d=await r.json();
+      var found=(d.items||[]).find(function(it){return it.id&&it.id.videoId;});
+      if(found){ytId=found.id.videoId;}
+    }catch(e){}
+    document.getElementById('reel-modal-title').textContent=v.name;
+  }
+  if(ytId){
+    document.getElementById('reel-iframe').src='https://www.youtube.com/embed/'+ytId+'?autoplay=1&playsinline=1&rel=0&modestbranding=1';
+  }else{
+    document.getElementById('reel-modal-title').textContent='❌ Não encontrado: '+v.name;
+  }
 }
 function closeReelModal(){
   document.getElementById('reel-iframe').src='';
