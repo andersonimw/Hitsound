@@ -2,9 +2,11 @@
 // Previne crash por erros não tratados
 process.on('uncaughtException', function(err) {
   console.error('[CRASH EVITADO] uncaughtException:', err.message);
+  console.error('[STACK]', err.stack);
 });
-process.on('unhandledRejection', function(reason) {
+process.on('unhandledRejection', function(reason, promise) {
   console.error('[CRASH EVITADO] unhandledRejection:', reason);
+  console.error('[PROMISE]', promise);
 });
 const express = require('express');
 const http = require('http');
@@ -1273,6 +1275,13 @@ async function fetchYT(url) {
 }
 
 app.use(express.json());
+app.use(function(req, res, next) {
+  res.setTimeout(25000, function() {
+    console.error('[TIMEOUT] Requisicao demorou mais de 25s:', req.url);
+    if (!res.headersSent) res.status(503).json({ error: 'timeout' });
+  });
+  next();
+});
 app.use(express.static(path.join(__dirname)));
 
 app.get('/', function(req, res) {
