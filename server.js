@@ -1538,16 +1538,27 @@ app.get('/api/lastfm-novidades', async function(req, res) {
       'axe':       ['axe bahia','Ivete Sangalo','Claudia Leitte','Bell Marques','Chiclete com Banana','Harmonia do Samba','Psirico','Margareth Menezes','Safadao forro','Tomate axe'],
       'brasil':    ['musica brasileira','hits brasil','MPB','Caetano Veloso','Gilberto Gil','Djavan','Milton Nascimento','Seu Jorge','Marisa Monte','Elza Soares'],
       'internacional': ['pop hits','Billboard hot 100','Taylor Swift','Bad Bunny','Drake','The Weeknd','Beyonce','Ed Sheeran','Billie Eilish','Ariana Grande'],
+      'eua':        ['Billboard hot 100','Taylor Swift','Drake','The Weeknd','Beyonce','Ed Sheeran','Billie Eilish','Ariana Grande','Post Malone','Kendrick Lamar'],
+      'mexico':     ['musica mexicana','Bad Bunny','J Balvin','Maluma','Peso Pluma','Natanael Cano','Grupo Frontera','Christian Nodal','Eslabón Armado','Fuerza Regida'],
+      'portugal':   ['musica portuguesa','Salvador Sobral','Ana Moura','Mariza fado','David Carreira','Wet Bed Gang','Dino d Santiago','Agir','Richie Campbell','Tony Carreira'],
+      'espanha':    ['musica española','Rosalia','Bad Bunny','Alejandro Sanz','Enrique Iglesias','C Tangana','Aitana','Pablo Alboran','Melendi','David Bisbal'],
+      'argentina':  ['musica argentina','Bizarrap','Tini','Nicki Nicole','Maria Becerra','Duki','Wos','Abel Pintos','Lali','Trueno'],
+      'colombia':   ['musica colombiana','J Balvin','Maluma','Shakira','Carlos Vives','Karol G','Feid','Ryan Castro','Sebastián Yatra','Camilo'],
+      'chile':      ['musica chilena','Mon Laferte','Cami','Paloma Mami','Harry Nach','Polimá Westcoast','Julianno Sosa','Pailita','Marcianeke','Pablo Chill-E'],
+      'franca':     ['musique française','Aya Nakamura','Jul','Ninho','Dadju','Nekfeu','Stromae','Angele','Vitaa','Maes'],
+      'reino-unido':['UK hits','Adele','Ed Sheeran','Harry Styles','Dua Lipa','Sam Smith','Stormzy','Dave UK','Central Cee','Little Simz'],
     };
 
     const terms = itunesTermMap[genre] || itunesTermMap['brasil'];
+    const countryMap = {'brasil':'BR','eua':'US','mexico':'MX','portugal':'PT','espanha':'ES','argentina':'AR','colombia':'CO','chile':'CL','franca':'FR','reino-unido':'GB'};
+    const itunesCountry = countryMap[genre] || 'BR';
     var seen = {};
     var seenArtists = {};
     var results = [];
 
     // Busca iTunes em paralelo para os termos do genero
     var fetchPromises = terms.map(function(term) {
-      var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(term) + '&media=music&limit=50&country=BR';
+      var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(term) + '&media=music&limit=50&country=' + itunesCountry;
       return fetch(url, { signal: AbortSignal.timeout(6000) })
         .then(function(r){ return r.json(); })
         .catch(function(){ return { results: [] }; });

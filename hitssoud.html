@@ -994,6 +994,19 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
       <input type="date" id="cad-nascimento" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
       <input type="email" id="cad-email" placeholder="E-mail *" maxlength="60" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:10px;display:block;"/>
       <input type="tel" id="cad-telefone" placeholder="Telefone *" maxlength="20" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:16px;display:block;"/>
+      <div style="font-size:11px;font-weight:900;color:#FF6B00;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;margin-top:6px;"><i class="fa fa-globe"></i> Seu país</div>
+      <select id="cad-pais" style="width:100%;background:#222;border:1.5px solid #2A2A2A;border-radius:10px;padding:12px 14px;color:#F0F0F0;font-family:'Nunito',sans-serif;font-size:14px;outline:none;margin-bottom:16px;display:block;">
+        <option value="brasil">🇧🇷 Brasil</option>
+        <option value="eua">🇺🇸 Estados Unidos</option>
+        <option value="mexico">🇲🇽 México</option>
+        <option value="portugal">🇵🇹 Portugal</option>
+        <option value="espanha">🇪🇸 Espanha</option>
+        <option value="argentina">🇦🇷 Argentina</option>
+        <option value="colombia">🇨🇴 Colômbia</option>
+        <option value="chile">🇨🇱 Chile</option>
+        <option value="franca">🇫🇷 França</option>
+        <option value="reino-unido">🇬🇧 Reino Unido</option>
+      </select>
       <button id="btn-cadastrar" style="width:100%;padding:14px;background:linear-gradient(135deg,#FF6B00,#9E2347);border:none;border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;">Criar Conta <i class="fa fa-arrow-right"></i></button>
       <div id="cad-erro" style="color:#ff4444;font-size:12px;text-align:center;margin-top:10px;display:none;">Preencha todos os campos!</div>
     </div>
@@ -1332,7 +1345,11 @@ function startProgressSync(){clearInterval(progressInterval);progressInterval=se
 function fmt(s){return Math.floor(s/60)+':'+(s%60+'').padStart(2,'0');}
 async function searchYouTube(query){try{var r=await fetch('/api/search?q='+encodeURIComponent(query));var d=await r.json();if(d.error){showToast('❌ '+(d.error.message||d.error));return[];}return(d.items||[]).filter(function(it){return it.id&&it.id.videoId;}).map(function(it){return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id.videoId,thumb:it.snippet.thumbnails.medium.url};});}catch(e){showToast('❌ Erro de conexão');return[];}}
 async function loadTrending(genre){
-  genre=genre||'brasil';
+  genre=genre||localStorage.getItem('hs_pais')||'brasil';
+  // Marca a aba ativa correta
+  document.querySelectorAll('#trending-tabs .avids-tab').forEach(function(t){
+    t.classList.toggle('active', t.dataset.genre===genre);
+  });
   var cacheKey='hs_cache_trending_'+genre;
   var cachedTime=parseInt(localStorage.getItem(cacheKey+'_time')||'0');
   var expirado=(Date.now()-cachedTime)>6*60*60*1000;
@@ -1853,11 +1870,13 @@ document.getElementById('btn-cadastrar').addEventListener('click',function(){
   var nascimento=document.getElementById('cad-nascimento').value.trim();
   var email=document.getElementById('cad-email').value.trim();
   var telefone=document.getElementById('cad-telefone').value.trim();
+  var pais=document.getElementById('cad-pais').value||'brasil';
   if(!nome||!sobrenome||!nascimento||!email||!telefone){
     document.getElementById('cad-erro').style.display='block';
     return;
   }
-  localStorage.setItem('hs_cadastro',JSON.stringify({nome:nome,sobrenome:sobrenome,nascimento:nascimento,email:email,telefone:telefone}));
+  localStorage.setItem('hs_cadastro',JSON.stringify({nome:nome,sobrenome:sobrenome,nascimento:nascimento,email:email,telefone:telefone,pais:pais}));
+  localStorage.setItem('hs_pais',pais);
   document.getElementById('cadastro-screen').style.display='none';
   showTermos();
 });
@@ -2087,7 +2106,7 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
   playQuizTrack();
 });
 
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);var par=document.getElementById('btn-play-all-results');
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending(localStorage.getItem('hs_pais')||'brasil');applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);var par=document.getElementById('btn-play-all-results');
   if(par)par.addEventListener('click',function(){
     var tracks=_listMap['search-tracks'];
     alert('tracks: '+(tracks?tracks.length:'null'));
