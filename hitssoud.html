@@ -359,13 +359,6 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   #toast{bottom:calc(var(--player-h) + var(--nav-h) + 12px);}
 }
 
-#reel-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99998;display:none;flex-direction:column;}
-#reel-modal.open{display:flex;}
-#reel-modal-header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(0,0,0,0.8);}
-#reel-modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;}
-#reel-modal-title{font-size:14px;font-weight:700;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#reel-modal-artist{font-size:11px;color:#aaa;}
-#reel-iframe{width:100%;flex:1;border:none;}
 
 .avids-tab{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--surface3);background:var(--surface);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
 .avids-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
@@ -397,16 +390,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
 </style>
 </head>
 <body>
-<div id="reel-modal">
-  <div id="reel-modal-header">
-    <button id="reel-modal-close" onclick="closeReelModal()"><i class="fa fa-arrow-left"></i></button>
-    <div>
-      <div id="reel-modal-title">-</div>
-      <div id="reel-modal-artist">-</div>
-    </div>
-  </div>
-  <iframe id="reel-iframe" src="" allowfullscreen allow="autoplay; fullscreen"></iframe>
-</div>
+
 <div id="yt-container"><div id="yt-player"></div></div>
 
 <!-- ALARME -->
@@ -684,10 +668,6 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
     <button class="avids-tab" data-genre="pop">🎹 Pop</button>
   </div>
   <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px;scrollbar-width:none;" id="avids-list"></div>
-</div>
-<div id="reels-section" style="display:none;">
-  <div class="section-header"><h2 class="section-title">🎬 Reels dos Artistas</h2><span class="see-all" id="btn-reels-refresh">Atualizar</span></div>
-  <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px;scrollbar-width:none;" id="reels-list"></div>
 </div>
 <div id="mix-section" class="hidden">
   <div class="section-header"><h2 class="section-title">🎵 Seu Mix</h2><span class="see-all" id="btn-refresh-mix">Atualizar</span></div>
@@ -1310,32 +1290,7 @@ document.querySelectorAll('.np-tab').forEach(function(tab){tab.addEventListener(
 // ── VIDEO ─────────────────────────────────────────────────────────
 var videoLoaded=false;
 
-async function openReelModal(v){
-  document.getElementById('reel-modal-title').textContent=v.name;
-  document.getElementById('reel-modal-artist').textContent=v.artist;
-  document.getElementById('reel-iframe').src='';
-  document.getElementById('reel-modal').classList.add('open');
-  var ytId=v.ytId;
-  if(!ytId){
-    document.getElementById('reel-modal-title').textContent='🔍 Buscando '+v.name+'...';
-    try{
-      var r=await fetch('/api/search?q='+encodeURIComponent(v.artist+' '+v.name));
-      var d=await r.json();
-      var found=(d.items||[]).find(function(it){return it.id&&it.id.videoId;});
-      if(found){ytId=found.id.videoId;}
-    }catch(e){}
-    document.getElementById('reel-modal-title').textContent=v.name;
-  }
-  if(ytId){
-    document.getElementById('reel-iframe').src='https://www.youtube.com/embed/'+ytId+'?autoplay=1&playsinline=1&rel=0&modestbranding=1';
-  }else{
-    document.getElementById('reel-modal-title').textContent='❌ Não encontrado: '+v.name;
-  }
-}
-function closeReelModal(){
-  document.getElementById('reel-iframe').src='';
-  document.getElementById('reel-modal').classList.remove('open');
-}
+
 
 function loadVideo(tr){if(videoLoaded&&document.getElementById('video-iframe').dataset.trackId===tr.ytId)return;var iframe=document.getElementById('video-iframe');iframe.dataset.trackId=tr.ytId;iframe.src='https://www.youtube.com/embed/'+tr.ytId+'?autoplay=1&playsinline=1&rel=0&modestbranding=1';document.getElementById('video-info-name').textContent=tr.name;document.getElementById('video-info-artist').textContent=tr.artist;videoLoaded=true;}
 
@@ -1965,7 +1920,7 @@ async function loadArtistVideos(genre){
     var h='';
     d.items.forEach(function(v){
       var obj=JSON.stringify(v).replace(/"/g,"'");
-      h+='<div style="flex-shrink:0;width:110px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="openReelModal('+obj+')">';
+      h+='<div style="flex-shrink:0;width:110px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="playTrackObj('+obj+')">';
       h+='<img src="'+v.thumb+'" style="width:110px;height:195px;object-fit:cover;display:block;" loading="lazy"/>';
       h+='<div style="padding:6px;"><div style="font-size:10px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(v.name)+'</div>';
       h+='<div style="font-size:9px;color:var(--text-muted);margin-top:1px;">'+esc(v.artist)+'</div></div></div>';
@@ -1986,50 +1941,7 @@ document.getElementById('avids-tabs')&&document.getElementById('avids-tabs').add
   tab.classList.add('active');
   loadArtistVideos(tab.dataset.genre);
 });
-async function loadReels(){
-  // Canais falsos para ignorar
-  var canaisFalsos=/hybe|topic|records|music|official|vevo|label|entertainment|universal|sony|warner|distribu/i;
-  var top=Object.entries(artistPlayCount)
-    .sort(function(a,b){return b[1]-a[1];})
-    .map(function(e){return e[0];})
-    .filter(function(nome){return !canaisFalsos.test(nome);})
-    .slice(0,5);
-  if(!top.length)return;
-  var el=document.getElementById('reels-list');
-  var sec=document.getElementById('reels-section');
-  if(!el||!sec)return;
-  sec.style.display='block';
-  var cachedReels=localStorage.getItem('hs_cache_reels');
-  var cachedReelsTime=parseInt(localStorage.getItem('hs_cache_reels_time')||'0');
-  var reelsExpirado=(Date.now()-cachedReelsTime)>6*60*60*1000;
-  if(cachedReels&&!reelsExpirado){el.innerHTML=cachedReels;}
-  else{el.innerHTML='<div class="loading"><div class="spinner"></div></div>';}
-  var all=[];
-  for(var i=0;i<top.length;i++){
-    try{
-      var r=await fetch('/api/reels?artist='+encodeURIComponent(top[i]));
-      var d=await r.json();
-      if(d.items){
-        var vids=d.items.filter(function(it){return it.id&&it.id.videoId;}).map(function(it){
-          return{name:it.snippet.title,artist:it.snippet.channelTitle,ytId:it.id.videoId,thumb:it.snippet.thumbnails.medium.url};
-        });
-        all=all.concat(vids.slice(0,4));
-      }
-    }catch(e){}
-  }
-  if(!all.length){sec.style.display='none';return;}
-  var h='';
-  all.forEach(function(v){
-    h+='<div style="flex-shrink:0;width:150px;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer;border:1px solid var(--surface3);" onclick="openReelModal('+JSON.stringify(v).replace(/"/g,'\'')+')">'; 
-    h+='<img src="'+v.thumb+'" style="width:150px;height:150px;object-fit:cover;display:block;" loading="lazy"/>';
-    h+='<div style="padding:8px;"><div style="font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(v.name)+'</div>';
-    h+='<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+esc(v.artist)+'</div></div></div>';
-  });
-  el.innerHTML=h;
-  localStorage.setItem('hs_cache_reels',h);
-  localStorage.setItem('hs_cache_reels_time',Date.now());
-}
-document.getElementById('btn-reels-refresh')&&document.getElementById('btn-reels-refresh').addEventListener('click',loadReels);
+
 async function loadPodcasts(cat){
   cat = cat || 'esporte';
   var el = document.getElementById('podcast-list');
@@ -2054,7 +1966,7 @@ async function loadPodcasts(cat){
     d.items.filter(function(it){ return it.id && it.id.videoId; }).forEach(function(it){
       var tr = {name: it.snippet.title, artist: it.snippet.channelTitle, ytId: it.id.videoId, thumb: it.snippet.thumbnails.medium.url};
       var obj = JSON.stringify(tr).replace(/"/g,"'");
-      h += '<div style="display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;background:var(--surface);margin-bottom:8px;cursor:pointer;border:1px solid var(--surface3);" onclick="openReelModal('+obj+')">';
+      h += '<div style="display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;background:var(--surface);margin-bottom:8px;cursor:pointer;border:1px solid var(--surface3);" onclick="playTrackObj('+obj+')">';
       h += '<img src="'+tr.thumb+'" style="width:80px;height:55px;border-radius:8px;object-fit:cover;flex-shrink:0;" loading="lazy"/>';
       h += '<div style="overflow:hidden;"><div style="font-size:12px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+esc(tr.name)+'</div>';
       h += '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">🎙️ '+esc(tr.artist)+'</div></div></div>';
@@ -2200,7 +2112,7 @@ document.getElementById('quiz-play-btn')&&document.getElementById('quiz-play-btn
   playQuizTrack();
 });
 
-function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadReels,4000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);var par=document.getElementById('btn-play-all-results');
+function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();renderGenres();renderLibrary();loadTrending();applyLang(localStorage.getItem('hs_lang')||'pt');applyTheme(localStorage.getItem('hs_theme')||'dark');applyProfile();updateHeroBanner();setTimeout(generateMix,2000);setTimeout(loadArtistVideos,3000);setTimeout(loadUsername,2000);setTimeout(jamAutoReconnect,3000);var par=document.getElementById('btn-play-all-results');
   if(par)par.addEventListener('click',function(){
     var tracks=_listMap['search-tracks'];
     alert('tracks: '+(tracks?tracks.length:'null'));
