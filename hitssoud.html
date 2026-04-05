@@ -1646,6 +1646,59 @@ function openJamSession(){
     jamSocket.emit('jam:reconnect',{roomId:savedRoom,userName:uname});
   }
 }
+function openNoticias(){
+  const m = document.getElementById('noticias-modal');
+  if(m) m.style.display = 'flex';
+  loadNoticiasCat('geral');
+}
+function closeNoticiasModal(){
+  const m = document.getElementById('noticias-modal');
+  if(m) m.style.display = 'none';
+}
+let currentNewsCat = 'geral';
+async function loadNoticiasCat(cat){
+  currentNewsCat = cat;
+  document.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+  const activeTab = document.querySelector(`.news-tab[data-cat="${cat}"]`);
+  if(activeTab) activeTab.classList.add('active');
+  
+  const container = document.getElementById('noticias-list');
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Carregando notícias...</div>';
+  
+  try {
+    const r = await fetch(`/api/noticias?cat=${cat}`);
+    const data = await r.json();
+    if(data.articles && data.articles.length > 0){
+      container.innerHTML = data.articles.map(a => `
+        <div class="news-card" onclick="openNewsDetail('${escapeHtml(a.title)}','${escapeHtml(a.description || '')}','${escapeHtml(a.url)}','${escapeHtml(a.image || '')}')">
+          <img src="${a.image || '/placeholder.png'}" onerror="this.src='/placeholder.png'" style="width:100%;height:140px;object-fit:cover;border-radius:10px;margin-bottom:8px;"/>
+          <div style="font-weight:700;font-size:14px;line-height:1.3;margin-bottom:4px;">${a.title}</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.4;">${(a.description || '').substring(0,100)}...</div>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Nenhuma notícia encontrada</div>';
+    }
+  } catch(e){
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#ff4444;">Erro ao carregar notícias</div>';
+  }
+}
+function escapeHtml(text){
+  if(!text) return '';
+  return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function openNewsDetail(title, desc, url, img){
+  const modal = document.getElementById('news-detail-modal');
+  document.getElementById('news-detail-img').src = img || '/placeholder.png';
+  document.getElementById('news-detail-title').textContent = title;
+  document.getElementById('news-detail-desc').textContent = desc;
+  document.getElementById('news-detail-link').href = url;
+  modal.style.display = 'flex';
+}
+function closeNewsDetail(){
+  document.getElementById('news-detail-modal').style.display = 'none';
+}
+
 function closeJamModal(){
   document.getElementById('jam-modal').style.display='none';
   // NAO remove hs_jam_room aqui — fechar o modal nao encerra a sessao
@@ -2667,6 +2720,69 @@ document.addEventListener('click', function(e){
     </div>
   </div>
 </div>
+
+<!-- MODAL NOTÍCIAS -->
+<div id="noticias-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:950;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px;padding:24px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="closeNoticiasModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fa fa-times"></i></button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;margin-bottom:4px;">📰 NOTÍCIAS</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Fique por dentro das últimas novidades</div>
+    
+    <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;white-space:nowrap;padding-bottom:8px;">
+      <div class="news-tab active" data-cat="geral" onclick="loadNoticiasCat('geral')">Geral</div>
+      <div class="news-tab" data-cat="esporte" onclick="loadNoticiasCat('esporte')">Esporte</div>
+      <div class="news-tab" data-cat="musica" onclick="loadNoticiasCat('musica')">Música</div>
+      <div class="news-tab" data-cat="tecnologia" onclick="loadNoticiasCat('tecnologia')">Tech</div>
+      <div class="news-tab" data-cat="economia" onclick="loadNoticiasCat('economia')">Economia</div>
+      <div class="news-tab" data-cat="entretenimento" onclick="loadNoticiasCat('entretenimento')">TV</div>
+      <div class="news-tab" data-cat="internacional" onclick="loadNoticiasCat('internacional')">Mundial</div>
+    </div>
+    
+    <div id="noticias-list"></div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE DA NOTÍCIA -->
+<div id="news-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:960;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px;padding:24px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="closeNewsDetail()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fa fa-times"></i></button>
+    <img id="news-detail-img" style="width:100%;height:200px;object-fit:cover;border-radius:12px;margin-bottom:16px;"/>
+    <h2 id="news-detail-title" style="font-size:18px;font-weight:800;line-height:1.4;margin-bottom:12px;"></h2>
+    <p id="news-detail-desc" style="font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:20px;"></p>
+    <a id="news-detail-link" href="#" target="_blank" style="display:inline-block;background:var(--orange);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;">Ler matéria completa</a>
+  </div>
+</div>
+
+<style>
+.news-tab {
+  background:var(--surface2);
+  border:1.5px solid var(--surface3);
+  border-radius:20px;
+  padding:8px 16px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.news-tab.active {
+  background:var(--orange);
+  color:#fff;
+  border-color:var(--orange);
+}
+.news-card {
+  background:var(--surface2);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:12px;
+  cursor:pointer;
+  transition:transform 0.2s;
+}
+.news-card:hover {
+  transform:scale(1.02);
+}
+</style>
+
 
 <!-- Botão flutuante IA Humor -->
 <button id="ia-humor-btn" title="IA: músicas para seu momento">🎭</button>
