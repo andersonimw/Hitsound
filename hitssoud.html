@@ -1689,8 +1689,10 @@ function escapeHtml(text){
 }
 function openNewsDetail(title, desc, url, img){
   const modal = document.getElementById('news-detail-modal');
+  document.getElementById('news-detail-img').src = img || '/placeholder.png';
   document.getElementById('news-detail-title').textContent = title;
-  document.getElementById('news-detail-iframe').src = url;
+  document.getElementById('news-detail-desc').textContent = desc;
+  document.getElementById('news-detail-link').href = url;
   modal.style.display = 'flex';
 }
 function closeNewsDetail(){
@@ -2741,13 +2743,17 @@ document.addEventListener('click', function(e){
 </div>
 
 <!-- MODAL DETALHE DA NOTÍCIA -->
-<div id="news-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:960;align-items:center;justify-content:center;padding:10px;">
-  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:600px;height:90vh;display:flex;flex-direction:column;position:relative;overflow:hidden;">
-    <div style="padding:16px;border-bottom:1px solid var(--surface3);display:flex;align-items:center;justify-content:space-between;">
-      <h2 id="news-detail-title" style="font-size:16px;font-weight:800;margin:0;flex:1;padding-right:10px;"></h2>
-      <button onclick="closeNewsDetail()" style="background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">✕</button>
-    </div>
-    <iframe id="news-detail-iframe" style="flex:1;border:none;width:100%;background:#fff;"></iframe>
+<div id="news-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:960;align-items:center;justify-content:center;padding:10px;">
+  <div style="background:var(--surface);border-radius:20px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;position:relative;padding:20px;">
+    <button onclick="closeNewsDetail()" style="position:absolute;top:14px;right:14px;background:var(--surface2);border:none;color:var(--text-muted);font-size:20px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:1;">✕</button>
+    
+    <img id="news-detail-img" style="width:100%;height:200px;object-fit:cover;border-radius:14px;margin-bottom:18px;" onerror="this.style.display='none'"/>
+    
+    <h2 id="news-detail-title" style="font-size:19px;font-weight:800;line-height:1.35;margin-bottom:14px;color:var(--text);padding-right:30px;"></h2>
+    
+    <p id="news-detail-desc" style="font-size:15px;color:var(--text-muted);line-height:1.65;margin-bottom:24px;"></p>
+    
+    <a id="news-detail-link" href="#" target="_blank" style="display:block;background:linear-gradient(135deg,var(--orange),var(--wine-light));color:#fff;padding:14px 24px;border-radius:12px;text-decoration:none;font-weight:800;text-align:center;font-size:15px;">📰 Abrir matéria completa</a>
   </div>
 </div>
 
