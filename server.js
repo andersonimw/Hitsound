@@ -1640,30 +1640,6 @@ app.get('/api/reels', async function(req, res) {
   }
 });
 
-app.get('/api/noticias', async function(req, res) {
-  try {
-    const cat = req.query.cat || 'geral';
-    const lang = req.query.lang || 'pt';
-    const catMap = {
-      'geral':          'Brasil noticias',
-      'esporte':        'esporte futebol brasil',
-      'musica':         'musica lancamento artista',
-      'tecnologia':     'tecnologia inovacao',
-      'economia':       'economia financas mercado brasil',
-      'entretenimento': 'entretenimento cinema tv celebridades',
-      'internacional':  'world news international'
-    };
-    const q = catMap[cat] || 'brasil';
-    const langParam = cat === 'internacional' ? 'en' : 'pt';
-    const url = 'https://gnews.io/api/v4/search?q='+encodeURIComponent(q)+'&lang='+langParam+'&max=10&apikey='+process.env.GNEWS_API_KEY;
-    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    const d = await r.json();
-    res.json(d);
-  } catch(e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 app.get('/api/podcasts', async function(req, res) {
   try {
     const q = req.query.q || 'podcast brasil';
