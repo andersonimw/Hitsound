@@ -658,7 +658,7 @@ button{font-family:'Nunito',sans-serif;cursor:pointer;}
   <div class="section-header"><h2 class="section-title">🎵 Seu Mix</h2><span class="see-all" id="btn-refresh-mix">Atualizar</span></div>
   <div class="tracks-list" id="mix-tracks"></div>
 </div>
-<div class="section-header"><h2 class="section-title">🔥 Em Alta</h2><span class="see-all" onclick="showView('top100')">Ver Top 100</span></div>
+<div class="section-header"><h2 class="section-title">🔥 Em Alta</h2><span class="see-all" onclick="showView('top100')">Ver Top 30</span></div>
   <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;" id="trending-tabs">
     <button class="avids-tab active" data-genre="brasil">🇧🇷 Brasil</button>
     <button class="avids-tab" data-genre="funk">🕺 Funk</button>
@@ -2524,6 +2524,10 @@ function openIaHumor(){
   document.getElementById('ia-humor-modal').classList.add('open');
   document.getElementById('ia-humor-input').focus();
 }
+document.addEventListener('DOMContentLoaded',function(){
+  var iab=document.getElementById('ia-humor-btn');
+  if(iab)iab.addEventListener('click',openIaHumor);
+});
 function closeIaHumor(){
   document.getElementById('ia-humor-modal').classList.remove('open');
 }
@@ -2664,7 +2668,7 @@ document.addEventListener('click', function(e){
 </div>
 
 <!-- Botão flutuante IA Humor -->
-<button id="ia-humor-btn" onclick="openIaHumor()" title="IA: músicas para seu momento">🎭</button>
+<button id="ia-humor-btn" title="IA: músicas para seu momento">🎭</button>
 
 <!-- Modal IA Humor -->
 <div id="ia-humor-modal">
