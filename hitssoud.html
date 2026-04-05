@@ -1176,7 +1176,7 @@ document.getElementById('npc-addpl').addEventListener('click',function(){if(!cur
 
 // ── HISTÓRICO ─────────────────────────────────────────────────────
 function saveHistory(){try{localStorage.setItem('hs_history',JSON.stringify({history:playHistory,artists:artistPlayCount,weekly:weeklyPlays,weeklyTracks:weeklyTracks,tracksPlayed:tracksPlayed}));}catch(e){}}
-function loadHistory(){try{var s=localStorage.getItem('hs_history');if(s){var d=JSON.parse(s);playHistory=d.history||[];artistPlayCount=d.artists||{};weeklyPlays=d.weekly||{};weeklyTracks=d.weeklyTracks||{};tracksPlayed=d.tracksPlayed||playHistory.length||0;}}catch(e){}setTimeout(renderRecentTracks,500);}
+function loadHistory(){try{var s=localStorage.getItem('hs_history');if(s){var d=JSON.parse(s);playHistory=d.history||[];artistPlayCount=d.artists||{};weeklyPlays=d.weekly||{};weeklyTracks=d.weeklyTracks||{};tracksPlayed=d.tracksPlayed||playHistory.length||0;var FAKE=/(hybe|topic|records|vevo|label|entertainment|universal|sony|warner|distribu|official|compilation)/i;Object.keys(artistPlayCount).forEach(function(k){if(FAKE.test(k))delete artistPlayCount[k];});playHistory=playHistory.filter(function(h){return!FAKE.test(h.artist||'');});}}catch(e){}setTimeout(renderRecentTracks,500);}
 function renderRecentTracks(){
   if(!playHistory.length) return;
   _listMap['recent-tracks'] = playHistory.slice(0,20);
@@ -1950,6 +1950,23 @@ async function generateMix(){
   renderTracksList(mixed,'mix-tracks');
 }
 document.getElementById('btn-refresh-mix') && document.getElementById('btn-refresh-mix').addEventListener('click',function(){generateMix();});
+async function openPodcastPage(p){
+  if(p.feedUrl){
+    window.open(p.feedUrl,'_blank');
+  } else {
+    showToast('🔍 Buscando '+p.name+'...');
+    try{
+      var r=await fetch('/api/search?q='+encodeURIComponent(p.name+' '+p.artist+' podcast'));
+      var d=await r.json();
+      var found=(d.items||[]).find(function(it){return it.id&&it.id.videoId;});
+      if(found){
+        playTrackObj({name:p.name,artist:p.artist,ytId:found.id.videoId,thumb:p.thumb});
+      }else{
+        showToast('❌ Podcast não encontrado');
+      }
+    }catch(e){showToast('❌ Erro ao buscar podcast');}
+  }
+}
 async function loadPodcasts(cat){
   cat = cat || 'esporte';
   var el = document.getElementById('podcast-list');
@@ -1958,7 +1975,7 @@ async function loadPodcasts(cat){
   var termMap = {
     'esporte':     'podcast esporte futebol brasil',
     'humor':       'podcast humor comedia brasil',
-    'tecnologia':  'podcast tecnologia brasil',
+    'tecnologia':  'podcast tecnologia inovacao brasil',
     'negocios':    'podcast negocios empreendedorismo brasil',
     'investimento':'podcast investimento financas brasil',
     'psicologia':  'podcast psicologia comportamento brasil',
@@ -1967,19 +1984,23 @@ async function loadPodcasts(cat){
   };
   var q = termMap[cat] || 'podcast brasil';
   try {
-    var r = await fetch('/api/search?q=' + encodeURIComponent(q) + '&type=video&maxResults=15');
+    var r = await fetch('/api/podcasts?q=' + encodeURIComponent(q));
     var d = await r.json();
-    if(!d.items || !d.items.length){ el.innerHTML='<p style="color:var(--text-muted);padding:10px;">Nenhum podcast encontrado.</p>'; return; }
+    if(!d.results || !d.results.length){ el.innerHTML='<p style="color:var(--text-muted);padding:10px;">Nenhum podcast encontrado.</p>'; return; }
     var h = '';
-    d.items.filter(function(it){ return it.id && it.id.videoId; }).forEach(function(it){
-      var tr = {name: it.snippet.title, artist: it.snippet.channelTitle, ytId: it.id.videoId, thumb: it.snippet.thumbnails.medium.url};
-      var obj = JSON.stringify(tr).replace(/"/g,"'");
-      h += '<div style="display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;background:var(--surface);margin-bottom:8px;cursor:pointer;border:1px solid var(--surface3);" onclick="playTrackObj('+obj+')">';
-      h += '<img src="'+tr.thumb+'" style="width:80px;height:55px;border-radius:8px;object-fit:cover;flex-shrink:0;" loading="lazy"/>';
-      h += '<div style="overflow:hidden;"><div style="font-size:12px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+esc(tr.name)+'</div>';
-      h += '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">🎙️ '+esc(tr.artist)+'</div></div></div>';
+    d.results.forEach(function(it){
+      var name = it.trackName || it.collectionName || '';
+      var artist = it.artistName || '';
+      var thumb = it.artworkUrl100 || '';
+      var feedUrl = it.feedUrl || '';
+      if(!name) return;
+      var obj = JSON.stringify({name:name, artist:artist, thumb:thumb, ytId:null, feedUrl:feedUrl}).replace(/"/g,"'");
+      h += '<div style="display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;background:var(--surface);margin-bottom:8px;cursor:pointer;border:1px solid var(--surface3);" onclick="openPodcastPage('+obj+')">';
+      h += '<img src="'+thumb+'" style="width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0;" loading="lazy"/>';
+      h += '<div style="overflow:hidden;"><div style="font-size:12px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">'+esc(name)+'</div>';
+      h += '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">🎙️ '+esc(artist)+'</div></div></div>';
     });
-    el.innerHTML = h;
+    el.innerHTML = h || '<p style="color:var(--text-muted);padding:10px;">Nenhum podcast encontrado.</p>';
   } catch(e) { el.innerHTML='<p style="color:var(--text-muted);padding:10px;">Erro ao carregar podcasts.</p>'; }
 }
 document.getElementById('podcast-tabs') && document.getElementById('podcast-tabs').addEventListener('click', function(e){
