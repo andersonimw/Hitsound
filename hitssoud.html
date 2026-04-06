@@ -2277,7 +2277,7 @@ function jamAutoReconnect(){
   jamSocket.emit('jam:reconnect',{roomId:savedRoom,userName:uname});
   console.log('[JAM] Reconexao automatica para sala:',savedRoom);
 }
-if(!checkFirstAccess()){}else{initApp();}
+initApp();
 
 // Ranking de ouvintes
 async function loadRanking() {
@@ -2627,10 +2627,7 @@ function openIaHumor(){
   document.getElementById('ia-humor-modal').classList.add('open');
   document.getElementById('ia-humor-input').focus();
 }
-document.addEventListener('DOMContentLoaded',function(){
-  var iab=document.getElementById('ia-humor-btn');
-  if(iab)iab.addEventListener('click',openIaHumor);
-});
+
 function closeIaHumor(){
   document.getElementById('ia-humor-modal').classList.remove('open');
 }
