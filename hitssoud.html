@@ -2277,9 +2277,7 @@ function jamAutoReconnect(){
   jamSocket.emit('jam:reconnect',{roomId:savedRoom,userName:uname});
   console.log('[JAM] Reconexao automatica para sala:',savedRoom);
 }
-console.log('[DEBUG] ========== INICIANDO initApp() ==========');
-initApp();
-console.log('[DEBUG] ========== initApp() CONCLUÍDO ==========');
+// initApp() movido para o final do arquivo
 
 // Ranking de ouvintes
 async function loadRanking() {
@@ -2896,6 +2894,13 @@ document.addEventListener('click', function(e){
   </div>
 </div>
 
+
+<script>
+// Chamar initApp() depois que todas as funções foram definidas
+console.log('[DEBUG] ========== INICIANDO initApp() ==========');
+initApp();
+console.log('[DEBUG] ========== initApp() CONCLUÍDO ==========');
+</script>
 
 <!-- Eruda: Console flutuante para debug no celular -->
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
