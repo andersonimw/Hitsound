@@ -2277,7 +2277,9 @@ function jamAutoReconnect(){
   jamSocket.emit('jam:reconnect',{roomId:savedRoom,userName:uname});
   console.log('[JAM] Reconexao automatica para sala:',savedRoom);
 }
+console.log('[DEBUG] ========== INICIANDO initApp() ==========');
 initApp();
+console.log('[DEBUG] ========== initApp() CONCLUÍDO ==========');
 
 // Ranking de ouvintes
 async function loadRanking() {
