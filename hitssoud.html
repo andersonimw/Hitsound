@@ -2268,7 +2268,7 @@ function initApp(){loadPlaylists();loadHistory();loadAlarms();loadProfile();rend
         });
     }
   });
-  var iab=document.getElementById('ia-humor-btn');if(iab)iab.addEventListener('click',openIaHumor);var ias=document.getElementById('ia-humor-send');if(ias)ias.addEventListener('click',sendIaHumor);var iai=document.getElementById('ia-humor-input');if(iai)iai.addEventListener('keydown',function(e){if(e.key==='Enter')sendIaHumor();});var iam=document.getElementById('ia-humor-modal');if(iam)iam.addEventListener('click',function(e){if(e.target===this)closeIaHumor();});}
+  var iab=document.getElementById('ia-humor-btn');console.log('[DEBUG] Botão IA encontrado:',iab);if(iab){iab.addEventListener('click',openIaHumor);console.log('[DEBUG] Listener registrado!');}else{console.error('[DEBUG] Botão IA NÃO encontrado!');}var ias=document.getElementById('ia-humor-send');if(ias)ias.addEventListener('click',sendIaHumor);var iai=document.getElementById('ia-humor-input');if(iai)iai.addEventListener('keydown',function(e){if(e.key==='Enter')sendIaHumor();});var iam=document.getElementById('ia-humor-modal');if(iam)iam.addEventListener('click',function(e){if(e.target===this)closeIaHumor();});}
 function jamAutoReconnect(){
   var savedRoom=localStorage.getItem('hs_jam_room');
   if(!savedRoom) return;
@@ -2624,8 +2624,15 @@ document.addEventListener('click',function(e){
 // listeners da IA registrados no initApp()
 
 function openIaHumor(){
-  document.getElementById('ia-humor-modal').classList.add('open');
-  document.getElementById('ia-humor-input').focus();
+  console.log('[DEBUG] openIaHumor chamada!');
+  const modal = document.getElementById('ia-humor-modal');
+  console.log('[DEBUG] Modal encontrado:', modal);
+  if(modal){
+    modal.classList.add('open');
+    console.log('[DEBUG] Classe open adicionada');
+  }
+  const input = document.getElementById('ia-humor-input');
+  if(input) input.focus();
 }
 
 function closeIaHumor(){
@@ -2886,6 +2893,11 @@ document.addEventListener('click', function(e){
     </div>
   </div>
 </div>
+
+
+<!-- Eruda: Console flutuante para debug no celular -->
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
 
 </body>
 </html>
