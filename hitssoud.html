@@ -3057,29 +3057,36 @@ function switchLibTab(tab) {
 function loadLibraryCurtidas() {
   const container = document.getElementById('library-curtidas-list');
   
-  // Buscar músicas curtidas do localStorage
-  const likedIds = JSON.parse(localStorage.getItem('hs_liked') || '[]');
-  const allTracks = JSON.parse(localStorage.getItem('hs_history') || '[]');
+  // Usar a MESMA fonte que o Perfil usa
+  const savedData = localStorage.getItem('hs_liked');
+  let likedTracksObj = {};
   
-  // Filtrar apenas as curtidas
-  const likedTracks = allTracks.filter(t => likedIds.includes(t.videoId));
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      likedTracksObj = parsed.tracks || {};
+    } catch(e) {
+      console.error('Erro ao carregar curtidas:', e);
+    }
+  }
   
-  if (likedTracks.length === 0) {
+  const tracksArray = Object.values(likedTracksObj);
+  
+  if (tracksArray.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">💔 Nenhuma música curtida ainda.<br><br>Toque no ❤️ para adicionar suas favoritas!</div>';
     return;
   }
   
-  container.innerHTML = likedTracks.map((track, idx) => {
-    const trackStr = JSON.stringify(track).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  container.innerHTML = tracksArray.map((track, idx) => {
     return `
-    <div class="track-item" onclick='playTrackObj(JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(track))}")))'> 
+    <div class="track-item" onclick="playTrack('${track.ytId}', '${track.name.replace(/'/g, "\'")}', '${(track.artist || 'Artista').replace(/'/g, "\'")}', '${(track.thumb || '').replace(/'/g, "\'")}')">
       <div class="track-num">${idx + 1}</div>
-      <img src="${track.thumbnail || '/placeholder.png'}" class="track-thumb" onerror="this.src='/placeholder.png'" />
+      <img src="${track.thumb || '/placeholder.png'}" class="track-thumb" onerror="this.src='/placeholder.png'" />
       <div class="track-info">
-        <div class="track-title">${track.title}</div>
+        <div class="track-title">${track.name}</div>
         <div class="track-artist">${track.artist || 'Artista Desconhecido'}</div>
       </div>
-      <button class="btn-icon-small" onclick="event.stopPropagation();toggleLike('${track.videoId}');loadLibraryCurtidas();">
+      <button class="btn-icon-small" onclick="event.stopPropagation();toggleLike('${track.ytId}');setTimeout(loadLibraryCurtidas, 100);">
         <i class="fa fa-heart" style="color:var(--wine);"></i>
       </button>
     </div>
