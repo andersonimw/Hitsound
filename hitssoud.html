@@ -3056,26 +3056,35 @@ function switchLibTab(tab) {
 
 function loadLibraryCurtidas() {
   const container = document.getElementById('library-curtidas-list');
-  const liked = likedTracks || [];
   
-  if (liked.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Nenhuma música curtida ainda.</div>';
+  // Buscar músicas curtidas do localStorage
+  const likedIds = JSON.parse(localStorage.getItem('hs_liked') || '[]');
+  const allTracks = JSON.parse(localStorage.getItem('hs_history') || '[]');
+  
+  // Filtrar apenas as curtidas
+  const likedTracks = allTracks.filter(t => likedIds.includes(t.videoId));
+  
+  if (likedTracks.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">💔 Nenhuma música curtida ainda.<br><br>Toque no ❤️ para adicionar suas favoritas!</div>';
     return;
   }
   
-  container.innerHTML = liked.map((track, idx) => `
-    <div class="track-item" onclick="playTrackObj(${JSON.stringify(track).replace(/"/g, '&quot;')})">
+  container.innerHTML = likedTracks.map((track, idx) => {
+    const trackStr = JSON.stringify(track).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    return `
+    <div class="track-item" onclick='playTrackObj(JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(track))}")))'> 
       <div class="track-num">${idx + 1}</div>
       <img src="${track.thumbnail || '/placeholder.png'}" class="track-thumb" onerror="this.src='/placeholder.png'" />
       <div class="track-info">
         <div class="track-title">${track.title}</div>
         <div class="track-artist">${track.artist || 'Artista Desconhecido'}</div>
       </div>
-      <button class="btn-icon-small" onclick="event.stopPropagation();toggleLike('${track.videoId}')">
+      <button class="btn-icon-small" onclick="event.stopPropagation();toggleLike('${track.videoId}');loadLibraryCurtidas();">
         <i class="fa fa-heart" style="color:var(--wine);"></i>
       </button>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function loadLibraryArtistas() {
@@ -3083,12 +3092,12 @@ function loadLibraryArtistas() {
   const artists = Object.keys(artistPlayCount || {}).slice(0, 20);
   
   if (artists.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Nenhum artista favorito ainda.</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">🎤 Nenhum artista favorito ainda.<br><br>Comece a ouvir músicas!</div>';
     return;
   }
   
   container.innerHTML = artists.map(artist => `
-    <div class="card" onclick="searchArtist('${artist.replace(/'/g, "\'")}')">
+    <div class="card" onclick="openSearch();document.getElementById('search-input').value='${artist.replace(/'/g, "\'")}';performSearch();">
       <div class="card-cover" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--orange),var(--wine));">
         <i class="fa fa-microphone" style="font-size:40px;color:#fff;"></i>
       </div>
@@ -3100,15 +3109,16 @@ function loadLibraryArtistas() {
 
 function loadLibraryHistorico() {
   const container = document.getElementById('library-historico-list');
-  const history = playHistory.slice(0, 50).reverse();
+  const history = (playHistory || []).slice(0, 50).reverse();
   
   if (history.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Nenhum histórico ainda.</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">🕒 Nenhum histórico ainda.<br><br>Suas músicas recentes aparecerão aqui!</div>';
     return;
   }
   
-  container.innerHTML = history.map((track, idx) => `
-    <div class="track-item" onclick="playTrackObj(${JSON.stringify(track).replace(/"/g, '&quot;')})">
+  container.innerHTML = history.map((track, idx) => {
+    return `
+    <div class="track-item" onclick='playTrackObj(JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(track))}")))'>
       <div class="track-num">${idx + 1}</div>
       <img src="${track.thumbnail || '/placeholder.png'}" class="track-thumb" onerror="this.src='/placeholder.png'" />
       <div class="track-info">
@@ -3116,7 +3126,8 @@ function loadLibraryHistorico() {
         <div class="track-artist">${track.artist || 'Artista Desconhecido'}</div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 // Busca e ordenação (placeholder - implementar depois)
