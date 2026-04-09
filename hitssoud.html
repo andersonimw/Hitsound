@@ -3079,7 +3079,7 @@ function loadLibraryCurtidas() {
   
   container.innerHTML = tracksArray.map((track, idx) => {
     return `
-    <div class="track-item" onclick="playTrack('${track.ytId}', '${track.name.replace(/'/g, "\'")}', '${(track.artist || 'Artista').replace(/'/g, "\'")}', '${(track.thumb || '').replace(/'/g, "\'")}')">
+    <div class="track-item" onclick="playTrackObj({name:'${track.name.replace(/'/g, "\\'")}',artist:'${(track.artist||'').replace(/'/g, "\\'")}',ytId:'${track.ytId}',thumb:'${(track.thumb||'').replace(/'/g, "\\'")}'})">
       <div class="track-num">${idx + 1}</div>
       <img src="${track.thumb || '/placeholder.png'}" class="track-thumb" onerror="this.src='/placeholder.png'" />
       <div class="track-info">
