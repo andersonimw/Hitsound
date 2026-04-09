@@ -3115,9 +3115,8 @@ function loadLibraryArtistas() {
 }
 
 function showArtistTracks(artistName) {
-  // Buscar todas as músicas desse artista no histórico
-  const allTracks = JSON.parse(localStorage.getItem('hs_history') || '[]');
-  const artistTracks = allTracks.filter(t => t.artist === artistName);
+  // Buscar todas as músicas desse artista no playHistory global
+  const artistTracks = (playHistory || []).filter(t => t.artist === artistName);
   
   if (artistTracks.length === 0) {
     showToast('🎤 Nenhuma música de ' + artistName + ' encontrada');
@@ -3137,12 +3136,12 @@ function showArtistTracks(artistName) {
     </div>
     <div class="tracks-list">
       ${artistTracks.map((track, idx) => `
-        <div class="track-item" onclick="playTrackObj({name:'${(track.name || track.title || 'Sem título').replace(/'/g, "\'")}',artist:'${(track.artist || '').replace(/'/g, "\'")}',ytId:'${track.videoId || track.ytId}',thumb:'${(track.thumbnail || track.thumb || '').replace(/'/g, "\'")}'})">
+        <div class="track-item" onclick="playTrackObj({name:'${track.name.replace(/'/g, "\'")}',artist:'${track.artist.replace(/'/g, "\'")}',ytId:'${track.ytId}',thumb:'${(track.thumb || '').replace(/'/g, "\'")}'})">
           <div class="track-num">${idx + 1}</div>
-          <img src="${track.thumbnail || track.thumb || '/placeholder.png'}" class="track-thumb" onerror="this.src='/placeholder.png'" />
+          <img src="${track.thumb || '/placeholder.png'}" class="track-thumb" onerror="this.src='/placeholder.png'" />
           <div class="track-info">
-            <div class="track-title">${track.name || track.title || 'Sem título'}</div>
-            <div class="track-artist">${track.artist || 'Artista Desconhecido'}</div>
+            <div class="track-title">${track.name}</div>
+            <div class="track-artist">${track.artist}</div>
           </div>
         </div>
       `).join('')}
