@@ -3104,7 +3104,7 @@ function loadLibraryArtistas() {
   }
   
   container.innerHTML = artists.map(artist => `
-    <div class="card" onclick="openSearch();document.getElementById('search-input').value='${artist.replace(/'/g, "\'")}';performSearch();">
+    <div class="card" onclick="showArtistTracks('${artist.replace(/'/g, "\'")}')">
       <div class="card-cover" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--orange),var(--wine));">
         <i class="fa fa-microphone" style="font-size:40px;color:#fff;"></i>
       </div>
@@ -3112,6 +3112,42 @@ function loadLibraryArtistas() {
       <div class="card-meta">${artistPlayCount[artist]} reproduções</div>
     </div>
   `).join('');
+}
+
+function showArtistTracks(artistName) {
+  // Buscar todas as músicas desse artista no histórico
+  const allTracks = JSON.parse(localStorage.getItem('hs_history') || '[]');
+  const artistTracks = allTracks.filter(t => t.artist === artistName);
+  
+  if (artistTracks.length === 0) {
+    showToast('🎤 Nenhuma música de ' + artistName + ' encontrada');
+    return;
+  }
+  
+  // Trocar para visualização de lista
+  const container = document.getElementById('library-artistas-grid');
+  
+  container.innerHTML = `
+    <div style="margin-bottom:20px;">
+      <button onclick="loadLibraryArtistas()" style="background:var(--surface2);border:1.5px solid var(--surface3);border-radius:10px;padding:10px 16px;color:var(--text);cursor:pointer;margin-bottom:16px;">
+        <i class="fa fa-arrow-left"></i> Voltar aos Artistas
+      </button>
+      <h3 style="color:var(--text);margin:0 0 8px 0;">🎤 ${artistName}</h3>
+      <p style="color:var(--text-muted);font-size:14px;margin:0 0 20px 0;">${artistTracks.length} músicas</p>
+    </div>
+    <div class="tracks-list">
+      ${artistTracks.map((track, idx) => `
+        <div class="track-item" onclick="playTrackObj({name:'${(track.name || track.title || 'Sem título').replace(/'/g, "\'")}',artist:'${(track.artist || '').replace(/'/g, "\'")}',ytId:'${track.videoId || track.ytId}',thumb:'${(track.thumbnail || track.thumb || '').replace(/'/g, "\'")}'})">
+          <div class="track-num">${idx + 1}</div>
+          <img src="${track.thumbnail || track.thumb || '/placeholder.png'}" class="track-thumb" onerror="this.src='/placeholder.png'" />
+          <div class="track-info">
+            <div class="track-title">${track.name || track.title || 'Sem título'}</div>
+            <div class="track-artist">${track.artist || 'Artista Desconhecido'}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
 }
 
 function loadLibraryHistorico() {
