@@ -3103,13 +3103,27 @@ function loadLibraryArtistas() {
     return;
   }
   
-  container.innerHTML = artists.map(artist => `
-    <div class="card" onclick="showArtistTracks('${artist.replace(/'/g, "\'")}')">
-      <div class="card-cover" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--orange),var(--wine));">
-        <i class="fa fa-microphone" style="font-size:40px;color:#fff;"></i>
-      </div>
-      <div class="card-title">${artist}</div>
-      <div class="card-meta">${artistPlayCount[artist]} reproduções</div>
+  // Buscar foto da primeira música de cada artista
+  const artistsWithPhotos = artists.map(artist => {
+    const firstTrack = (playHistory || []).find(t => t.artist === artist);
+    const photo = firstTrack ? (firstTrack.thumb || `https://i.ytimg.com/vi/${firstTrack.ytId}/mqdefault.jpg`) : null;
+    return { name: artist, photo, plays: artistPlayCount[artist] };
+  });
+  
+  container.innerHTML = artistsWithPhotos.map(artist => `
+    <div class="card" onclick="showArtistTracks('${artist.name.replace(/'/g, "\'")}')">
+      ${artist.photo ? 
+        `<img src="${artist.photo}" class="card-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+        <div class="card-cover" style="display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--orange),var(--wine));">
+          <i class="fa fa-microphone" style="font-size:40px;color:#fff;"></i>
+        </div>` 
+        : 
+        `<div class="card-cover" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--orange),var(--wine));">
+          <i class="fa fa-microphone" style="font-size:40px;color:#fff;"></i>
+        </div>`
+      }
+      <div class="card-title">${artist.name}</div>
+      <div class="card-meta">${artist.plays} reproduções</div>
     </div>
   `).join('');
 }
