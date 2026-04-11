@@ -3186,10 +3186,31 @@ function loadLibraryHistorico() {
   }).join('');
 }
 
-// Busca na biblioteca
-document.getElementById('library-search')?.addEventListener('input', function(e) {
-  const query = e.target.value.toLowerCase().trim();
-  filterCurrentLibTab(query);
+// Busca na biblioteca - executar após DOM pronto
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('library-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      const query = e.target.value.toLowerCase().trim();
+      filterCurrentLibTab(query);
+    });
+  }
+  
+  const sortSelect = document.getElementById('library-sort');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', function(e) {
+      const sortType = e.target.value;
+      sortCurrentLibTab(sortType);
+    });
+  }
+  
+  const viewToggle = document.getElementById('library-view-toggle');
+  if (viewToggle) {
+    viewToggle.addEventListener('click', function() {
+      currentLibView = currentLibView === 'grid' ? 'list' : 'grid';
+      this.innerHTML = currentLibView === 'grid' ? '<i class="fa fa-th"></i>' : '<i class="fa fa-list"></i>';
+    });
+  }
 });
 
 function filterCurrentLibTab(query) {
@@ -3244,10 +3265,7 @@ function filterPlaylists(query) {
   });
 }
 
-document.getElementById('library-sort')?.addEventListener('change', function(e) {
-  const sortType = e.target.value;
-  sortCurrentLibTab(sortType);
-});
+// Listener movido para DOMContentLoaded acima
 
 function sortCurrentLibTab(sortType) {
   const activeTab = document.querySelector('.lib-tab.active')?.dataset.tab;
@@ -3311,11 +3329,7 @@ function sortArtistItems(sortType) {
   items.forEach(item => container.appendChild(item));
 }
 
-document.getElementById('library-view-toggle')?.addEventListener('click', function() {
-  currentLibView = currentLibView === 'grid' ? 'list' : 'grid';
-  this.innerHTML = currentLibView === 'grid' ? '<i class="fa fa-th"></i>' : '<i class="fa fa-list"></i>';
-  // TODO: alternar visualização
-});
+// Listener movido para DOMContentLoaded acima
 
 
 </script>
