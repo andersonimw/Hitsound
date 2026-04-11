@@ -3186,14 +3186,130 @@ function loadLibraryHistorico() {
   }).join('');
 }
 
-// Busca e ordenação (placeholder - implementar depois)
+// Busca na biblioteca
 document.getElementById('library-search')?.addEventListener('input', function(e) {
-  // TODO: filtrar conteúdo da aba ativa
+  const query = e.target.value.toLowerCase().trim();
+  filterCurrentLibTab(query);
 });
 
+function filterCurrentLibTab(query) {
+  const activeTab = document.querySelector('.lib-tab.active')?.dataset.tab;
+  
+  if (activeTab === 'curtidas') {
+    filterCurtidas(query);
+  } else if (activeTab === 'artistas') {
+    filterArtistas(query);
+  } else if (activeTab === 'historico') {
+    filterHistorico(query);
+  } else if (activeTab === 'playlists') {
+    filterPlaylists(query);
+  }
+}
+
+function filterCurtidas(query) {
+  const items = document.querySelectorAll('#library-curtidas-list .track-item');
+  items.forEach(item => {
+    const title = item.querySelector('.track-title')?.textContent.toLowerCase() || '';
+    const artist = item.querySelector('.track-artist')?.textContent.toLowerCase() || '';
+    const matches = title.includes(query) || artist.includes(query);
+    item.style.display = matches ? 'flex' : 'none';
+  });
+}
+
+function filterArtistas(query) {
+  const items = document.querySelectorAll('#library-artistas-grid .card');
+  items.forEach(item => {
+    const name = item.querySelector('.card-title')?.textContent.toLowerCase() || '';
+    const matches = name.includes(query);
+    item.style.display = matches ? 'block' : 'none';
+  });
+}
+
+function filterHistorico(query) {
+  const items = document.querySelectorAll('#library-historico-list .track-item');
+  items.forEach(item => {
+    const title = item.querySelector('.track-title')?.textContent.toLowerCase() || '';
+    const artist = item.querySelector('.track-artist')?.textContent.toLowerCase() || '';
+    const matches = title.includes(query) || artist.includes(query);
+    item.style.display = matches ? 'flex' : 'none';
+  });
+}
+
+function filterPlaylists(query) {
+  const items = document.querySelectorAll('#library-grid .card');
+  items.forEach(item => {
+    const name = item.querySelector('.card-title')?.textContent.toLowerCase() || '';
+    const matches = name.includes(query);
+    item.style.display = matches ? 'block' : 'none';
+  });
+}
+
 document.getElementById('library-sort')?.addEventListener('change', function(e) {
-  // TODO: ordenar conteúdo da aba ativa
+  const sortType = e.target.value;
+  sortCurrentLibTab(sortType);
 });
+
+function sortCurrentLibTab(sortType) {
+  const activeTab = document.querySelector('.lib-tab.active')?.dataset.tab;
+  
+  if (activeTab === 'curtidas') {
+    loadLibraryCurtidas();
+    setTimeout(() => sortTrackItems('#library-curtidas-list', sortType), 100);
+  } else if (activeTab === 'artistas') {
+    loadLibraryArtistas();
+    setTimeout(() => sortArtistItems(sortType), 100);
+  } else if (activeTab === 'historico') {
+    loadLibraryHistorico();
+    setTimeout(() => sortTrackItems('#library-historico-list', sortType), 100);
+  }
+}
+
+function sortTrackItems(containerId, sortType) {
+  const container = document.querySelector(containerId);
+  if (!container) return;
+  
+  const items = Array.from(container.querySelectorAll('.track-item'));
+  
+  items.sort((a, b) => {
+    const titleA = a.querySelector('.track-title')?.textContent || '';
+    const titleB = b.querySelector('.track-title')?.textContent || '';
+    
+    if (sortType === 'az') {
+      return titleA.localeCompare(titleB);
+    } else if (sortType === 'za') {
+      return titleB.localeCompare(titleA);
+    }
+    // 'recent' e 'plays' mantém ordem original
+    return 0;
+  });
+  
+  items.forEach(item => container.appendChild(item));
+}
+
+function sortArtistItems(sortType) {
+  const container = document.getElementById('library-artistas-grid');
+  if (!container) return;
+  
+  const items = Array.from(container.querySelectorAll('.card'));
+  
+  items.sort((a, b) => {
+    const nameA = a.querySelector('.card-title')?.textContent || '';
+    const nameB = b.querySelector('.card-title')?.textContent || '';
+    
+    if (sortType === 'az') {
+      return nameA.localeCompare(nameB);
+    } else if (sortType === 'za') {
+      return nameB.localeCompare(nameA);
+    } else if (sortType === 'plays') {
+      const playsA = parseInt(a.querySelector('.card-meta')?.textContent) || 0;
+      const playsB = parseInt(b.querySelector('.card-meta')?.textContent) || 0;
+      return playsB - playsA;
+    }
+    return 0;
+  });
+  
+  items.forEach(item => container.appendChild(item));
+}
 
 document.getElementById('library-view-toggle')?.addEventListener('click', function() {
   currentLibView = currentLibView === 'grid' ? 'list' : 'grid';
